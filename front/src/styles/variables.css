@@ -1,0 +1,155 @@
+/* ── Auth design tokens — light mode / red primary ────────────── */
+:root {
+    --auth-bg:          #F5F6F8;
+    --auth-panel-bg:    #FFFFFF;
+    --auth-form-bg:     #FFFFFF;
+    --auth-card-bg:     #F9FAFB;
+    --auth-accent:      #f00614;
+    --auth-accent-dim:  #c8010f;
+    --auth-accent-glow: rgba(240, 6, 20, 0.10);
+    --auth-text:        #1A2433;
+    --auth-muted:       #6B7A8D;
+    --auth-border:      rgba(240, 6, 20, 0.18);
+    --auth-error:       #DC2626;
+    --auth-error-bg:    rgba(220, 38, 38, 0.07);
+}
+
+/* ── Dashboard design tokens ──────────────────────────────────── */
+.dash-root {
+    /* Dark theme — palette: green (default) */
+    --dt-bg:           #060F1C;
+    --dt-sidebar:      #07111F;
+    --dt-header:       #0A1628;
+    --dt-card:         #0E2038;
+    --dt-border:       rgba(26, 229, 160, 0.12);
+    --dt-border2:      rgba(26, 229, 160, 0.20);
+    --dt-accent:       #1AE5A0;
+    --dt-accent-t:     #1AE5A0;
+    --dt-accent-bg:    rgba(26, 229, 160, 0.08);
+    --dt-ac-contrast:  #060F1C;
+    --dt-text:         #C8E2EF;
+    --dt-muted:        #6B8CAE;
+    --dt-title:        #FFFFFF;
+    --dt-shadow:       rgba(0, 0, 0, 0.50);
+    --dt-card-shadow:  none;
+    --dt-hover:        rgba(26, 229, 160, 0.06);
+    --dt-active:       rgba(26, 229, 160, 0.10);
+    --dt-mhover:       rgba(255, 255, 255, 0.04);
+    --dt-danger:       #FF5A6A;
+    /* Metric value colors */
+    --dt-val-accent:   #1AE5A0;
+    --dt-val-info:     #38BDF8;
+    --dt-val-warning:  #FBBF24;
+    --dt-val-danger:   #FF5A6A;
+    /* Border radius scale */
+    --dt-radius-sm:   8px;
+    --dt-radius-md:   10px;
+    --dt-radius-lg:   12px;
+    --dt-radius-xl:   16px;
+    --dt-radius-pill: 20px;
+}
+
+/* ── Dark palette overrides ───────────────────────────────────── */
+.dash-root.palette-blue {
+    --dt-accent:      #38BDF8;
+    --dt-accent-t:    #38BDF8;
+    --dt-accent-bg:   rgba(56, 189, 248, 0.08);
+    --dt-ac-contrast: #060F1C;
+    --dt-border:      rgba(56, 189, 248, 0.12);
+    --dt-border2:     rgba(56, 189, 248, 0.20);
+    --dt-hover:       rgba(56, 189, 248, 0.06);
+    --dt-active:      rgba(56, 189, 248, 0.10);
+    --dt-val-accent:  #38BDF8;
+}
+
+.dash-root.palette-red {
+    --dt-bg:          #140608;
+    --dt-sidebar:     #1C0A0C;
+    --dt-header:      #200C0E;
+    --dt-card:        #2A1012;
+    --dt-accent:      #FF5A6A;
+    --dt-accent-t:    #FF5A6A;
+    --dt-accent-bg:   rgba(255, 90, 106, 0.08);
+    --dt-ac-contrast: #1C0608;
+    --dt-border:      rgba(255, 90, 106, 0.12);
+    --dt-border2:     rgba(255, 90, 106, 0.20);
+    --dt-hover:       rgba(255, 90, 106, 0.06);
+    --dt-active:      rgba(255, 90, 106, 0.10);
+    --dt-val-accent:  #FF5A6A;
+}
+
+.dash-root.palette-yellow {
+    --dt-bg:          #14110A;
+    --dt-sidebar:     #1C1810;
+    --dt-header:      #201C12;
+    --dt-card:        #28241A;
+    --dt-accent:      #FBBF24;
+    --dt-accent-t:    #FBBF24;
+    --dt-accent-bg:   rgba(251, 191, 36, 0.08);
+    --dt-ac-contrast: #14110A;
+    --dt-border:      rgba(251, 191, 36, 0.12);
+    --dt-border2:     rgba(251, 191, 36, 0.20);
+    --dt-hover:       rgba(251, 191, 36, 0.06);
+    --dt-active:      rgba(251, 191, 36, 0.10);
+    --dt-val-accent:  #FBBF24;
+}
+
+/* ── Light theme base ─────────────────────────────────────────── */
+.dash-root.light {
+    --dt-bg:          #F8FAFC;
+    --dt-sidebar:     #FFFFFF;
+    --dt-header:      #FFFFFF;
+    --dt-card:        #FFFFFF;
+    --dt-border:      rgba(0, 0, 0, 0.08);
+    --dt-border2:     rgba(0, 0, 0, 0.14);
+    --dt-accent:      #1AE5A0;
+    --dt-accent-t:    #0A9066;
+    --dt-accent-bg:   rgba(10, 144, 102, 0.08);
+    --dt-ac-contrast: #FFFFFF;
+    --dt-text:        #334F6F;
+    --dt-muted:       #8294A8;
+    --dt-title:       #0E1F2F;
+    --dt-shadow:      rgba(0, 0, 0, 0.10);
+    --dt-card-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+    --dt-hover:       rgba(0, 0, 0, 0.04);
+    --dt-active:      rgba(10, 144, 102, 0.08);
+    --dt-mhover:      rgba(0, 0, 0, 0.04);
+    --dt-danger:      #DC2626;
+    /* Metric value colors — contraste sobre blanco */
+    --dt-val-accent:  #0A9066;
+    --dt-val-info:    #0284C7;
+    --dt-val-warning: #B45309;
+    --dt-val-danger:  #DC2626;
+}
+
+/* ── Light palette overrides ──────────────────────────────────── */
+.dash-root.light.palette-blue {
+    --dt-bg:         #F8FAFC;
+    --dt-accent:     #38BDF8;
+    --dt-accent-t:   #0284C7;
+    --dt-accent-bg:  rgba(2, 132, 199, 0.08);
+    --dt-hover:      rgba(2, 132, 199, 0.06);
+    --dt-active:     rgba(2, 132, 199, 0.08);
+    --dt-val-accent: #0284C7;
+}
+
+.dash-root.light.palette-red {
+    --dt-bg:         #F8FAFC;
+    --dt-accent:     #FF5A6A;
+    --dt-accent-t:   #DC2626;
+    --dt-accent-bg:  rgba(220, 38, 38, 0.08);
+    --dt-hover:      rgba(220, 38, 38, 0.06);
+    --dt-active:     rgba(220, 38, 38, 0.08);
+    --dt-danger:     #B91C1C;
+    --dt-val-accent: #DC2626;
+}
+
+.dash-root.light.palette-yellow {
+    --dt-bg:         #F8FAFC;
+    --dt-accent:     #FBBF24;
+    --dt-accent-t:   #B45309;
+    --dt-accent-bg:  rgba(180, 83, 9, 0.08);
+    --dt-hover:      rgba(180, 83, 9, 0.06);
+    --dt-active:     rgba(180, 83, 9, 0.08);
+    --dt-val-accent: #B45309;
+}

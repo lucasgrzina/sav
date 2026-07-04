@@ -1,0 +1,11 @@
+/* ── Vue transition: label-fade (sidebar nav labels) ──────────── */
+.label-fade-enter-active { transition: opacity 0.15s ease; }
+.label-fade-leave-active  { transition: opacity 0.1s ease; }
+.label-fade-enter-from,
+.label-fade-leave-to { opacity: 0; }
+
+/* ── Vue transition: menu-pop (user dropdown) ─────────────────── */
+.menu-pop-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.menu-pop-leave-active  { transition: opacity 0.1s ease, transform 0.1s ease; }
+.menu-pop-enter-from,
+.menu-pop-leave-to { opacity: 0; transform: translateY(-6px); }

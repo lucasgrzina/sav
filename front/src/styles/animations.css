@@ -1,0 +1,28 @@
+/* ── Auth animations ──────────────────────────────────────────── */
+@keyframes auth-enter {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes error-slide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── ECG animation ────────────────────────────────────────────── */
+@keyframes ecg-scroll {
+    from { transform: translateY(-50%) translateX(0); }
+    to   { transform: translateY(-50%) translateX(-50%); }
+}
+
+/* ── Dashboard animations ─────────────────────────────────────── */
+@keyframes dot-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* ── Page transition ──────────────────────────────────────────── */
+@keyframes page-fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

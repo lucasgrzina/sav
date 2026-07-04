@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "codebase-memory-mcp": "^0.8.1",
+    "sass-embedded": "^1.99.0",
+    "unplugin-vue-components": "^32.0.0"
+  }
+}
