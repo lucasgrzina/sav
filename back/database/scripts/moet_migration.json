@@ -1,0 +1,114 @@
+{
+  "techniques": [
+    {
+      "name": "MOET",
+      "target_date_name": "Fecha de COLECTA / TE",
+      "type": "technique",
+      "parent_id": null,
+      "children": [
+        {
+          "name": "Lavaje y Congelación de Embriones (LCE)",
+          "target_date_name": "Fecha de colecta de embriones",
+          "type": "subtype",
+          "protocols_name": "Protocolo solo Donantes"
+        },
+        {
+          "name": "Lavaje y Transferencia de Embriones (LCE)",
+          "target_date_name": "Fecha de COLECTA / TE",
+          "type": "subtype",
+          "protocols_name": "Protocolo para Donantes y Receptoras"
+        },
+        {
+          "name": "Transferencia de Embriones Congelados (TEC)",
+          "target_date_name": "Fecha de transferencia de embriones",
+          "type": "subtype",
+          "protocols_name": "Protocolo solo Receptoras"
+        }
+      ]
+    }
+  ],
+  "protocols": [
+    {
+      "technique": "MOET",
+      "subtechnique": "Lavaje y Congelación de Embriones (LCE)",
+      "name": "SUPEROVULACION - P600 - PLUSET 600UI - 60 c.c. (1:50)",
+      "color": "#ffff00",
+      "vet_id": null,
+      "tasks": [
+        { "description": "COLOCAR DISPOSITIVO INTRAVAGINAL", "days_offset": 15, "time_of_day": "Before", "time": "16:00:00", "important": false },
+        { "description": "PROGESTERONA 10 cc", "days_offset": 15, "time_of_day": "Before", "time": "16:00:00", "important": false },
+        { "description": "17 B ESTRADIOL 5 cc", "days_offset": 15, "time_of_day": "Before", "time": "16:00:00", "important": false },
+        { "description": "PLUSET 9", "days_offset": 12, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 9", "days_offset": 12, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "PLUSET 8", "days_offset": 11, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 8", "days_offset": 11, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "PLUSET 6", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 6", "days_offset": 10, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "PLUSET 5", "days_offset": 9, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "CICLASE 2cc", "days_offset": 9, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "PLUSET 5", "days_offset": 9, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "CICLASE 2cc", "days_offset": 9, "time_of_day": "Before", "time": "18:00:00", "important": true },
+        { "description": "RETIRAR CIDR No olvidar", "days_offset": 8, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "PLUSET 3", "days_offset": 8, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 3", "days_offset": 8, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "CELO", "days_offset": 7, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "GESTAR / GNRH 3 cc", "days_offset": 7, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "INSEMINACION 1 Pajuela", "days_offset": 7, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "INSEMINACION 1 Pajuela", "days_offset": 6, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "INSEMINACION 1 Pajuela", "days_offset": 6, "time_of_day": "Before", "time": "14:00:00", "important": false },
+        { "description": "Colecta", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": false }
+      ],
+      "alerts": [
+        { "text": "Mañana comienza el programa", "days_offset": 16, "time_of_day": "Before", "time": "20:00:00", "roles": ["client-manager", "client-owner"], "require_confirmation": false },
+        { "text": "Hoy comienza el programa", "days_offset": 16, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Mañana se debe colocar Pluset 9", "days_offset": 13, "time_of_day": "Before", "time": "20:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Hoy se debe colocar Pluset 9", "days_offset": 12, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Mañana se debe colocar Ciclase 2cc", "days_offset": 10, "time_of_day": "Before", "time": "20:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Hoy se debe colocar Ciclase 2cc", "days_offset": 9, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Mañana se debe retirar el dispositivo CIDR", "days_offset": 9, "time_of_day": "Before", "time": "20:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Hoy se debe retirar el dispositivo CIDR", "days_offset": 8, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Mañana se insemina", "days_offset": 8, "time_of_day": "Before", "time": "20:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "Hoy se insemina", "days_offset": 7, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false }
+      ]
+    },
+    {
+      "technique": "MOET",
+      "subtechnique": "Lavaje y Congelación de Embriones (LCE)",
+      "name": "SUPEROVULACION - P500 - PLUSET 500UI - 50 c.c. (1:50)",
+      "color": "#C0C0C0",
+      "vet_id": null,
+      "tasks": [
+        { "description": "COLOCAR DISPOSITIVO INTRAVAGINAL", "days_offset": 15, "time_of_day": "Before", "time": "16:00:00", "important": false },
+        { "description": "PROGESTERONA 10 cc", "days_offset": 15, "time_of_day": "Before", "time": "16:00:00", "important": false },
+        { "description": "17 B ESTRADIOL 5 cc", "days_offset": 15, "time_of_day": "Before", "time": "16:00:00", "important": false },
+        { "description": "PLUSET 8 cc", "days_offset": 12, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 8 cc", "days_offset": 12, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "PLUSET 7 cc", "days_offset": 11, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 7 cc", "days_offset": 11, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "PLUSET 5 cc", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 5 cc", "days_offset": 10, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "PLUSET 3 cc", "days_offset": 9, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PROSTAGLANDINA 2 CC", "days_offset": 9, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "PLUSET 3 cc", "days_offset": 9, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "PROSTAGLANDINA 2 CC", "days_offset": 9, "time_of_day": "Before", "time": "18:00:00", "important": true },
+        { "description": "RETIRAR CIDR No olvidar", "days_offset": 8, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "PLUSET 2 cc", "days_offset": 8, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "PLUSET 2 cc + PINTURA BASE DE COLA", "days_offset": 8, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "GNRH 3 cc", "days_offset": 7, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "INSEMINACION 1 Pajuela", "days_offset": 7, "time_of_day": "Before", "time": "18:00:00", "important": false },
+        { "description": "INSEMINACION 1 Pajuela", "days_offset": 6, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "INSEMINACION 1 Pajuela", "days_offset": 6, "time_of_day": "Before", "time": "14:00:00", "important": false },
+        { "description": "Colecta", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": false }
+      ],
+      "alerts": [
+        { "text": "MAÑANA AM INICIAN \"D\" ¿Tenés planillas impresas e insumos?", "days_offset": 16, "time_of_day": "Before", "time": "20:00:00", "roles": ["client-manager", "client-owner"], "require_confirmation": false },
+        { "text": "BUEN DIA! Hoy iniciamos DONANTES. BUEN COMIENZO!!", "days_offset": 15, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "BUEN DIA! MAÑANA AM INICIO SUPEROVULACION.", "days_offset": 13, "time_of_day": "Before", "time": "20:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "BUEN DIA! Hoy iniciamos con el PLUSET. BUEN COMIENZO!!", "days_offset": 12, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "BUEN DÍA! IMPORTANTE LA PROSTAGLANDINA Y EL PLUSET DÍA DE HOY!", "days_offset": 9, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "BUEN DÍA! IMPORTANTE EL DE HOY!", "days_offset": 8, "time_of_day": "Before", "time": "07:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "BUENAS TARDES! MAÑANA DIA DE COLECTAS, ENCERRAR A PRIMERA HORA POR LA MAÑANA", "days_offset": 8, "time_of_day": "Before", "time": "18:00:00", "roles": ["client-manager"], "require_confirmation": false }
+      ]
+    }
+  ]
+}

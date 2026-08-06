@@ -40,4 +40,9 @@ class Technique extends Model
     {
         return $this->parent_id !== null;
     }
+
+    public function protocols(): HasMany
+    {
+        return $this->hasMany(Protocol::class);
+    }
 }

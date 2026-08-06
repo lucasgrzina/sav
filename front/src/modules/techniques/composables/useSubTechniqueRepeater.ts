@@ -5,7 +5,7 @@ export function useSubTechniqueRepeater(initial: TechniqueChild[] = []) {
   const children = ref<TechniqueChild[]>(initial.map((c) => ({ ...c })))
 
   function addChild() {
-    children.value.push({ name: '', protocols_name: null })
+    children.value.push({ name: '', protocols_name: null, target_date_name: null })
   }
 
   function removeChild(index: number) {

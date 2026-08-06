@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Clients;
 
+use App\Http\Requests\Concerns\ValidatesContactsArray;
 use App\Models\DocumentType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
+    use ValidatesContactsArray;
+
     public function authorize(): bool
     {
         return true;
@@ -29,7 +32,7 @@ class StoreClientRequest extends FormRequest
             'contacts'                  => ['nullable', 'array', 'max:10'],
             'contacts.*.type'           => ['required', 'string', Rule::in(['email', 'phone', 'whatsapp'])],
             'contacts.*.label'          => ['nullable', 'string', 'max:100'],
-            'contacts.*.value'          => ['required', 'string', 'max:200'],
+            'contacts.*.value'          => ['required', 'string', 'max:200', $this->contactValueFormatRule()],
             'contacts.*.is_primary'     => ['nullable', 'boolean'],
             'contacts.*.use_for_alerts' => ['nullable', 'boolean'],
         ];

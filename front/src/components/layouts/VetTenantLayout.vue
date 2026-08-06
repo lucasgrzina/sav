@@ -46,7 +46,7 @@ onMounted(() => {
         <div v-if="!collapsed" class="dash-overlay" @click="collapsed = true" />
       </Transition>
 
-      <AppSidebar v-model:collapsed="collapsed" />
+      <AppSidebar v-model:collapsed="collapsed" :tenant-context-loading="isLoading" />
 
       <div class="dash-main">
         <header class="dash-header">

@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             TechniquePermissionsSeeder::class,
+            ProtocolPermissionsSeeder::class,
+            ProgramPermissionsSeeder::class,
             SystemSettingSeeder::class,
             CountrySeeder::class,
             HealthPlanSeeder::class,
@@ -34,5 +36,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $user->assignRole('super-admin');
+
+        $this->call([
+            TestDataSeeder::class,
+            MoetProtocolSeeder::class,
+        ]);
     }
 }

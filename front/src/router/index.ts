@@ -9,7 +9,6 @@ import { tutorialsRoutes } from '@/modules/tutorials/router/tutorials.routes'
 import { systemSettingsRoutes } from '@/modules/system-settings/router/system-settings.routes'
 import { vetsRoutes } from '@/modules/vets/router/vets.routes'
 import { vetsTenantRoutes } from '@/modules/vets/router/vets-tenant.routes'
-import { clientsRoutes } from '@/modules/clients/router/clients.routes'
 import { adminClientsRoutes } from '@/modules/clients/router/admin-clients.routes'
 import { techniquesRoutes } from '@/modules/techniques/router/technique.routes'
 import { healthRoutes } from '@/modules/health/router/health.routes'
@@ -35,7 +34,6 @@ const routes = [
             ...tutorialsRoutes,
             ...systemSettingsRoutes,
             ...vetsRoutes,
-            ...clientsRoutes,
             ...adminClientsRoutes,
             ...techniquesRoutes,
             ...healthRoutes,

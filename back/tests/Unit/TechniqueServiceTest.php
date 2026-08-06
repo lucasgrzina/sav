@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Exceptions\TechniqueCannotBeDeletedException;
+use App\Models\Protocol;
 use App\Models\Technique;
 use App\Repositories\TechniqueRepositoryEloquent;
 use App\Services\TechniqueService;
@@ -143,8 +144,8 @@ class TechniqueServiceTest extends TestCase
 
     public function test_destroy_does_not_throw_when_stubs_return_zero(): void
     {
-        // Los stubs de countProgramsForTechnique y countProtocolsForTechnique retornan 0,
-        // por lo que el destroy debe completarse sin excepción.
+        // El stub de countProgramsForTechnique retorna 0, y countProtocolsForTechnique ahora
+        // es una query real (sin protocolos creados acá) — el destroy debe completarse sin excepción.
         $root = Technique::create([
             'guid' => Str::uuid()->toString(),
             'name' => 'Sin vínculos',
@@ -154,5 +155,38 @@ class TechniqueServiceTest extends TestCase
         $this->service->destroy($root);
 
         $this->assertDatabaseMissing('techniques', ['guid' => $root->guid]);
+    }
+
+    // -------------------------------------------------------------------------
+    // regresión: countProtocolsForTechnique() ahora es una query real (ya no un stub)
+    // -------------------------------------------------------------------------
+
+    public function test_destroy_blocks_root_with_direct_protocols(): void
+    {
+        $root = Technique::create([
+            'guid' => Str::uuid()->toString(),
+            'name' => 'Raíz con protocolos',
+            'type' => 'technique',
+        ]);
+
+        // El protocolo cuelga directamente de la raíz (technique_id = $root->id),
+        // caso de datos inconsistentes que igual debe bloquear el borrado.
+        Protocol::create([
+            'guid'            => Str::uuid()->toString(),
+            'technique_id'    => $root->id,
+            'created_by_type' => 'superadmin',
+            'created_by_id'   => 1,
+            'name'            => 'Protocolo directo',
+        ]);
+
+        $this->expectException(TechniqueCannotBeDeletedException::class);
+
+        try {
+            $this->service->destroy($root);
+        } catch (TechniqueCannotBeDeletedException $e) {
+            $this->assertEquals('has_protocols', $e->getReason());
+            $this->assertEquals(1, $e->getCount());
+            throw $e;
+        }
     }
 }

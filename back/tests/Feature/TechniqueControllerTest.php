@@ -76,6 +76,29 @@ class TechniqueControllerTest extends TestCase
         $this->assertEquals('IA a tiempo fijo', $rootData['children'][0]['name']);
     }
 
+    public function test_index_exposes_target_date_name_on_children(): void
+    {
+        $root = Technique::create([
+            'guid' => Str::uuid()->toString(),
+            'name' => 'Inseminación Artificial',
+            'type' => 'technique',
+        ]);
+
+        Technique::create([
+            'guid'             => Str::uuid()->toString(),
+            'name'             => 'IA a tiempo fijo',
+            'type'             => 'technique',
+            'parent_id'        => $root->id,
+            'target_date_name' => 'Fecha de servicio',
+        ]);
+
+        $response = $this->actingAs($this->vetUser, 'sanctum')
+            ->getJson('/api/v1/techniques');
+
+        $rootData = collect($response->json('data'))->firstWhere('name', 'Inseminación Artificial');
+        $this->assertEquals('Fecha de servicio', $rootData['children'][0]['target_date_name']);
+    }
+
     public function test_index_filters_by_type(): void
     {
         Technique::create([

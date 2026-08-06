@@ -2,7 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 export const clientsRoutes: RouteRecordRaw[] = [
   {
-    path: '/vets/:vetGuid/clients',
+    path: 'clients',
     name: 'clients-list',
     component: () => import('@/modules/clients/pages/tenant/ClientsListPage.vue'),
     meta: { requiresAuth: true, title: 'Clientes' },
@@ -10,7 +10,7 @@ export const clientsRoutes: RouteRecordRaw[] = [
   {
     // IMPORTANTE: /new DEBE estar antes que /:guid para evitar que Vue Router
     // interprete "new" como un guid.
-    path: '/vets/:vetGuid/clients/new',
+    path: 'clients/new',
     name: 'clients-create',
     component: () => import('@/modules/clients/pages/tenant/ClientCreatePage.vue'),
     meta: { requiresAuth: true, title: 'Agregar cliente' },
@@ -18,26 +18,26 @@ export const clientsRoutes: RouteRecordRaw[] = [
   {
     // IMPORTANTE: las rutas con :clientGuid/staff/... deben ir ANTES que /:guid
     // para evitar que Vue Router capture clientGuid como valor del param :guid.
-    path: '/vets/:vetGuid/clients/:clientGuid/staff/new',
+    path: 'clients/:clientGuid/staff/new',
     name: 'clients-staff-create',
     component: () => import('@/modules/clients/pages/tenant/ClientStaffCreatePage.vue'),
     meta: { requiresAuth: true, title: 'Agregar staff al cliente' },
   },
   {
-    path: '/vets/:vetGuid/clients/:clientGuid/staff/:profileGuid/edit',
+    path: 'clients/:clientGuid/staff/:profileGuid/edit',
     name: 'clients-staff-edit',
     component: () => import('@/modules/clients/pages/tenant/ClientEditStaffPage.vue'),
     meta: { requiresAuth: true, title: 'Editar staff del cliente' },
   },
   {
-    path: '/vets/:vetGuid/clients/:guid',
+    path: 'clients/:guid',
     name: 'clients-detail',
     component: () => import('@/modules/clients/pages/tenant/ClientDetailPage.vue'),
     props: true,
     meta: { requiresAuth: true, title: 'Detalle del cliente' },
   },
   {
-    path: '/vets/:vetGuid/clients/:guid/edit',
+    path: 'clients/:guid/edit',
     name: 'clients-edit',
     component: () => import('@/modules/clients/pages/tenant/ClientEditPage.vue'),
     props: true,

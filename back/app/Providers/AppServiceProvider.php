@@ -11,6 +11,9 @@ use App\Contracts\Repositories\EstablishmentRepositoryInterface;
 use App\Contracts\Repositories\HealthActivityRepositoryInterface;
 use App\Contracts\Repositories\HealthPlanCategoryRepositoryInterface;
 use App\Contracts\Repositories\HealthPlanTemplateRepositoryInterface;
+use App\Contracts\Repositories\AnimalRepositoryInterface;
+use App\Contracts\Repositories\ProgramRepositoryInterface;
+use App\Contracts\Repositories\ProtocolRepositoryInterface;
 use App\Contracts\Repositories\TechniqueRepositoryInterface;
 use App\Contracts\Repositories\TutorialRepositoryInterface;
 use App\Contracts\Repositories\ExportRepositoryInterface;
@@ -25,6 +28,7 @@ use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\VetRepositoryInterface;
 use App\Models\Client;
 use App\Models\Export;
+use App\Models\Program;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Vet;
@@ -37,6 +41,9 @@ use App\Repositories\EstablishmentRepositoryEloquent;
 use App\Repositories\HealthActivityRepositoryEloquent;
 use App\Repositories\HealthPlanCategoryRepositoryEloquent;
 use App\Repositories\HealthPlanTemplateRepositoryEloquent;
+use App\Repositories\AnimalRepositoryEloquent;
+use App\Repositories\ProgramRepositoryEloquent;
+use App\Repositories\ProtocolRepositoryEloquent;
 use App\Repositories\TechniqueRepositoryEloquent;
 use App\Repositories\TutorialRepositoryEloquent;
 use App\Repositories\ExportRepositoryEloquent;
@@ -79,6 +86,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EstablishmentRepositoryInterface::class, EstablishmentRepositoryEloquent::class);
         $this->app->bind(TutorialRepositoryInterface::class, TutorialRepositoryEloquent::class);
         $this->app->bind(TechniqueRepositoryInterface::class, TechniqueRepositoryEloquent::class);
+        $this->app->bind(ProtocolRepositoryInterface::class, ProtocolRepositoryEloquent::class);
+        $this->app->bind(ProgramRepositoryInterface::class, ProgramRepositoryEloquent::class);
+        $this->app->bind(AnimalRepositoryInterface::class, AnimalRepositoryEloquent::class);
         $this->app->bind(HealthActivityRepositoryInterface::class, HealthActivityRepositoryEloquent::class);
         $this->app->bind(HealthPlanCategoryRepositoryInterface::class, HealthPlanCategoryRepositoryEloquent::class);
         $this->app->bind(HealthPlanTemplateRepositoryInterface::class, HealthPlanTemplateRepositoryEloquent::class);
@@ -116,6 +126,7 @@ class AppServiceProvider extends ServiceProvider
             'vet'          => Vet::class,
             'user_profile' => UserProfile::class,
             'client'       => Client::class,
+            'program'      => Program::class,
         ]);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\Repositories\TechniqueRepositoryInterface;
 use App\Exceptions\TechniqueCannotBeDeletedException;
 use App\Exceptions\TechniqueChildHasProgramsException;
+use App\Models\Protocol;
 use App\Models\Technique;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -201,12 +202,10 @@ class TechniqueService
     }
 
     /**
-     * STUB: Retorna cantidad de protocolos vinculados a una técnica.
-     * Cuando el módulo de protocolos exista, reemplazar con la query real.
+     * Retorna cantidad de protocolos vinculados directamente a una técnica.
      */
     private function countProtocolsForTechnique(Technique $technique): int
     {
-        // TODO: implementar cuando exista el modelo Protocol
-        return 0;
+        return Protocol::where('technique_id', $technique->id)->count();
     }
 }

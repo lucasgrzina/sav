@@ -9,10 +9,12 @@ import {
   PlayCircleOutlined,
   ProfileOutlined,
   CustomerServiceOutlined,
+  HeartOutlined,
+  ScheduleOutlined,
 } from '@ant-design/icons-vue'
 import { usePermission } from '@/core/composables/usePermissions'
 
-defineProps<{ collapsed: boolean }>()
+const props = defineProps<{ collapsed: boolean; tenantContextLoading?: boolean }>()
 
 const route = useRoute()
 const { can, hasTenantContext } = usePermission()
@@ -25,13 +27,24 @@ const vetNavItems = computed(() => [
   { path: `/vets/${vetGuid.value}/usuarios`, label: 'Usuarios',  icon: UserOutlined },
 ])
 
+const reproduccionNavItems = computed(() =>
+  [
+    { path: `/vets/${vetGuid.value}/protocols`, label: 'Protocolos', icon: HeartOutlined, permission: 'protocols.read' },
+    { path: `/vets/${vetGuid.value}/programs`, label: 'Programas', icon: ScheduleOutlined, permission: 'programs.read' },
+  ].filter((item) => can(item.permission)),
+)
+
 const soporteNavItems = computed(() => [
   { path: `/vets/${vetGuid.value}/soporte`,    label: 'Mensajes',   icon: CustomerServiceOutlined },
   { path: `/vets/${vetGuid.value}/tutoriales`, label: 'Tutoriales', icon: PlayCircleOutlined },
 ])
 
 const visibleItems = computed(() =>
-  hasTenantContext.value ? vetNavItems.value : [],
+  !props.tenantContextLoading && hasTenantContext.value ? vetNavItems.value : [],
+)
+
+const visibleReproduccionItems = computed(() =>
+  props.tenantContextLoading ? [] : reproduccionNavItems.value,
 )
 </script>
 
@@ -54,6 +67,27 @@ const visibleItems = computed(() =>
         <span v-if="!collapsed" class="dash-nav-label">{{ item.label }}</span>
       </Transition>
     </RouterLink>
+
+    <template v-if="visibleReproduccionItems.length">
+      <div class="dash-nav-divider" />
+      <Transition name="label-fade">
+        <span v-if="!collapsed" class="dash-nav-section">Reproducción</span>
+      </Transition>
+
+      <RouterLink
+        v-for="item in visibleReproduccionItems"
+        :key="item.path"
+        :to="item.path"
+        class="dash-nav-item"
+        :class="{ 'is-active': route.path.startsWith(item.path) }"
+        :title="collapsed ? item.label : undefined"
+      >
+        <component :is="item.icon" class="dash-nav-icon" />
+        <Transition name="label-fade">
+          <span v-if="!collapsed" class="dash-nav-label">{{ item.label }}</span>
+        </Transition>
+      </RouterLink>
+    </template>
 
     <div class="dash-nav-divider" />
     <Transition name="label-fade">

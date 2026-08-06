@@ -57,7 +57,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <a-form layout="vertical" @submit.prevent="onSubmit">
+  <a-form layout="vertical" class="flex flex-col gap-6" @submit.prevent="onSubmit">
     <FormSection title="Datos del nuevo personal">
       <a-row :gutter="[16, 0]">
         <a-col :xs="24" :sm="12">

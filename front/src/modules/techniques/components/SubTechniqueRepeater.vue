@@ -6,7 +6,7 @@ import type { TechniqueChild } from '../types/technique.types'
 const children = defineModel<TechniqueChild[]>({ required: true })
 
 function addChild() {
-  children.value = [...children.value, { name: '', protocols_name: null }]
+  children.value = [...children.value, { name: '', protocols_name: null, target_date_name: null }]
 }
 
 function removeChild(index: number) {

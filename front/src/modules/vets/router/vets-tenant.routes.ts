@@ -1,5 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { vetTenantGuard } from '@/router/guards/vetTenantGuard'
+import { vetProtocolsRoutes } from '@/modules/protocols/router/vet-protocols.routes'
+import { vetProgramsRoutes } from '@/modules/programs/router/vet-programs.routes'
+import { clientsRoutes } from '@/modules/clients/router/clients.routes'
 
 export const vetsTenantRoutes: RouteRecordRaw[] = [
   {
@@ -59,6 +62,9 @@ export const vetsTenantRoutes: RouteRecordRaw[] = [
         component: () => import('@/modules/support-messages/pages/SupportMessagesPage.vue'),
         meta: { requiresAuth: true, title: 'Soporte' },
       },
+      ...vetProtocolsRoutes,
+      ...vetProgramsRoutes,
+      ...clientsRoutes,
     ],
   },
 ]

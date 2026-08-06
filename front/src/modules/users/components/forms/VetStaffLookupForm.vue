@@ -137,7 +137,7 @@ async function handleCreate(values: VetStaffNewFormValues): Promise<void> {
         variant="primary"
         size="large"
         :loading="state.status === 'searching'"
-        :disabled="!emailInput.trim()"
+        :disabled="!emailInput.trim() || (state.status === 'not-found' || state.status === 'creating')"
         @click="handleSearch"
       >
         <template #icon><SearchOutlined /></template>

@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Members;
 
+use App\Http\Requests\Concerns\ValidatesContactsArray;
 use App\Services\UserProfileService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class CreateVetStaffRequest extends FormRequest
 {
+    use ValidatesContactsArray;
+
     public function authorize(): bool
     {
         return true;
@@ -28,7 +31,7 @@ class CreateVetStaffRequest extends FormRequest
             ],
             'contacts'                  => ['nullable', 'array'],
             'contacts.*.type'           => ['required', 'string', Rule::in(['email', 'phone', 'whatsapp'])],
-            'contacts.*.value'          => ['required', 'string', 'max:200'],
+            'contacts.*.value'          => ['required', 'string', 'max:200', $this->contactValueFormatRule()],
             'contacts.*.label'          => ['nullable', 'string', 'max:100'],
             'contacts.*.is_primary'     => ['nullable', 'boolean'],
             'contacts.*.use_for_alerts' => ['nullable', 'boolean'],

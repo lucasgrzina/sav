@@ -5,7 +5,7 @@ import { EditOutlined, ArrowLeftOutlined, DeleteOutlined } from '@ant-design/ico
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import PermissionGuard from '@/components/shared/PermissionGuard.vue'
 import TechniqueTypeBadge from '../components/TechniqueTypeBadge.vue'
-import TechniqueProgramsTab from '../components/TechniqueProgramsTab.vue'
+import TechniqueProtocolsTab from '../components/TechniqueProtocolsTab.vue'
 import TechniqueDeleteModal from '../components/TechniqueDeleteModal.vue'
 import { useTechniqueDetail } from '../composables/useTechniqueDetail'
 import { useDeleteTechnique } from '../composables/useTechniqueMutations'
@@ -25,7 +25,6 @@ const {
 const showDeleteModal = ref(false)
 
 const technique = computed(() => data.value?.technique)
-const programs = computed(() => data.value?.programs)
 
 function openDeleteModal() {
   showDeleteModal.value = true
@@ -111,8 +110,8 @@ const childColumns = [
           </BaseDataTable>
         </a-tab-pane>
 
-        <a-tab-pane key="programs" tab="Programas">
-          <TechniqueProgramsTab v-if="programs" :programs="programs" />
+        <a-tab-pane key="protocols" tab="Protocolos">
+          <TechniqueProtocolsTab :technique="technique" />
         </a-tab-pane>
       </a-tabs>
 

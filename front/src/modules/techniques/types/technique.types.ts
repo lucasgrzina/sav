@@ -4,6 +4,9 @@ export interface TechniqueChild {
   guid?: string
   name: string
   protocols_name: string | null
+  // Opcional: el shape de escritura (formulario de alta/edición de técnica) no lo incluye,
+  // solo lo expone TechniqueChildResource en lectura (DEC-13, program-module-plan.md).
+  target_date_name?: string | null
 }
 
 export interface Technique {
