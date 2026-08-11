@@ -132,4 +132,24 @@ class WhatsappTemplateCatalogTest extends TestCase
 
         WhatsappTemplateCatalog::for(AlertType::HealthPlanMonth);
     }
+
+    /**
+     * ProgramPdfShared is intentionally NOT in builderProvider(): its builder sends 3
+     * variables (name, protocol, pdf_share_url) while the text body only declares 2
+     * placeholders — the 3rd is consumed by the template's media header in Twilio Content
+     * Composer (DEC-07), not by the text copy. Asserting it against the generic
+     * "declared === sent" invariant above would be a false failure.
+     */
+    public function test_program_pdf_shared_declares_two_text_placeholders_reserving_a_third_for_the_media_header(): void
+    {
+        $definition = WhatsappTemplateCatalog::for(AlertType::ProgramPdfShared);
+
+        $this->assertSame(2, WhatsappTemplateCatalog::placeholderCount($definition['body']));
+    }
+
+    public function test_program_pdf_shared_is_a_valid_catalog_entry(): void
+    {
+        $this->assertNotNull(AlertType::tryFrom(AlertType::ProgramPdfShared->value));
+        $this->assertArrayHasKey(AlertType::ProgramPdfShared->value, WhatsappTemplateCatalog::definitions());
+    }
 }

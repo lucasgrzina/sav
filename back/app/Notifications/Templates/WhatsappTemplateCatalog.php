@@ -37,6 +37,16 @@ final class WhatsappTemplateCatalog
                 'body' => 'Hola {{1}}, del programa "{{2}}": {{3}}',
                 'examples' => ['Lucas', 'Sincronización IATF', 'hoy toca retirar el dispositivo'],
             ],
+            // DEC-07: este template es de tipo `twilio/media` (o `twilio/document`) en Twilio
+            // Content Composer, no un template de texto simple. El body de texto solo declara
+            // {{1}} y {{2}} — la URL del PDF viaja como una TERCERA variable posicional
+            // ({{3}}) reservada para el header de medio del template, fuera del copy textual.
+            // ProgramPdfShareMessageBuilder envía 3 variables a propósito; no es un mismatch
+            // con placeholderCount(body) === 2 (ver ProgramPdfShareMessageBuilderTest).
+            AlertType::ProgramPdfShared->value => [
+                'body' => 'Hola {{1}}, te compartimos el PDF del programa "{{2}}".',
+                'examples' => ['Lucas', 'Sincronización IATF'],
+            ],
         ];
     }
 

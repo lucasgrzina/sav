@@ -483,4 +483,109 @@ class ProgramServiceTest extends TestCase
 
         $this->assertEqualsCanonicalizing(['vet-assistant'], $recipientRoles);
     }
+
+    // -------------------------------------------------------------------------
+    // DEC-03/DEC-04 — projectTasksForPdf
+    // -------------------------------------------------------------------------
+
+    public function test_project_tasks_for_pdf_ordena_por_fecha_real_no_por_offset(): void
+    {
+        // days_offset mayor (10) pero time_of_day=before sobre un target ANTERIOR termina
+        // antes que un days_offset menor (1) sobre un target POSTERIOR.
+        $earlyTarget = ProtocolTask::create([
+            'guid'        => Str::uuid()->toString(),
+            'protocol_id' => $this->protocol->id,
+            'description' => 'Tarea con offset alto',
+            'days_offset' => 10,
+            'time_of_day' => 'before',
+            'time'        => '08:00',
+            'important'   => false,
+            'sort_order'  => 1,
+        ]);
+
+        $lateTarget = ProtocolTask::create([
+            'guid'        => Str::uuid()->toString(),
+            'protocol_id' => $this->protocol->id,
+            'description' => 'Tarea con offset bajo',
+            'days_offset' => 1,
+            'time_of_day' => 'after',
+            'time'        => '09:00',
+            'important'   => false,
+            'sort_order'  => 2,
+        ]);
+
+        $program = $this->service->create($this->basePayload([
+            'targets' => [['target_date' => '2026-08-20', 'animals' => []]],
+        ]), $this->vet->id);
+
+        $groups = $this->service->projectTasksForPdf($program->fresh()->load('protocol.tasks.alerts', 'targets.animals'));
+        $tasks = collect($groups[0]['tasks'])->keyBy('description');
+
+        // offset 10 before -> 2026-08-10 ; offset 1 after -> 2026-08-21
+        $this->assertEquals('2026-08-10', $tasks['Tarea con offset alto']['occurs_on']);
+        $this->assertEquals('2026-08-21', $tasks['Tarea con offset bajo']['occurs_on']);
+
+        // sortBy('occurs_on') debe dejar la de fecha real más temprana primero,
+        // aunque su days_offset sea mayor.
+        $orderedDescriptions = collect($groups[0]['tasks'])->pluck('description')->all();
+        $this->assertEquals(['Tarea con offset alto', 'Tarea con offset bajo'], $orderedDescriptions);
+    }
+
+    public function test_project_tasks_for_pdf_notifies_false_si_sin_alerts(): void
+    {
+        ProtocolTask::create([
+            'guid'        => Str::uuid()->toString(),
+            'protocol_id' => $this->protocol->id,
+            'description' => 'Tarea sin alertas',
+            'days_offset' => 0,
+            'time_of_day' => 'after',
+            'time'        => '08:00',
+            'important'   => false,
+            'sort_order'  => 1,
+        ]);
+
+        $program = $this->service->create($this->basePayload([
+            'targets' => [['target_date' => '2026-08-20', 'animals' => []]],
+        ]), $this->vet->id);
+
+        $groups = $this->service->projectTasksForPdf($program->fresh()->load('protocol.tasks.alerts', 'targets.animals'));
+
+        $this->assertFalse($groups[0]['tasks'][0]['notifies']);
+        $this->assertArrayNotHasKey('recipients', $groups[0]['tasks'][0]);
+    }
+
+    public function test_project_tasks_for_pdf_notifies_true_si_tiene_alerts(): void
+    {
+        $task = ProtocolTask::create([
+            'guid'        => Str::uuid()->toString(),
+            'protocol_id' => $this->protocol->id,
+            'description' => 'Tarea con alerta',
+            'days_offset' => 0,
+            'time_of_day' => 'after',
+            'time'        => '08:00',
+            'important'   => true,
+            'sort_order'  => 1,
+        ]);
+
+        ProtocolTaskAlert::create([
+            'guid'                 => Str::uuid()->toString(),
+            'protocol_task_id'     => $task->id,
+            'offset_days'          => 0,
+            'time_of_day'          => 'after',
+            'time'                 => '08:00',
+            'roles'                => ['vet'],
+            'message'              => 'Alerta',
+            'require_confirmation' => false,
+            'sort_order'           => 1,
+        ]);
+
+        $program = $this->service->create($this->basePayload([
+            'targets' => [['target_date' => '2026-08-20', 'animals' => []]],
+        ]), $this->vet->id);
+
+        $groups = $this->service->projectTasksForPdf($program->fresh()->load('protocol.tasks.alerts', 'targets.animals'));
+
+        $this->assertTrue($groups[0]['tasks'][0]['notifies']);
+        $this->assertTrue($groups[0]['tasks'][0]['important']);
+    }
 }

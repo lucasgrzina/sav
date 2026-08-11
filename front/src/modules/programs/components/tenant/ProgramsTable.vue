@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { EditOutlined, EyeOutlined, StopOutlined } from '@ant-design/icons-vue'
+import { EditOutlined, EyeOutlined, StopOutlined, MoreOutlined } from '@ant-design/icons-vue'
 import BaseTableActions from '@/components/tables/BaseTableActions.vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import PermissionGuard from '@/components/shared/PermissionGuard.vue'
@@ -13,6 +13,8 @@ defineProps<{
 
 const emit = defineEmits<{
   cancel: [program: ProgramListItem]
+  'download-pdf': [program: ProgramListItem]
+  'open-share': [program: ProgramListItem]
 }>()
 
 // DEC-11: las acciones navegan por router (página completa de alta/edición y detalle),
@@ -106,6 +108,23 @@ const columns = [
               </BaseButton>
             </PermissionGuard>
           </template>
+          <a-dropdown>
+            <BaseButton variant="row-action" size="small" tooltip="Más acciones">
+              <template #icon><MoreOutlined /></template>
+            </BaseButton>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item-group title="Programa">
+                  <a-menu-item key="download" @click="emit('download-pdf', record as ProgramListItem)">
+                    Descargar
+                  </a-menu-item>
+                  <a-menu-item key="send" @click="emit('open-share', record as ProgramListItem)">
+                    Enviar
+                  </a-menu-item>
+                </a-menu-item-group>
+              </a-menu>
+            </template>
+          </a-dropdown>
         </BaseTableActions>
       </template>
     </template>

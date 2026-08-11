@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Notifications\Builders\ProgramCancelledMessageBuilder;
 use App\Notifications\Builders\ProgramCreatedMessageBuilder;
+use App\Notifications\Builders\ProgramPdfShareMessageBuilder;
 use App\Notifications\Builders\ProgramTaskDueMessageBuilder;
 use App\Notifications\Exceptions\NotificationConfigurationException;
 use App\Notifications\Gateways\Kapso\KapsoWhatsappGateway;
@@ -74,6 +75,7 @@ class NotificationServiceProvider extends ServiceProvider
             ProgramCreatedMessageBuilder::class,
             ProgramCancelledMessageBuilder::class,
             ProgramTaskDueMessageBuilder::class,
+            ProgramPdfShareMessageBuilder::class,
         ], 'alert.builders');
 
         $this->app->singleton(MessageBuilderRegistry::class, function ($app) {

@@ -94,6 +94,16 @@ return [
                 'name' => env('KAPSO_TEMPLATE_PROGRAM_TASK_DUE', 'sav_program_task_due'),
                 'language' => env('KAPSO_TEMPLATE_LANGUAGE', 'es'),
             ],
+            // DEC-07: a diferencia de los otros, este template lleva un media/document header
+            // en Twilio Content Composer — kapso:create-templates (BODY-only) no lo provisiona
+            // correctamente todavía. El nombre/idioma se declara igual para no violar el
+            // invariante 1:1 entre WhatsappTemplateCatalog::definitions() y este array (ver
+            // KapsoCreateTemplatesCommand::payloads()); la creación real del template de media
+            // queda pendiente como paso operativo (ver plan, paso 7).
+            'program.pdf_shared' => [
+                'name' => env('KAPSO_TEMPLATE_PROGRAM_PDF_SHARED', 'sav_program_pdf_shared'),
+                'language' => env('KAPSO_TEMPLATE_LANGUAGE', 'es'),
+            ],
         ],
     ],
 

@@ -21,7 +21,7 @@ Seguí el workflow del skill. Abajo están tus parámetros.
 
 ## Tu rol
 
-Desarrollador Laravel senior. Generás módulos backend completos de forma consistente, siguiendo el checklist SAV sin saltear ningún paso.
+Desarrollador Laravel senior. Generás módulos backend completos de forma consistente, siguiendo el checklist del proyecto sin saltear ningún paso.
 
 ## STACK
 

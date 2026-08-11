@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import BaseSelect from '@/components/atoms/selects/BaseSelect.vue'
 import ProgramsTable from '../../components/tenant/ProgramsTable.vue'
 import ProgramCancelModal from '../../components/tenant/ProgramCancelModal.vue'
+import ProgramShareModal from '../../components/tenant/ProgramShareModal.vue'
 import { useProgramList } from '../../composables/useProgramList'
 import { useClients } from '@/modules/clients/composables/useClients'
 import { useCancelProgramWithModal } from '../../composables/useProgramMutations'
-import type { ProgramListParams } from '../../types/program.types'
+import { useRequestProgramPdf } from '../../composables/useRequestProgramPdf'
+import type { ProgramListItem, ProgramListParams } from '../../types/program.types'
 
 // DEC-11: el alta/edición dejó de ser un Drawer — esta página solo lista y navega a
 // VetProgramFormPage.vue / VetProgramDetailPage.vue por router.
@@ -54,6 +56,24 @@ const {
   closeCancelModal,
   confirmCancel,
 } = useCancelProgramWithModal()
+
+// --- Descargar PDF ---
+
+const { mutate: requestPdf } = useRequestProgramPdf()
+
+function onDownloadPdf(program: ProgramListItem) {
+  requestPdf(program.guid)
+}
+
+// --- Enviar por WhatsApp ---
+
+const selectedProgramGuid = ref<string | null>(null)
+const shareModalOpen = ref(false)
+
+function onOpenShareModal(program: ProgramListItem) {
+  selectedProgramGuid.value = program.guid
+  shareModalOpen.value = true
+}
 </script>
 
 <template>
@@ -104,6 +124,8 @@ const {
       :programs="data?.data ?? []"
       :loading="isLoading"
       @cancel="openCancelModal"
+      @download-pdf="onDownloadPdf"
+      @open-share="onOpenShareModal"
     />
 
     <BasePagination
@@ -120,6 +142,8 @@ const {
       @confirm="confirmCancel"
       @cancel="closeCancelModal"
     />
+
+    <ProgramShareModal v-model:open="shareModalOpen" :program-guid="selectedProgramGuid" />
   </div>
 </template>
 

@@ -4,22 +4,27 @@ namespace App\Services\Exports;
 
 use App\Contracts\Exports\ExportResolverInterface;
 use App\Contracts\Exports\ExporterInterface;
+use App\Contracts\Repositories\ProgramRepositoryInterface;
 use App\Contracts\Repositories\RoleRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Enums\ExportFormat;
 use App\Enums\ExportType;
+use App\Exports\Programs\ProgramPdfExporter;
 use App\Exports\Roles\RolesExporter;
 use App\Exports\Roles\RolesPdfExporter;
 use App\Exports\Roles\RolesTxtExporter;
 use App\Exports\Users\UsersExporter;
 use App\Exports\Users\UsersPdfExporter;
 use App\Exports\Users\UsersTxtExporter;
+use App\Services\ProgramService;
 
 class ExportResolverService implements ExportResolverInterface
 {
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly RoleRepositoryInterface $roleRepository,
+        private readonly ProgramRepositoryInterface $programRepository,
+        private readonly ProgramService $programService,
     ) {}
 
     public function resolve(string $exportType, string $format): ExporterInterface
@@ -46,6 +51,9 @@ class ExportResolverService implements ExportResolverInterface
             $typeEnum === ExportType::ROLES && $formatEnum === ExportFormat::PDF
                 => new RolesPdfExporter($this->roleRepository),
 
+            $typeEnum === ExportType::PROGRAM && $formatEnum === ExportFormat::PDF
+                => new ProgramPdfExporter($this->programRepository, $this->programService),
+
             default => throw new \InvalidArgumentException(
                 "Combinación de tipo '{$exportType}' y formato '{$format}' no soportada."
             ),
@@ -60,6 +68,9 @@ class ExportResolverService implements ExportResolverInterface
                 ExportFormat::XLSX->value,
                 ExportFormat::CSV->value,
                 ExportFormat::TXT->value,
+                ExportFormat::PDF->value,
+            ],
+            ExportType::PROGRAM => [
                 ExportFormat::PDF->value,
             ],
         };

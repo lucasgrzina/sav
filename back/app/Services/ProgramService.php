@@ -235,4 +235,31 @@ class ProgramService
     {
         return \App\Support\DateOffset::apply($date, $offsetDays, $timeOfDay);
     }
+
+    /**
+     * DEC-03/DEC-04: proyecta las tareas del protocolo sobre cada target del programa para
+     * el PDF de detalle. Reusa el mismo cálculo de fecha real (DateOffset::apply) que
+     * projectTargetTasks, pero sin el bloque de recipients/alerts en detalle — el PDF solo
+     * necesita saber SI la tarea notifica (booleano), no a quién ni con qué mensaje.
+     *
+     * @return array<int, array{target: ProgramTarget, tasks: array}>
+     */
+    public function projectTasksForPdf(Program $program): array
+    {
+        $program->loadMissing('protocol.tasks.alerts', 'targets.animals');
+
+        return $program->targets->map(function (ProgramTarget $target) use ($program) {
+            $tasks = $program->protocol->tasks->map(function ($task) use ($target) {
+                return [
+                    'description' => $task->description,
+                    'occurs_on'   => $this->applyOffset($target->target_date, $task->days_offset, $task->time_of_day)->toDateString(),
+                    'occurs_at'   => $task->time,
+                    'important'   => $task->important,
+                    'notifies'    => $task->alerts->isNotEmpty(),
+                ];
+            })->sortBy('occurs_on')->values()->all();
+
+            return ['target' => $target, 'tasks' => $tasks];
+        })->all();
+    }
 }

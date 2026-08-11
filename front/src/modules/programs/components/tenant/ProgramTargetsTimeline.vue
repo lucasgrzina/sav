@@ -63,10 +63,10 @@ function groupRecipientsByRole(recipients: ProgramAlertRecipient[]): RecipientGr
 
             <div class="ptt-task">
               <div class="ptt-task-header">
-                <span class="ptt-task-title">{{ task.description }}</span>
+                <span class="ptt-task-title">{{ formatDate(task.occurs_on) }} · {{ task.occurs_at }}</span>
                 <a-tag v-if="task.important" color="orange">Importante</a-tag>
               </div>
-              <span class="ptt-task-meta">{{ formatDate(task.occurs_on) }} · {{ task.occurs_at }}</span>
+              <span class="ptt-task-meta">{{ task.description }}</span>
 
               <div v-if="task.alerts.length" class="ptt-alerts">
                 <div
