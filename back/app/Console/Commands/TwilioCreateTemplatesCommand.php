@@ -15,9 +15,16 @@ class TwilioCreateTemplatesCommand extends Command
 
     private const ENDPOINT = 'https://content.twilio.com/v1/Content';
 
-    /** Nombre del template por AlertType, y la env var donde va su contentSid resultante. */
+    /**
+     * Nombre del template por AlertType, y la env var donde va su contentSid resultante.
+     *
+     * 'program.created' NO está acá: desde que lleva un botón call-to-action con URL
+     * dinámica ({{3}}), su shape en la Content API de Twilio no es el `twilio/text` simple
+     * que este comando autoprovisiona. Se gestiona a mano en el Content Composer, igual que
+     * 'program.pdf_shared' (que tampoco está acá, por el mismo motivo con su header de
+     * medio — ver DEC-07 en WhatsappTemplateCatalog).
+     */
     private const TEMPLATES = [
-        'program.created'   => ['env' => 'TWILIO_TEMPLATE_PROGRAM_CREATED', 'friendly_name' => 'sav_program_created'],
         'program.cancelled' => ['env' => 'TWILIO_TEMPLATE_PROGRAM_CANCELLED', 'friendly_name' => 'sav_program_cancelled'],
         'program.task_due'  => ['env' => 'TWILIO_TEMPLATE_PROGRAM_TASK_DUE', 'friendly_name' => 'sav_program_task_due'],
     ];

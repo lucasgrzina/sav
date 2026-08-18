@@ -25,6 +25,13 @@ final class WhatsappTemplateCatalog
     public static function definitions(): array
     {
         return [
+            // DEC-XX: este template lleva un botón call-to-action ("Descargar el programa")
+            // con URL dinámica en Twilio Content Composer. El body de texto sigue declarando
+            // solo {{1}} y {{2}} — la URL de descarga viaja como una TERCERA variable
+            // posicional ({{3}}) que el botón consume, fuera del copy textual. Mismo patrón
+            // que ProgramPdfShared (DEC-07): ProgramCreatedMessageBuilder envía 3 variables a
+            // propósito; no es un mismatch con placeholderCount(body) === 2 (ver
+            // WhatsappTemplateCatalogTest).
             AlertType::ProgramCreated->value => [
                 'body' => 'Hola {{1}}, se creó el programa "{{2}}".',
                 'examples' => ['Lucas', 'Sincronización IATF'],

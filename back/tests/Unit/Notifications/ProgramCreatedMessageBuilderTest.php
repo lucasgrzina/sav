@@ -29,6 +29,7 @@ class ProgramCreatedMessageBuilderTest extends TestCase
 
         $alert = new Alert();
         $alert->setRelation('subject', $program);
+        $alert->payload = ['pdf_download_url' => 'https://sav.test/v1/programs/some-guid/download-pdf?signature=abc'];
 
         $recipient = new Recipient(userId: 1, phone: '5491122334455', name: 'Juan', channel: Channel::Whatsapp);
 
@@ -41,6 +42,7 @@ class ProgramCreatedMessageBuilderTest extends TestCase
         $this->assertSame([
             '1' => 'Juan',
             '2' => 'Plan Vacunación Bovina',
+            '3' => 'https://sav.test/v1/programs/some-guid/download-pdf?signature=abc',
         ], $content->variables);
     }
 

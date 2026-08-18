@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Enums\ExportFormat;
 use App\Enums\ExportType;
+use App\Exports\Programs\ProgramPdfExporter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Programs\ShareProgramPdfRequest;
 use App\Http\Resources\V1\ExportResource;
@@ -13,6 +14,7 @@ use App\Services\ProgramService;
 use App\Services\ProgramShareService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProgramPdfController extends Controller
 {
@@ -20,6 +22,7 @@ class ProgramPdfController extends Controller
         private ProgramService $programService,
         private ExportService $exportService,
         private ProgramShareService $programShareService,
+        private ProgramPdfExporter $programPdfExporter,
     ) {}
 
     /**
@@ -123,6 +126,42 @@ class ProgramPdfController extends Controller
                 $export->file_name,
                 ['Content-Type' => $export->format->mimeType()],
             );
+        } catch (\Exception $e) {
+            return $this->makeFromException($e);
+        }
+    }
+
+    /**
+     * GET /v1/programs/{guid}/download-pdf — botón "Descargar el programa" del template de
+     * ProgramCreated: el click llega desde WhatsApp, sin sesión de la app. guid y vet_id se
+     * leen de la request (nunca parámetros tipados por posición, ver requestPdf() arriba).
+     * Genera el PDF lazy, sin pasar por Export/ExportService (no hay User autenticado en
+     * este contexto), y lo sirve directo, borrando el archivo temporal al enviarlo.
+     */
+    public function downloadPublic(Request $request)
+    {
+        try {
+            $guid = $request->route('guid');
+            $vetId = (int) $request->query('vet_id');
+            $program = $this->programService->findByGuidForVet($guid, $vetId);
+
+            if (!$program) {
+                return $this->makeNotFound('Programa no encontrado.');
+            }
+
+            $filePath = 'exports/public/' . now()->format('Y-m') . '/' . Str::uuid()->toString() . '.pdf';
+
+            $this->programPdfExporter->export(
+                ['program_guid' => $program->guid, 'vet_id' => $vetId],
+                [],
+                $filePath,
+            );
+
+            return response()->download(
+                storage_path('app/private/' . $filePath),
+                "programa_{$program->guid}.pdf",
+                ['Content-Type' => 'application/pdf'],
+            )->deleteFileAfterSend(true);
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }

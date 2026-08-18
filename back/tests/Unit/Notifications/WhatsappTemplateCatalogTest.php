@@ -5,7 +5,6 @@ namespace Tests\Unit\Notifications;
 use App\Models\Program;
 use App\Models\Protocol;
 use App\Notifications\Builders\ProgramCancelledMessageBuilder;
-use App\Notifications\Builders\ProgramCreatedMessageBuilder;
 use App\Notifications\Builders\ProgramTaskDueMessageBuilder;
 use App\Notifications\Contracts\AlertMessageBuilder;
 use App\Notifications\Data\Recipient;
@@ -23,7 +22,6 @@ class WhatsappTemplateCatalogTest extends TestCase
     public static function builderProvider(): array
     {
         return [
-            'program.created' => [ProgramCreatedMessageBuilder::class, AlertType::ProgramCreated],
             'program.cancelled' => [ProgramCancelledMessageBuilder::class, AlertType::ProgramCancelled],
             'program.task_due' => [ProgramTaskDueMessageBuilder::class, AlertType::ProgramTaskDue],
         ];
@@ -151,5 +149,19 @@ class WhatsappTemplateCatalogTest extends TestCase
     {
         $this->assertNotNull(AlertType::tryFrom(AlertType::ProgramPdfShared->value));
         $this->assertArrayHasKey(AlertType::ProgramPdfShared->value, WhatsappTemplateCatalog::definitions());
+    }
+
+    /**
+     * ProgramCreated is intentionally NOT in builderProvider(): its builder now sends 3
+     * variables (name, protocol, pdf_download_url) while the text body only declares 2
+     * placeholders — the 3rd is consumed by the template's call-to-action button in Twilio
+     * Content Composer, not by the text copy. Asserting it against the generic
+     * "declared === sent" invariant above would be a false failure.
+     */
+    public function test_program_created_declares_two_text_placeholders_reserving_a_third_for_the_cta_button(): void
+    {
+        $definition = WhatsappTemplateCatalog::for(AlertType::ProgramCreated);
+
+        $this->assertSame(2, WhatsappTemplateCatalog::placeholderCount($definition['body']));
     }
 }
