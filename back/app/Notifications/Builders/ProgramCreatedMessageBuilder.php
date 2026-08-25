@@ -36,6 +36,7 @@ final class ProgramCreatedMessageBuilder implements AlertMessageBuilder
             variables: [
                 '1' => $recipient->name,
                 '2' => $program->protocol->name,
+                '3' => $alert->payload['pdf_download_url'] ?? null,
             ],
         );
     }

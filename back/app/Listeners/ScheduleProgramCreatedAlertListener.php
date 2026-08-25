@@ -8,6 +8,7 @@ use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
 use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class ScheduleProgramCreatedAlertListener
@@ -16,9 +17,17 @@ class ScheduleProgramCreatedAlertListener
     {
         $program = $event->program;
 
+        // URL::signedRoute (sin expiración, a diferencia del share manual con
+        // temporarySignedRoute): el programa puede consultarse en cualquier momento de su
+        // vida. vet_id viaja firmado dentro de la URL (regla dura #4: multi-tenant).
+        $downloadUrl = URL::signedRoute('programs.public-download-pdf', [
+            'guid' => $program->guid,
+            'vet_id' => $program->vet_id,
+        ]);
+
         $alert = new Alert([
             'type' => AlertType::ProgramCreated,
-            'payload' => [],
+            'payload' => ['pdf_download_url' => $downloadUrl],
             'scheduled_at' => now(),
             'status' => 'pending',
             'vet_id' => $program->vet_id,
