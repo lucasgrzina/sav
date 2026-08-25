@@ -25,3 +25,6 @@ Homestead.json
 .env.production
 .phpactor.json
 auth.json
+
+# Claude Code local instructions
+CLAUDE.md
