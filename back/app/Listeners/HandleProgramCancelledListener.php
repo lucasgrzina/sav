@@ -4,14 +4,13 @@ namespace App\Listeners;
 
 use App\Events\ProgramCancelledEvent;
 use App\Notifications\Enums\AlertType;
-use App\Notifications\Enums\Channel;
-use App\Notifications\Enums\DeliveryStatus;
 use App\Notifications\Models\Alert;
-use App\Notifications\Models\AlertRecipient;
-use Illuminate\Support\Str;
+use App\Notifications\Services\AlertRecipientFactory;
 
 class HandleProgramCancelledListener
 {
+    public function __construct(private readonly AlertRecipientFactory $recipientFactory) {}
+
     public function handle(ProgramCancelledEvent $event): void
     {
         $program = $event->program;
@@ -34,14 +33,6 @@ class HandleProgramCancelledListener
         $alert->subject()->associate($program);
         $alert->save();
 
-        foreach ($program->managers as $manager) {
-            AlertRecipient::create([
-                'alert_id' => $alert->id,
-                'user_profile_id' => $manager->id,
-                'channel' => Channel::Whatsapp,
-                'status' => DeliveryStatus::Pending,
-                'idempotency_key' => Str::uuid()->toString(),
-            ]);
-        }
+        $this->recipientFactory->createForManagers($alert, $program->managers);
     }
 }

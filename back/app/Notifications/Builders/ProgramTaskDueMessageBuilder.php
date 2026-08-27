@@ -7,6 +7,7 @@ use App\Notifications\Contracts\AlertMessageBuilder;
 use App\Notifications\Data\EmailContent;
 use App\Notifications\Data\MessageContent;
 use App\Notifications\Data\Payloads\ProgramTaskPayload;
+use App\Notifications\Data\PushContent;
 use App\Notifications\Data\Recipient;
 use App\Notifications\Data\TemplateContent;
 use App\Notifications\Enums\AlertType;
@@ -30,6 +31,20 @@ final class ProgramTaskDueMessageBuilder implements AlertMessageBuilder
             return new EmailContent(
                 subject: "Recordatorio: {$program->protocol->name}",
                 body: "Hola {$recipient->name}, {$payload->message}",
+            );
+        }
+
+        if ($recipient->channel === Channel::Push) {
+            return new PushContent(
+                title: 'Recordatorio de tarea',
+                body: "{$program->protocol->name}: {$payload->message}",
+                tag: "alert-{$alert->guid}",
+                url: "programas/{$program->guid}",
+                data: [
+                    'requires_confirmation' => (bool) $alert->require_confirmation,
+                    'alert_guid' => $alert->guid,
+                    'program_guid' => $program->guid,
+                ],
             );
         }
 

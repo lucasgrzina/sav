@@ -1,9 +1,11 @@
 <?php
 
+use App\Notifications\Enums\Channel;
 use App\Notifications\Gateways\Fake\FakeGateway;
 use App\Notifications\Gateways\Kapso\KapsoWhatsappGateway;
 use App\Notifications\Gateways\Mail\MailGateway;
 use App\Notifications\Gateways\Twilio\TwilioWhatsappGateway;
+use App\Notifications\Gateways\WebPush\WebPushGateway;
 
 $whatsappProvider = env('WHATSAPP_PROVIDER', 'twilio');
 
@@ -34,6 +36,9 @@ return [
         'email' => [
             'gateway' => MailGateway::class,
         ],
+        'push' => [
+            'gateway' => WebPushGateway::class,
+        ],
     ],
 
     // Channel(s) to try, in order, when a delivery ends in a definitive Failed result
@@ -43,6 +48,11 @@ return [
     'fallback' => [
         'whatsapp' => ['email'],
     ],
+
+    // Canales en los que se registra un AlertRecipient por defecto para cada destinatario
+    // resuelto por roles (ver AlertRecipientFactory). Push es adicional/paralelo a Whatsapp,
+    // no un fallback (ver DEC-08) — no participa de 'fallback' más arriba.
+    'default_channels' => [Channel::Whatsapp, Channel::Push],
 
     'twilio' => [
         'sid' => env('TWILIO_ACCOUNT_SID'),

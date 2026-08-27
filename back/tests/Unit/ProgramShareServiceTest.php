@@ -20,6 +20,7 @@ use App\Models\UserProfile;
 use App\Models\Vet;
 use App\Notifications\Jobs\DeliverAlertJob;
 use App\Notifications\Models\Alert;
+use App\Notifications\Services\AlertRecipientFactory;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
 use App\Services\Exports\ExportService;
@@ -49,6 +50,7 @@ class ProgramShareServiceTest extends TestCase
         $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
         $this->service = new ProgramShareService(
             new ExportService(app(ExportRepositoryInterface::class), app(\App\Contracts\Exports\ExportResolverInterface::class)),
+            new AlertRecipientFactory(),
         );
 
         $this->vet = $this->createVet();

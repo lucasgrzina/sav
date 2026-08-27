@@ -3,6 +3,7 @@
 namespace App\Notifications\Models;
 
 use App\Enums\ContactType;
+use App\Models\PushSubscription;
 use App\Models\UserProfile;
 use App\Notifications\Data\Recipient;
 use App\Notifications\Enums\Channel;
@@ -49,6 +50,10 @@ class AlertRecipient extends Model
     /** @throws RecipientContactNotFoundException si el perfil no tiene un contacto habilitado para este canal */
     public function toDto(): Recipient
     {
+        if ($this->channel === Channel::Push) {
+            return $this->toPushDto();
+        }
+
         $contactType = match ($this->channel) {
             Channel::Whatsapp => ContactType::Whatsapp,
             Channel::Sms => ContactType::Phone,
@@ -75,6 +80,32 @@ class AlertRecipient extends Model
             name: $this->userProfile->user->name,
             channel: $this->channel,
             email: $this->channel === Channel::Email ? $contact->value : null,
+        );
+    }
+
+    /**
+     * Ya no es el mecanismo principal de filtrado del canal Push (ese rol lo cumple
+     * AlertRecipientFactory::hasActiveSubscription() antes de crear la fila) — queda como
+     * red de seguridad secundaria para el caso borde de que el usuario revoque el permiso
+     * push entre el momento en que se creó el AlertRecipient y el momento real del despacho.
+     *
+     * @throws RecipientContactNotFoundException si el perfil no tiene ninguna suscripción push activa
+     */
+    private function toPushDto(): Recipient
+    {
+        $hasActiveSubscription = PushSubscription::where('user_id', $this->userProfile->user_id)->exists();
+
+        if (! $hasActiveSubscription) {
+            throw new RecipientContactNotFoundException(
+                "El perfil {$this->userProfile->guid} no tiene ninguna suscripción push activa",
+            );
+        }
+
+        return new Recipient(
+            userId: $this->userProfile->user_id,
+            phone: null,
+            name: $this->userProfile->user->name,
+            channel: Channel::Push,
         );
     }
 }

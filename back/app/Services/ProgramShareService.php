@@ -11,16 +11,14 @@ use App\Models\Program;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Notifications\Enums\AlertType;
-use App\Notifications\Enums\Channel;
-use App\Notifications\Enums\DeliveryStatus;
 use App\Notifications\Jobs\DeliverAlertJob;
 use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
+use App\Notifications\Services\AlertRecipientFactory;
 use App\Services\Exports\ExportService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 /**
  * Orquesta el envío por WhatsApp del PDF de un programa (DEC-05/DEC-06/DEC-08/DEC-09):
@@ -34,6 +32,7 @@ class ProgramShareService
 
     public function __construct(
         private readonly ExportService $exportService,
+        private readonly AlertRecipientFactory $recipientFactory,
     ) {}
 
     /**
@@ -106,17 +105,8 @@ class ProgramShareService
             $alert->subject()->associate($program);
             $alert->save();
 
-            foreach ($recipients as $manager) {
-                $recipient = AlertRecipient::create([
-                    'alert_id' => $alert->id,
-                    'user_profile_id' => $manager->id,
-                    'channel' => Channel::Whatsapp,
-                    'status' => DeliveryStatus::Pending,
-                    'idempotency_key' => Str::uuid()->toString(),
-                ]);
-
-                DeliverAlertJob::dispatch($recipient->id);
-            }
+            $createdRecipients = $this->recipientFactory->createForManagers($alert, $recipients);
+            $createdRecipients->each(fn (AlertRecipient $r) => DeliverAlertJob::dispatch($r->id));
 
             $alert->update(['status' => 'dispatched']);
 
