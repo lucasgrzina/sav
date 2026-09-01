@@ -6,6 +6,7 @@ use App\Enums\ContactType;
 use App\Models\Contact;
 use App\Models\Country;
 use App\Models\DocumentType;
+use App\Models\PushSubscription;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserProfile;
@@ -454,5 +455,46 @@ class DeliverAlertJobTest extends TestCase
 
         $fallback = AlertRecipient::where('alert_id', $alert->id)->where('channel', Channel::Email)->firstOrFail();
         Queue::assertPushed(DeliverAlertJob::class, fn ($job) => $job->recipientId === $fallback->id);
+    }
+
+    /** End-to-end con FakeGateway(Channel::Push): el flujo builder → pipeline → gateway → update de estado funciona igual que WhatsApp, sin tocar DeliverAlertJob. */
+    public function test_delivers_a_pending_push_recipient_and_marks_it_sent(): void
+    {
+        $profile = $this->createManagerProfile();
+        PushSubscription::create([
+            'user_id' => $profile->user_id,
+            'endpoint' => 'https://fcm.test/deliver-alert-job',
+            'endpoint_hash' => hash('sha256', 'https://fcm.test/deliver-alert-job'),
+            'p256dh' => 'key',
+            'auth_key' => 'auth',
+        ]);
+
+        $alert = Alert::create([
+            'type' => AlertType::ProgramCreated,
+            'payload' => [],
+            'scheduled_at' => now(),
+            'status' => 'pending',
+        ]);
+        $recipient = AlertRecipient::create([
+            'alert_id' => $alert->id,
+            'user_profile_id' => $profile->id,
+            'channel' => Channel::Push,
+            'status' => DeliveryStatus::Pending,
+            'idempotency_key' => Str::uuid()->toString(),
+        ]);
+
+        $fakeGateway = new FakeGateway(Channel::Push);
+        $fakeGateway->willReturn(DeliveryResult::sent('push-999'));
+        app()->instance(FakeGateway::class, $fakeGateway);
+
+        $gateways = new GatewayRegistry(app(), ['push' => ['gateway' => FakeGateway::class]]);
+
+        $job = new DeliverAlertJob($recipient->id);
+        $job->handle($this->builders(), $gateways, new DeliveryPipeline([]), new ChannelFallbackService());
+
+        $recipient->refresh();
+        $this->assertSame(DeliveryStatus::Sent, $recipient->status);
+        $this->assertSame('push-999', $recipient->provider_message_id);
+        $this->assertCount(1, $fakeGateway->sentMessages());
     }
 }

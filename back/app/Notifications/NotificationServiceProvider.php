@@ -9,6 +9,7 @@ use App\Notifications\Builders\ProgramTaskDueMessageBuilder;
 use App\Notifications\Exceptions\NotificationConfigurationException;
 use App\Notifications\Gateways\Kapso\KapsoWhatsappGateway;
 use App\Notifications\Gateways\Twilio\TwilioWhatsappGateway;
+use App\Notifications\Gateways\WebPush\WebPushGateway;
 use App\Notifications\Pipeline\DeliveryPipeline;
 use App\Notifications\Policies\OptOutPolicy;
 use App\Notifications\Registries\GatewayRegistry;
@@ -64,6 +65,25 @@ class NotificationServiceProvider extends ServiceProvider
                 trim((string) ($config['api_key'] ?? '')),
                 $config['templates'] ?? [],
                 (int) ($config['timeout'] ?? 10),
+            );
+        });
+
+        $this->app->singleton(WebPushGateway::class, function ($app) {
+            $publicKey = trim((string) env('APP_VAPID_PUBLIC_KEY', ''));
+            $privateKey = trim((string) env('APP_VAPID_PRIVATE_KEY', ''));
+
+            if ($publicKey === '' || $privateKey === '') {
+                throw new NotificationConfigurationException('Faltan APP_VAPID_PUBLIC_KEY y/o APP_VAPID_PRIVATE_KEY.');
+            }
+
+            return new WebPushGateway(
+                new \Minishlink\WebPush\WebPush([
+                    'VAPID' => [
+                        'subject' => env('APP_VAPID_SUBJECT', 'mailto:soporte@sav.app'),
+                        'publicKey' => $publicKey,
+                        'privateKey' => $privateKey,
+                    ],
+                ]),
             );
         });
 

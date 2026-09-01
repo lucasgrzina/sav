@@ -6,6 +6,7 @@ use App\Models\Program;
 use App\Notifications\Contracts\AlertMessageBuilder;
 use App\Notifications\Data\EmailContent;
 use App\Notifications\Data\MessageContent;
+use App\Notifications\Data\PushContent;
 use App\Notifications\Data\Recipient;
 use App\Notifications\Data\TemplateContent;
 use App\Notifications\Enums\AlertType;
@@ -28,6 +29,20 @@ final class ProgramCancelledMessageBuilder implements AlertMessageBuilder
             return new EmailContent(
                 subject: "Programa cancelado: {$program->protocol->name}",
                 body: "Hola {$recipient->name}, se canceló el programa \"{$program->protocol->name}\".",
+            );
+        }
+
+        if ($recipient->channel === Channel::Push) {
+            return new PushContent(
+                title: 'Programa cancelado',
+                body: "Se canceló el programa \"{$program->protocol->name}\".",
+                tag: "alert-{$alert->guid}",
+                url: "programas/{$program->guid}",
+                data: [
+                    'requires_confirmation' => (bool) $alert->require_confirmation,
+                    'alert_guid' => $alert->guid,
+                    'program_guid' => $program->guid,
+                ],
             );
         }
 

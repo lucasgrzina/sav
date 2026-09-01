@@ -19,6 +19,7 @@ use App\Contracts\Repositories\TutorialRepositoryInterface;
 use App\Contracts\Repositories\ExportRepositoryInterface;
 use App\Contracts\Repositories\NotificationRepositoryInterface;
 use App\Contracts\Repositories\PermissionRepositoryInterface;
+use App\Contracts\Repositories\PushSubscriptionRepositoryInterface;
 use App\Contracts\Repositories\RoleRepositoryInterface;
 use App\Contracts\Repositories\SupportMessageRepositoryInterface;
 use App\Contracts\Repositories\SupportMessageReplyRepositoryInterface;
@@ -49,6 +50,7 @@ use App\Repositories\TutorialRepositoryEloquent;
 use App\Repositories\ExportRepositoryEloquent;
 use App\Repositories\NotificationRepositoryEloquent;
 use App\Repositories\PermissionRepositoryEloquent;
+use App\Repositories\PushSubscriptionRepositoryEloquent;
 use App\Repositories\RoleRepositoryEloquent;
 use App\Repositories\SupportMessageRepositoryEloquent;
 use App\Repositories\SupportMessageReplyRepositoryEloquent;
@@ -92,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(HealthActivityRepositoryInterface::class, HealthActivityRepositoryEloquent::class);
         $this->app->bind(HealthPlanCategoryRepositoryInterface::class, HealthPlanCategoryRepositoryEloquent::class);
         $this->app->bind(HealthPlanTemplateRepositoryInterface::class, HealthPlanTemplateRepositoryEloquent::class);
+        $this->app->bind(PushSubscriptionRepositoryInterface::class, PushSubscriptionRepositoryEloquent::class);
     }
 
     public function boot(): void

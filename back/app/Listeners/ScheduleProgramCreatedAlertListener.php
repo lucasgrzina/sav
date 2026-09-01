@@ -4,15 +4,14 @@ namespace App\Listeners;
 
 use App\Events\ProgramCreatedEvent;
 use App\Notifications\Enums\AlertType;
-use App\Notifications\Enums\Channel;
-use App\Notifications\Enums\DeliveryStatus;
 use App\Notifications\Models\Alert;
-use App\Notifications\Models\AlertRecipient;
+use App\Notifications\Services\AlertRecipientFactory;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 class ScheduleProgramCreatedAlertListener
 {
+    public function __construct(private readonly AlertRecipientFactory $recipientFactory) {}
+
     public function handle(ProgramCreatedEvent $event): void
     {
         $program = $event->program;
@@ -35,14 +34,6 @@ class ScheduleProgramCreatedAlertListener
         $alert->subject()->associate($program);
         $alert->save();
 
-        foreach ($program->managers as $manager) {
-            AlertRecipient::create([
-                'alert_id' => $alert->id,
-                'user_profile_id' => $manager->id,
-                'channel' => Channel::Whatsapp,
-                'status' => DeliveryStatus::Pending,
-                'idempotency_key' => Str::uuid()->toString(),
-            ]);
-        }
+        $this->recipientFactory->createForManagers($alert, $program->managers);
     }
 }
