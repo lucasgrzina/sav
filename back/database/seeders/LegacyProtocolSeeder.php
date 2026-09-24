@@ -14,8 +14,10 @@ use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
- * Carga la técnica MOET (con sus 3 sub-técnicas) y los protocolos legacy
- * definidos en database/scripts/moet_migration.json, para Argentina.
+ * Carga el catálogo base de técnicas y protocolos (legacy: MOET, IATF, FIV;
+ * más protocolos de catálogo agregados después, no provenientes de la
+ * migración legacy, como Hernicol) desde database/scripts/*_migration.json,
+ * para Argentina.
  *
  * Las alertas del JSON son una lista plana por protocolo (days_offset relativo
  * a la fecha objetivo), pero protocol_task_alerts cuelga de una tarea puntual
@@ -24,17 +26,17 @@ use RuntimeException;
  * cronológicamente), heurística acordada porque el JSON no trae el mapeo
  * explícito y en algunos casos arrastra inconsistencias propias del origen.
  */
-class MoetProtocolSeeder extends Seeder
+class LegacyProtocolSeeder extends Seeder
 {
+    private const MIGRATION_FILES = [
+        'moet_migration.json',
+        'iatf_migration.json',
+        'fiv_migration.json',
+        'hernicol_iatf_migration.json',
+    ];
+
     public function run(): void
     {
-        $path = base_path('database/scripts/moet_migration.json');
-        if (!file_exists($path)) {
-            throw new RuntimeException("No se encontró database/scripts/moet_migration.json en {$path}");
-        }
-
-        $data = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
-
         Schema::disableForeignKeyConstraints();
         ProtocolTaskAlert::query()->truncate();
         ProtocolTask::query()->truncate();
@@ -51,8 +53,17 @@ class MoetProtocolSeeder extends Seeder
             throw new RuntimeException('No existe el país Argentina (iso_code=AR). Ejecutar después de CountrySeeder.');
         }
 
-        $subtechniques = $this->seedTechniques($data['techniques'] ?? []);
-        $this->seedProtocols($data['protocols'] ?? [], $subtechniques, $createdById, $countryId);
+        foreach (self::MIGRATION_FILES as $fileName) {
+            $path = base_path("database/scripts/{$fileName}");
+            if (!file_exists($path)) {
+                throw new RuntimeException("No se encontró database/scripts/{$fileName} en {$path}");
+            }
+
+            $data = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+
+            $subtechniques = $this->seedTechniques($data['techniques'] ?? []);
+            $this->seedProtocols($data['protocols'] ?? [], $subtechniques, $createdById, $countryId);
+        }
     }
 
     /** @return array<string, Technique> nombre de sub-técnica => modelo */

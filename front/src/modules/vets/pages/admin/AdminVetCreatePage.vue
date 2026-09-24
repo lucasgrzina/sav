@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import VetForm from '../../components/forms/VetForm.vue'
+import type { VetFormSubmit } from '../../components/forms/VetForm.vue'
 import { useCreateVet } from '../../composables/useCreateVet'
-import type { VetCreateForm } from '../../validators/vet.validator'
 
 const router = useRouter()
 const { mutate, isPending, fieldErrors, generalError } = useCreateVet()
 
-function handleSubmit(values: VetCreateForm) {
+function handleSubmit(values: VetFormSubmit) {
+  // VetForm siempre se usa con mode="create" en esta página, así que el
+  // payload siempre trae country_guid. Se descarta cualquier otra rama por tipo.
+  if (!('country_guid' in values)) return
+
   mutate(values, {
     onSuccess: () => router.push('/admin/vets'),
   })

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useExportFormat } from '@/core/composables/useExportFormat'
 
 const { visible, loading, format, options, confirm, cancel } = useExportFormat()

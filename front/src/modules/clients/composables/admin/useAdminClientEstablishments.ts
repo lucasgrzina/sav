@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/vue-query'
 import { computed, toValue } from 'vue'
-import type { MaybeRef } from 'vue'
+import type { MaybeRefOrGetter } from 'vue'
 import { adminListEstablishmentsApi } from '../../api/clients.api'
 
-export function useAdminClientEstablishments(clientGuid: MaybeRef<string>) {
+export function useAdminClientEstablishments(clientGuid: MaybeRefOrGetter<string>) {
   const cGuid = computed(() => toValue(clientGuid))
 
   return useQuery({

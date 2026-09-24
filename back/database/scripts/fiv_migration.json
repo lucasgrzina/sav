@@ -1,0 +1,12 @@
+{
+  "techniques": [
+    {
+      "name": "FIV",
+      "target_date_name": "Fecha de OPU",
+      "type": "technique",
+      "parent_id": null,
+      "children": []
+    }
+  ],
+  "protocols": []
+}

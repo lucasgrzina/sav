@@ -16,6 +16,7 @@ export function useRoleFilters() {
   const debouncedSearch = useDebounce(searchRef as Ref<string>, 400)
 
   watch(() => filters.per_page, (size) => {
+    if (size === undefined) return
     setPerPage(size)
   })
 

@@ -147,7 +147,7 @@ const columns = [
       :page="data.current_page"
       :total="data.total"
       :per-page="data.per_page"
-      @change="({ page, perPage }) => { filters.page = page; filters.per_page = perPage }"
+      @change="({ page, perPage }: { page: number; perPage: number }) => { filters.page = page; filters.per_page = perPage }"
     />
 
     <TechniqueDeleteModal

@@ -62,6 +62,14 @@ async function handleUnlink(): Promise<void> {
 
       <ClientInfoCards :client="client" />
 
+      <a-alert
+        type="info"
+        message="Sugerencia: completá las secciones en este orden"
+        description="Primero los establecimientos, ya que las alertas y protocolos se configuran por establecimiento. Después agregá los contactos para notificaciones y, por último, el staff que va a operar el sistema."
+        show-icon
+        class="cdp-tabs-guide"
+      />
+
       <!-- Tabs con secciones -->
       <a-tabs class="cdp-tabs">
         <a-tab-pane key="establishments" tab="Establecimientos">
@@ -106,5 +114,6 @@ async function handleUnlink(): Promise<void> {
   padding: 20px 0;
 }
 
-.cdp-tabs { margin-top: 8px; }
+.cdp-tabs-guide { margin-top: 16px; }
+.cdp-tabs { margin-top: 16px; }
 </style>

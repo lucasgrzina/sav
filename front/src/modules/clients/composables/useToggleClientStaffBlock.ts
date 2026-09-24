@@ -34,7 +34,7 @@ export function useToggleClientStaffBlock(vetGuid: string, clientGuid: string) {
         : `¿Querés bloquear el acceso de "${member.user.name}" a este cliente? El usuario seguirá existiendo en el sistema.`,
       confirmLabel: isBlocked ? 'Desbloquear' : 'Bloquear',
       danger:       !isBlocked,
-      onConfirm:    () => mutation.mutateAsync(member.guid),
+      onConfirm:    async () => { await mutation.mutateAsync(member.guid) },
     })
   }
 

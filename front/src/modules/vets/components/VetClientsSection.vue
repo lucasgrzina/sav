@@ -62,7 +62,7 @@ const columns = [
     <EmptyState
       v-if="!isLoading && !data?.data.length"
       message="Esta veterinaria no tiene clientes vinculados."
-      icon="🐾"
+      icon="🐄"
     />
 
     <BaseDataTable

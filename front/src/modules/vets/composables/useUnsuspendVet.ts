@@ -27,7 +27,7 @@ export function useUnsuspendVet() {
       message: `¿Confirmás la reactivación de "${vet.name}"?`,
       confirmLabel: 'Reactivar',
       danger: false,
-      onConfirm: () => mutation.mutateAsync(vet.guid),
+      onConfirm: async () => { await mutation.mutateAsync(vet.guid) },
     })
   }
 

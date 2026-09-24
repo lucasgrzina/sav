@@ -1,5 +1,6 @@
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
+import type { ChannelAuthorizationCallback } from 'pusher-js'
 import { http } from '@/core/api/http'
 
 window.Pusher = Pusher
@@ -26,15 +27,15 @@ export function getEcho(): Echo<'reverb'> {
     authorizer: (channel: { name: string }) => ({
       authorize: (
         socketId: string,
-        callback: (error: boolean, data: unknown) => void,
+        callback: ChannelAuthorizationCallback,
       ) => {
         http
           .post(BROADCAST_AUTH_URL, {
             socket_id:    socketId,
             channel_name: channel.name,
           })
-          .then((res) => callback(false, res.data))
-          .catch((err) => callback(true, err))
+          .then((res) => callback(null, res.data))
+          .catch((err) => callback(err instanceof Error ? err : new Error(String(err)), null))
       },
     }),
   })

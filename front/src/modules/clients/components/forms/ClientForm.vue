@@ -10,7 +10,7 @@ import type { ClientCreateForm, ClientUpdateForm } from '../../validators/client
 import type { ClientItem } from '../../types/client.types'
 import type { ContactFormItem } from '@/modules/vets/types/vet.types'
 
-type ClientFormSubmit = (ClientCreateForm & { contacts: ContactFormItem[] }) | ClientUpdateForm
+export type ClientFormSubmit = (ClientCreateForm & { contacts: ContactFormItem[] }) | ClientUpdateForm
 
 const props = withDefaults(
   defineProps<{

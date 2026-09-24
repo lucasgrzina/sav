@@ -2,7 +2,7 @@ import type { NavigationGuard } from 'vue-router'
 import { useAuthStore } from '@/modules/auth/stores/auth.store'
 import { ROUTES } from '@/core/constants/app'
 
-export const authGuard: NavigationGuard = (to) => {
+export const authGuard: NavigationGuard = (_to) => {
     const auth = useAuthStore()
 
     if (!auth.isAuthenticated) {

@@ -27,7 +27,7 @@ export function useSuspendVet() {
       message: `¿Estás seguro de que querés suspender "${vet.name}"? No podrá operar hasta que sea reactivada.`,
       confirmLabel: 'Suspender',
       danger: true,
-      onConfirm: () => mutation.mutateAsync(vet.guid),
+      onConfirm: async () => { await mutation.mutateAsync(vet.guid) },
     })
   }
 

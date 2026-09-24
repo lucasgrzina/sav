@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { useMutation } from '@tanstack/vue-query'
 import ClientForm from '@/modules/clients/components/forms/ClientForm.vue'
+import type { ClientFormSubmit } from '@/modules/clients/components/forms/ClientForm.vue'
 import { useAdminLookupClient } from '@/modules/clients/composables/admin/useAdminLookupClient'
 import { useAdminCreateAndLinkClient } from '@/modules/clients/composables/admin/useAdminCreateAndLinkClient'
 import { adminLinkVetToClientApi } from '@/modules/clients/api/admin-clients.api'
@@ -11,7 +12,6 @@ import { useNotification } from '@/core/composables/useNotification'
 import { parseApiError } from '@/core/composables/parseApiError'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import type { ClientItem } from '@/modules/clients/types/client.types'
-import type { ClientCreateForm } from '@/modules/clients/validators/client.validator'
 
 const props = defineProps<{ guid: string }>()
 
@@ -53,7 +53,6 @@ const { mutateAsync: linkAsync, isPending: isLinking } = useMutation({
 
 const {
   mutateAsync: createAsync,
-  isPending: isCreating,
   fieldErrors,
   generalError: createError,
 } = useAdminCreateAndLinkClient(props.guid)
@@ -102,7 +101,11 @@ async function handleLink(clientGuid: string): Promise<void> {
   })
 }
 
-async function handleCreate(values: ClientCreateForm): Promise<void> {
+async function handleCreate(values: ClientFormSubmit): Promise<void> {
+  // ClientForm siempre se usa con mode="create" en este flujo, así que el
+  // payload siempre trae country_guid. Se descarta la rama de edición por tipo.
+  if (!('country_guid' in values)) return
+
   state.value = { status: 'creating' }
   await createAsync(values, {
     onSuccess: () => router.push(`/admin/vets/${props.guid}`),

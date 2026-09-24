@@ -174,7 +174,7 @@ function handleCancel(): void {
       <BaseButton variant="secondary" @click="handleCancel">Cancelar</BaseButton>
       <BaseButton
         variant="primary"
-        :loading="isPending.value"
+        :loading="isPending"
         @click="onSubmit"
       >
         {{ mode === 'create' ? 'Crear establecimiento' : 'Guardar cambios' }}

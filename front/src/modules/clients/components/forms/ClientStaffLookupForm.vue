@@ -135,6 +135,15 @@ async function handleCreate(values: ClientStaffCreatePayload): Promise<void> {
       </BaseButton>
     </div>
 
+    <!-- Guía del flujo — solo antes de buscar -->
+    <a-alert
+      v-if="state.status === 'idle'"
+      type="info"
+      message="Buscá antes de crear"
+      description="Ingresá el email del usuario. Si ya existe en el sistema, vas a poder incorporarlo al equipo de este cliente; si no existe, se crea automáticamente y queda incorporado."
+      show-icon
+    />
+
     <!-- Error de búsqueda -->
     <a-alert
       v-if="isSearchError"

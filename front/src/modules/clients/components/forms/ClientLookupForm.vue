@@ -4,11 +4,11 @@ import { useRouter, useRoute } from 'vue-router'
 import { SearchOutlined } from '@ant-design/icons-vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import ClientForm from './ClientForm.vue'
+import type { ClientFormSubmit } from './ClientForm.vue'
 import { useLookupClient } from '../../composables/useLookupClient'
 import { useLinkClient } from '../../composables/useLinkClient'
 import { useCreateClient } from '../../composables/useCreateClient'
 import type { ClientItem } from '../../types/client.types'
-import type { ClientCreateForm } from '../../validators/client.validator'
 
 type LookupState =
   | { status: 'idle' }
@@ -32,7 +32,7 @@ const state      = ref<LookupState>({ status: 'idle' })
 
 const { data: lookupData, isLoading: isSearching, isError: isSearchError, search, reset: resetLookup } = useLookupClient()
 const { mutateAsync: linkAsync, isPending: isLinking, generalError: linkError } = useLinkClient()
-const { mutateAsync: createAsync, isPending: isCreating, fieldErrors, generalError: createError } = useCreateClient()
+const { mutateAsync: createAsync, fieldErrors, generalError: createError } = useCreateClient()
 
 // Reaccionar al resultado del lookup
 watch([lookupData, isSearching, isSearchError], ([data, loading, hasError]) => {
@@ -79,7 +79,11 @@ async function handleLink(clientGuid: string): Promise<void> {
   })
 }
 
-async function handleCreate(values: ClientCreateForm): Promise<void> {
+async function handleCreate(values: ClientFormSubmit): Promise<void> {
+  // ClientForm siempre se usa con mode="create" en este flujo, así que el
+  // payload siempre trae country_guid. Se descarta la rama de edición por tipo.
+  if (!('country_guid' in values)) return
+
   state.value = { status: 'creating' }
   await createAsync(values, {
     onSuccess: (client) => {
@@ -115,6 +119,15 @@ async function handleCreate(values: ClientCreateForm): Promise<void> {
         Buscar
       </BaseButton>
     </div>
+
+    <!-- Guía del flujo — solo antes de buscar -->
+    <a-alert
+      v-if="state.status === 'idle'"
+      type="info"
+      message="Buscá antes de crear"
+      description="Ingresá el CUIT o identificador fiscal del cliente. Si ya existe en el sistema, vas a poder vincularlo a esta veterinaria; si no existe, se crea automáticamente y queda vinculado."
+      show-icon
+    />
 
     <!-- Error de búsqueda -->
     <a-alert

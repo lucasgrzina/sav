@@ -70,6 +70,7 @@ return [
             'program.created' => env('TWILIO_TEMPLATE_PROGRAM_CREATED'),
             'program.cancelled' => env('TWILIO_TEMPLATE_PROGRAM_CANCELLED'),
             'program.task_due' => env('TWILIO_TEMPLATE_PROGRAM_TASK_DUE'),
+            'health_plan.month' => env('TWILIO_TEMPLATE_HEALTH_PLAN_MONTH'),
         ],
     ],
 
@@ -112,6 +113,10 @@ return [
             // queda pendiente como paso operativo (ver plan, paso 7).
             'program.pdf_shared' => [
                 'name' => env('KAPSO_TEMPLATE_PROGRAM_PDF_SHARED', 'sav_program_pdf_shared'),
+                'language' => env('KAPSO_TEMPLATE_LANGUAGE', 'es'),
+            ],
+            'health_plan.month' => [
+                'name' => env('KAPSO_TEMPLATE_HEALTH_PLAN_MONTH', 'sav_health_plan_month'),
                 'language' => env('KAPSO_TEMPLATE_LANGUAGE', 'es'),
             ],
         ],

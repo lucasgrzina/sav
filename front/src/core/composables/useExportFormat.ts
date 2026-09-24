@@ -1,4 +1,4 @@
-import { ref, shallowRef } from 'vue'
+import { shallowRef } from 'vue'
 
 export type ExportFormat = 'pdf' | 'xlsx' | 'txt' | 'csv'
 

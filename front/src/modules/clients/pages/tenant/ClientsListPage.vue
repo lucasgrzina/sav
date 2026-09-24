@@ -52,7 +52,7 @@ async function handleUnlink(client: ClientItem): Promise<void> {
     <EmptyState
       v-if="!isLoading && !data?.data.length"
       message="No se encontraron clientes vinculados a esta veterinaria."
-      icon="🐾"
+      icon="🐄"
     >
       <PermissionGuard permission="clients.create">
         <BaseButton variant="primary" class="mt-3" @click="router.push(`/vets/${vetGuid}/clients/new`)">

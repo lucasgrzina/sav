@@ -100,4 +100,14 @@ class UserProfileRepositoryEloquent extends BaseRepositoryEloquent implements Us
         $profile->save();
         return $profile;
     }
+
+    public function listByRoleForVet(Vet $vet, string $roleName): Collection
+    {
+        return $this->newQuery()
+            ->with(['user', 'role'])
+            ->whereHas('role', fn ($q) => $q->where('name', $roleName))
+            ->where('authenticatable_type', 'vet')
+            ->where('authenticatable_id', $vet->id)
+            ->get();
+    }
 }

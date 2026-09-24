@@ -1,0 +1,61 @@
+{
+  "techniques": [
+    {
+      "name": "IATF",
+      "target_date_name": "Fecha de inseminación",
+      "type": "technique",
+      "parent_id": null,
+      "children": [
+        {
+          "name": "Vacas - Carne",
+          "target_date_name": "Fecha de inseminación",
+          "type": "subtype",
+          "protocols_name": "Protocolo 2"
+        }
+      ]
+    }
+  ],
+  "protocols": [
+    {
+      "technique": "IATF",
+      "subtechnique": "Vacas - Carne",
+      "name": "Rodeo 2° Servicio",
+      "color": "#ffc000",
+      "vet_id": null,
+      "tasks": [
+        { "description": "Colocar Dispositivo intravaginal", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar Benzoato de estradiol 2 cc", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar GnRH 3 cc", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar Prostaglandina 2 cc", "days_offset": 3, "time_of_day": "Before", "time": "17:00:00", "important": false },
+        { "description": "Retirar Dispositivo intravaginal", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inyectar Prostaglandina 2 cc", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar Cipionato de estradiol 1,5 cc", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar Novormon (eCG) 2,5 cc", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Pintura en la base de la cola", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inseminación Artificial a Tiempo Fijo (IATF)", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inyectar GnRH 3 cc a vacas sin respuesta a celo (sin repintar)", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true }
+      ],
+      "alerts": []
+    },
+    {
+      "technique": "IATF",
+      "subtechnique": "Vacas - Carne",
+      "name": "Rodeo General",
+      "color": "#92d050",
+      "vet_id": null,
+      "tasks": [
+        { "description": "Colocar Dispositivo intravaginal", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar Benzoato de estradiol 2 cc", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar GnRH 3 cc", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Retirar Dispositivo intravaginal", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inyectar Prostaglandina 2 cc", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar Cipionato de estradiol 1,5 cc", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Inyectar Novormon (eCG) 2,5 cc", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Pintura en la base de la cola", "days_offset": 2, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inseminación Artificial a Tiempo Fijo (IATF)", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inyectar GnRH 3 cc a vacas sin respuesta a celo (sin repintar)", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true }
+      ],
+      "alerts": []
+    }
+  ]
+}

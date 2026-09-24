@@ -60,10 +60,6 @@ function labelFor(name: string): string {
     : parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
 }
 
-function initials(module: string): string {
-  return module.slice(0, 2).toUpperCase()
-}
-
 const HUE: Record<string, string> = {
   users:       '155',
   roles:       '210',

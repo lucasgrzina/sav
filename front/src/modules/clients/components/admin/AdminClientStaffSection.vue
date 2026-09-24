@@ -32,7 +32,7 @@ const columns = [
   <div class="acss-root">
     <EmptyState
       v-if="!isLoading && !staff?.length"
-      message="Este cliente no tiene miembros de staff."
+      message="Este cliente no tiene miembros de staff. El staff son las personas que van a poder acceder al sistema en representación del cliente."
     />
 
     <BaseDataTable

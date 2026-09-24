@@ -27,7 +27,7 @@ export function useValidateVet() {
       message: `¿Confirmás la validación de "${vet.name}"? Esto le permitirá operar en el sistema.`,
       confirmLabel: 'Validar',
       danger: false,
-      onConfirm: () => mutation.mutateAsync(vet.guid),
+      onConfirm: async () => { await mutation.mutateAsync(vet.guid) },
     })
   }
 

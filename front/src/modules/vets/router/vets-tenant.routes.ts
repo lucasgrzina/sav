@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { vetTenantGuard } from '@/router/guards/vetTenantGuard'
 import { vetProtocolsRoutes } from '@/modules/protocols/router/vet-protocols.routes'
 import { vetProgramsRoutes } from '@/modules/programs/router/vet-programs.routes'
+import { vetEstablishmentHealthPlansRoutes } from '@/modules/establishment-health-plans/router/vet-establishment-health-plans.routes'
 import { clientsRoutes } from '@/modules/clients/router/clients.routes'
 
 export const vetsTenantRoutes: RouteRecordRaw[] = [
@@ -64,6 +65,7 @@ export const vetsTenantRoutes: RouteRecordRaw[] = [
       },
       ...vetProtocolsRoutes,
       ...vetProgramsRoutes,
+      ...vetEstablishmentHealthPlansRoutes,
       ...clientsRoutes,
     ],
   },

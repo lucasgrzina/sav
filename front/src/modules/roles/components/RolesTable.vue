@@ -26,10 +26,6 @@ const defaultColumns: TableColumnDef[] = [
 ]
 
 const columns = computed(() => props.columns ?? defaultColumns)
-
-function permLabel(name: string): string {
-  return name.split('.')[1] ?? name
-}
 </script>
 
 <template>

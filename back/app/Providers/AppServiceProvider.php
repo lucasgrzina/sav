@@ -7,6 +7,7 @@ use App\Contracts\Repositories\ClientRepositoryInterface;
 use App\Contracts\Repositories\ContactRepositoryInterface;
 use App\Contracts\Repositories\CountryRepositoryInterface;
 use App\Contracts\Repositories\DocumentTypeRepositoryInterface;
+use App\Contracts\Repositories\EstablishmentHealthPlanRepositoryInterface;
 use App\Contracts\Repositories\EstablishmentRepositoryInterface;
 use App\Contracts\Repositories\HealthActivityRepositoryInterface;
 use App\Contracts\Repositories\HealthPlanCategoryRepositoryInterface;
@@ -28,6 +29,7 @@ use App\Contracts\Repositories\UserProfileRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\VetRepositoryInterface;
 use App\Models\Client;
+use App\Models\EstablishmentHealthPlan;
 use App\Models\Export;
 use App\Models\Program;
 use App\Models\User;
@@ -38,6 +40,7 @@ use App\Repositories\ClientRepositoryEloquent;
 use App\Repositories\ContactRepositoryEloquent;
 use App\Repositories\CountryRepositoryEloquent;
 use App\Repositories\DocumentTypeRepositoryEloquent;
+use App\Repositories\EstablishmentHealthPlanRepositoryEloquent;
 use App\Repositories\EstablishmentRepositoryEloquent;
 use App\Repositories\HealthActivityRepositoryEloquent;
 use App\Repositories\HealthPlanCategoryRepositoryEloquent;
@@ -95,6 +98,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(HealthPlanCategoryRepositoryInterface::class, HealthPlanCategoryRepositoryEloquent::class);
         $this->app->bind(HealthPlanTemplateRepositoryInterface::class, HealthPlanTemplateRepositoryEloquent::class);
         $this->app->bind(PushSubscriptionRepositoryInterface::class, PushSubscriptionRepositoryEloquent::class);
+        $this->app->bind(EstablishmentHealthPlanRepositoryInterface::class, EstablishmentHealthPlanRepositoryEloquent::class);
     }
 
     public function boot(): void
@@ -126,10 +130,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Relation::morphMap([
-            'vet'          => Vet::class,
-            'user_profile' => UserProfile::class,
-            'client'       => Client::class,
-            'program'      => Program::class,
+            'vet'                        => Vet::class,
+            'user_profile'               => UserProfile::class,
+            'client'                     => Client::class,
+            'program'                    => Program::class,
+            'establishment_health_plan'  => EstablishmentHealthPlan::class,
         ]);
     }
 }

@@ -60,7 +60,14 @@ const columns = [
       </PermissionGuard>
     </div>
 
+    <EmptyState
+      v-if="!isLoading && !establishments?.length"
+      message="Todavía no cargaste establecimientos para este cliente. Agregá el primero: las alertas y protocolos se configuran a nivel establecimiento."
+      icon="🏡"
+    />
+
     <BaseDataTable
+      v-else
       :columns="columns"
       :data-source="establishments ?? []"
       :loading="isLoading"

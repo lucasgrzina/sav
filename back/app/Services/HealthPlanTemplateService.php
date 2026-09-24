@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Contracts\Repositories\HealthActivityRepositoryInterface;
 use App\Contracts\Repositories\HealthPlanCategoryRepositoryInterface;
 use App\Contracts\Repositories\HealthPlanTemplateRepositoryInterface;
+use App\Exceptions\HealthPlanTemplateLockedException;
 use App\Models\HealthPlanTemplate;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -81,6 +82,76 @@ class HealthPlanTemplateService
     public function destroy(HealthPlanTemplate $template): void
     {
         // El cascade en la FK elimina automáticamente los registros del pivot
+        $this->templateRepo->destroy($template);
+    }
+
+    public function paginateForVet(int $vetId, array $filters, int $perPage): LengthAwarePaginator
+    {
+        return $this->templateRepo->paginateForVetScope($vetId, $filters, $perPage);
+    }
+
+    public function findByGuidForVetScope(string $guid, int $vetId): ?HealthPlanTemplate
+    {
+        return $this->templateRepo->findByGuidForVetScope($guid, $vetId);
+    }
+
+    public function findOwnByGuidForVet(string $guid, int $vetId): ?HealthPlanTemplate
+    {
+        return $this->templateRepo->findOwnByGuidForVet($guid, $vetId);
+    }
+
+    /**
+     * Crea un template propio del vet con sus actividades asignadas.
+     *
+     * @param  array  $data  Validated. Incluye 'health_plan_category_guid' y 'activities'.
+     * @throws \RuntimeException si la categoría no existe
+     */
+    public function createForVet(array $data, int $vetId): HealthPlanTemplate
+    {
+        return DB::transaction(function () use ($data, $vetId) {
+            $category = $this->categoryRepo->findByGuid($data['health_plan_category_guid']);
+            if (!$category) {
+                throw new \RuntimeException('Categoría no encontrada.');
+            }
+
+            $template = $this->templateRepo->create([
+                'name'                    => $data['name'],
+                'health_plan_category_id' => $category->id,
+                'vet_id'                  => $vetId,
+            ]);
+
+            $syncData = $this->buildSyncData($data['activities'] ?? []);
+            $this->templateRepo->syncActivities($template, $syncData);
+
+            return $template->load(['category', 'activities']);
+        });
+    }
+
+    /**
+     * Actualiza un template propio del vet, bloqueando si ya generó planes instanciados.
+     *
+     * @throws HealthPlanTemplateLockedException|\RuntimeException
+     */
+    public function updateOwnedByVet(HealthPlanTemplate $template, array $data): HealthPlanTemplate
+    {
+        if ($this->templateRepo->hasInstantiatedPlans($template->id)) {
+            throw new HealthPlanTemplateLockedException();
+        }
+
+        return $this->update($template, $data);
+    }
+
+    /**
+     * Elimina un template propio del vet, bloqueando si ya generó planes instanciados.
+     *
+     * @throws HealthPlanTemplateLockedException
+     */
+    public function destroyOwnedByVet(HealthPlanTemplate $template): void
+    {
+        if ($this->templateRepo->hasInstantiatedPlans($template->id)) {
+            throw new HealthPlanTemplateLockedException();
+        }
+
         $this->templateRepo->destroy($template);
     }
 

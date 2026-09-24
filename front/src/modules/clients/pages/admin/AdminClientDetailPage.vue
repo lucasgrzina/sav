@@ -40,6 +40,14 @@ const { data: client, isLoading } = useAdminClient(computed(() => props.guid))
 
       <ClientInfoCards :client="client" />
 
+      <a-alert
+        type="info"
+        message="Qué hacer en esta vista"
+        description="Cargá los establecimientos del cliente y vinculalo a una o más veterinarias para que puedan gestionarlo. El staff son los usuarios que acceden al sistema en representación del cliente."
+        show-icon
+        class="acdp-tabs-guide"
+      />
+
       <!-- Tabs con secciones -->
       <a-tabs class="acdp-tabs">
         <a-tab-pane key="establishments" tab="Establecimientos">
@@ -87,5 +95,6 @@ const { data: client, isLoading } = useAdminClient(computed(() => props.guid))
   padding: 20px 0;
 }
 
-.acdp-tabs { margin-top: 8px; }
+.acdp-tabs-guide { margin-top: 16px; }
+.acdp-tabs { margin-top: 16px; }
 </style>

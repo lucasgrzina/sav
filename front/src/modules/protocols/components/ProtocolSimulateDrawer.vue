@@ -57,7 +57,7 @@ const taskColumns = computed(() => [
   {
     title: 'Fecha',
     key: 'computed_date',
-    customCell: (_record: SimulatedTask, index: number) => ({ rowSpan: taskDateSpans.value[index] }),
+    customCell: (_record: SimulatedTask, index = 0) => ({ rowSpan: taskDateSpans.value[index] }),
   },
   { title: 'Hora', key: 'computed_time', dataIndex: 'computed_time' },
   { title: 'Tarea', key: 'description', dataIndex: 'description' },
@@ -67,7 +67,7 @@ const alertColumns = computed(() => [
   {
     title: 'Fecha',
     key: 'computed_date',
-    customCell: (_record: SimulatedAlert, index: number) => ({ rowSpan: alertDateSpans.value[index] }),
+    customCell: (_record: SimulatedAlert, index = 0) => ({ rowSpan: alertDateSpans.value[index] }),
   },
   { title: 'Hora', key: 'computed_time', dataIndex: 'computed_time' },
   { title: 'Tarea asociada', key: 'task_description', dataIndex: 'task_description' },

@@ -152,7 +152,7 @@ function categoryLabel(category: SupportMessageCategory): string {
         <div v-if="thread.status === 'closed'" class="thread-closed">
           <LockOutlined />
           <span>
-            Cerrado el {{ formatDate(thread.closed_at) }}
+            Cerrado el {{ thread.closed_at ? formatDate(thread.closed_at) : '—' }}
             <template v-if="thread.closer"> por {{ thread.closer.name }}</template>
           </span>
         </div>

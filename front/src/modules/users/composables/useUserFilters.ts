@@ -18,7 +18,8 @@ export function useUserFilters() {
     const searchRef = toRef(filters, 'search')
     const debouncedSearch = useDebounce(searchRef as Ref<string>, 400)
 
-    watch(() => filters.per_page, (size: number | undefined ) => {
+    watch(() => filters.per_page, (size: number | undefined) => {
+        if (size === undefined) return
         setPerPage(size)
     })
 

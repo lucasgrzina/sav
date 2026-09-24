@@ -40,4 +40,11 @@ interface UserProfileRepositoryInterface
     public function listForUser(User $user): Collection;
 
     public function toggleBlock(UserProfile $profile): UserProfile;
+
+    /**
+     * Lista los UserProfiles de un Vet con el rol dado (ej. 'vet' — DU2-02, regla dura #4).
+     *
+     * @return Collection<int, UserProfile>
+     */
+    public function listByRoleForVet(Vet $vet, string $roleName): Collection;
 }

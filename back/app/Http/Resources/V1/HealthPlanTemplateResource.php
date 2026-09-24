@@ -20,6 +20,9 @@ class HealthPlanTemplateResource extends JsonResource
                 $this->whenLoaded('activities', $this->activities, collect())
             ),
             'activities_count' => $this->activities_count ?? ($this->relationLoaded('activities') ? $this->activities->count() : 0),
+            'vet_guid'         => $this->whenLoaded('vet', fn () => $this->vet?->guid),
+            'is_own'           => (bool) ($this->is_own ?? false),
+            'is_locked'        => (bool) ($this->is_locked ?? false),
             'created_at'       => $this->created_at?->toISOString(),
             'updated_at'       => $this->updated_at?->toISOString(),
         ];

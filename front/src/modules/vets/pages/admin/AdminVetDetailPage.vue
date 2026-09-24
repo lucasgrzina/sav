@@ -15,15 +15,6 @@ const props = defineProps<{ guid: string }>()
 
 const router = useRouter()
 const { data: vet, isLoading } = useVet(computed(() => props.guid))
-
-const initials = computed(() => {
-  if (!vet.value?.name) return '??'
-  return vet.value.name
-    .split(' ')
-    .slice(0, 2)
-    .map(w => w[0].toUpperCase())
-    .join('')
-})
 </script>
 
 <template>

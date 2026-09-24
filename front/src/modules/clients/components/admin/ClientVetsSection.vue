@@ -38,7 +38,7 @@ const columns = [
 
     <EmptyState
       v-if="!vets.length"
-      message="Este cliente no tiene veterinarias vinculadas."
+      message="Este cliente no tiene veterinarias vinculadas. Vinculá una para que pueda gestionar sus establecimientos y protocolos."
       icon="🏥"
     />
 
