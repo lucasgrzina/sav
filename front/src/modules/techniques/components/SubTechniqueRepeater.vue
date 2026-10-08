@@ -39,7 +39,7 @@ function updateProtocolsName(index: number, value: string) {
     >
       <a-input
         :value="child.name"
-        placeholder="Nombre de el programa *"
+        placeholder="Nombre del programa *"
         @update:value="(v: string) => updateName(idx, v)"
       />
       <a-input

@@ -178,7 +178,7 @@ function onCountrySelect(value: string | number | null) {
         >
           <template #description>
             Cada tarea es un paso del protocolo. El campo <strong>Días de diferencia</strong>
-            indica cuántos días hay entre la fecha objetivo de el programa (el "Label fecha
+            indica cuántos días hay entre la fecha objetivo del programa (el "Label fecha
             objetivo" cargado en la técnica) y el momento en que se ejecuta la tarea —
             <strong>0</strong> significa el mismo día. El selector de al lado
             (<strong>Antes / Después</strong>) define la dirección: si la tarea ocurre antes o

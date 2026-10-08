@@ -6,7 +6,7 @@ export const techniqueChildSchema = z.object({
   guid: z.string().uuid().optional(),
   name: z
     .string()
-    .min(1, 'El nombre de el programa es requerido')
+    .min(1, 'El nombre del programa es requerido')
     .max(255, 'El nombre no puede superar 255 caracteres'),
   protocols_name: z
     .string()
