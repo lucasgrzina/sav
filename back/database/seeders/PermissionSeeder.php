@@ -44,8 +44,6 @@ class PermissionSeeder extends Seeder
             'establishments.create',
             'establishments.update',
             'establishments.delete',
-            'clients.owners.read',
-            'clients.owners.create',
             'clients.staff.read',
             'clients.staff.create',
             'clients.staff.update',

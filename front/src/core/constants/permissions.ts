@@ -25,8 +25,6 @@ export const PERMISSIONS = {
   CLIENTS_CREATE:        'clients.create',
   CLIENTS_UPDATE:        'clients.update',
   CLIENTS_DELETE:        'clients.delete',
-  CLIENTS_OWNERS_READ:   'clients.owners.read',
-  CLIENTS_OWNERS_CREATE: 'clients.owners.create',
   // Establishments
   ESTABLISHMENTS_READ:   'establishments.read',
   ESTABLISHMENTS_CREATE: 'establishments.create',

@@ -29,7 +29,7 @@ class UserProfileService
         'client-administrative',
     ];
 
-    /** Roles válidos para personal de veterinaria (subset de TENANT_ROLES). */
+    /** Roles válidos para personal de empresa (subset de TENANT_ROLES). */
     public const VET_STAFF_ROLES = ['vet', 'vet-assistant', 'vet-administrative'];
 
     /** Roles válidos para personal de cliente (subset de TENANT_ROLES). */
@@ -90,7 +90,7 @@ class UserProfileService
         $existing = $this->userProfileRepository->findForUserAndVet($user, $vet);
 
         if ($existing) {
-            throw new \RuntimeException('El usuario ya es miembro de esta veterinaria.');
+            throw new \RuntimeException('El usuario ya es miembro de esta empresa.');
         }
 
         return $this->userProfileRepository->create([
@@ -114,84 +114,6 @@ class UserProfileService
     public function toggleBlock(UserProfile $profile): UserProfile
     {
         return $this->userProfileRepository->toggleBlock($profile);
-    }
-
-    /**
-     * Lista los owners (UserProfiles con role client-owner) de un Client dado.
-     */
-    public function listOwnersForClient(Client $client): Collection
-    {
-        return $this->userProfileRepository->listOwnersForClient($client);
-    }
-
-    /**
-     * Crea un client-owner para el Client.
-     *
-     * Flujo:
-     *   1. Buscar User por email.
-     *   2a. Si no existe: crear User con password temporal + encolar job de invitación.
-     *   2b. Si existe: usar ese User (sin modificarlo, sin reenviar invitación).
-     *   3. Verificar que el User no sea ya owner de este Client.
-     *   4. Resolver el rol 'client-owner' de la tabla roles.
-     *   5. Crear UserProfile(authenticatable_type='client', authenticatable_id=$client->id).
-     *   6. Todo dentro de una transacción DB.
-     *
-     * Lanza RuntimeException si el User ya es owner del Client.
-     *
-     * @param  Client $client   Client al que se agrega el owner
-     * @param  array  $data     Datos validados: { email, first_name, last_name }
-     */
-    public function addOwnerToClient(Client $client, array $data): UserProfile
-    {
-        return DB::transaction(function () use ($client, $data) {
-            $user      = $this->userRepository->findByEmail($data['email']);
-            $isNewUser = false;
-
-            if (!$user) {
-                // Usuario nuevo: crear con password temporal y sin verificar
-                $expirationHours = (int) config('auth.invitation_link_expiration_hours', 72);
-
-                $user = $this->userRepository->create([
-                    'first_name'                   => $data['first_name'],
-                    'last_name'                    => $data['last_name'],
-                    'name'                         => $data['first_name'] . ' ' . $data['last_name'],
-                    'email'                        => $data['email'],
-                    'password'                     => Hash::make(Str::random(32)),
-                    'email_verified_at'            => null,
-                    'verification_link_token'      => Str::random(64),
-                    'verification_link_expires_at' => now()->addHours($expirationHours),
-                ]);
-
-                $isNewUser = true;
-            }
-
-            // Verificar duplicado: este User ya es owner de este Client
-            $existing = $this->userProfileRepository->findForUserAndClient($user, $client);
-            if ($existing) {
-                throw new \RuntimeException('Este usuario ya es owner de este cliente.');
-            }
-
-            // Resolver rol 'client-owner' desde la tabla roles
-            $role = $this->roleRepository->findByName('client-owner');
-            if (!$role) {
-                throw new \RuntimeException('El rol client-owner no existe en el sistema.');
-            }
-
-            // Crear el UserProfile
-            $profile = $this->userProfileRepository->create([
-                'user_id'              => $user->id,
-                'authenticatable_type' => 'client',
-                'authenticatable_id'   => $client->id,
-                'role_id'              => $role->id,
-            ]);
-
-            // Encolar job de invitación solo si el usuario es nuevo
-            if ($isNewUser) {
-                SendClientOwnerInvitationJob::dispatch($user->id, $client->name);
-            }
-
-            return $profile;
-        });
     }
 
     /**

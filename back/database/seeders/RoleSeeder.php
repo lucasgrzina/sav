@@ -64,7 +64,6 @@ class RoleSeeder extends Seeder
         // Permisos de roles tenant (resueltos por Gate::before en AppServiceProvider)
         $allClientPerms = [
             'clients.read', 'clients.create', 'clients.update', 'clients.delete',
-            'clients.owners.read', 'clients.owners.create',
             'clients.staff.read', 'clients.staff.create', 'clients.staff.update', 'clients.staff.delete',
             'establishments.read', 'establishments.create', 'establishments.update', 'establishments.delete',
         ];
@@ -85,7 +84,6 @@ class RoleSeeder extends Seeder
         Role::where('name', 'client-owner')->first()
             ?->syncPermissions(Permission::whereIn('name', [
                 'clients.read',
-                'clients.owners.read',
                 'clients.staff.read', 'clients.staff.create', 'clients.staff.update', 'clients.staff.delete',
                 'establishments.read',
             ])->get());
