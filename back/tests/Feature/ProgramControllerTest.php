@@ -160,18 +160,25 @@ class ProgramControllerTest extends TestCase
         ]);
     }
 
-    private function createManagerProfileForClient(Client $client): UserProfile
+    private function createManagerProfileForClient(Client $client, bool $link = true): UserProfile
     {
         $user = User::factory()->create();
         $role = Role::where('name', 'client-owner')->first();
 
-        return UserProfile::create([
+        $profile = UserProfile::create([
             'guid'                 => Str::uuid()->toString(),
             'user_id'              => $user->id,
             'authenticatable_type' => 'client',
             'authenticatable_id'   => $client->id,
             'role_id'              => $role->id,
         ]);
+
+        // Client staff can only manage programs of establishments they are linked to.
+        if ($link && $client->id === $this->establishment->client_id) {
+            $this->establishment->staff()->attach($profile->id);
+        }
+
+        return $profile;
     }
 
     private function basePayload(array $overrides = []): array
@@ -254,5 +261,97 @@ class ProgramControllerTest extends TestCase
             ->getJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}");
 
         $response->assertStatus(200)->assertJsonPath('data.managers.0.origin', 'vet');
+    }
+
+    // -------------------------------------------------------------------------
+    // Client staff <-> establishment link: client managers must be linked
+    // -------------------------------------------------------------------------
+
+    private function createSecondEstablishment(): Establishment
+    {
+        return Establishment::create([
+            'guid'      => Str::uuid()->toString(),
+            'client_id' => $this->client->id,
+            'name'      => 'Segundo Establecimiento',
+        ]);
+    }
+
+    public function test_store_rejects_unlinked_client_manager_with_error_per_index(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $vetManager = $this->createManagerProfileForVet($this->vet);
+        $unlinked = $this->createManagerProfileForClient($this->client, false);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'manager_profile_ids' => [$vetManager->guid, $unlinked->guid],
+            ]));
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['manager_profile_ids.1']);
+        $this->assertArrayNotHasKey('manager_profile_ids.0', $response->json('errors') ?? []);
+    }
+
+    public function test_store_accepts_vet_manager_without_any_link(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload())
+            ->assertStatus(201);
+    }
+
+    public function test_update_accepts_linked_client_manager(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload());
+        $guid = $created->json('data.guid');
+        $linked = $this->createManagerProfileForClient($this->client);
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'targets' => [['guid' => $created->json('data.targets.0.guid'), 'target_date' => '2026-08-01', 'animals' => []]],
+                'manager_profile_ids' => [$linked->guid],
+            ]))
+            ->assertStatus(200);
+    }
+
+    public function test_update_rejects_unlinked_client_manager(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload());
+        $guid = $created->json('data.guid');
+        $unlinked = $this->createManagerProfileForClient($this->client, false);
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'targets' => [['guid' => $created->json('data.targets.0.guid'), 'target_date' => '2026-08-01', 'animals' => []]],
+                'manager_profile_ids' => [$unlinked->guid],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['manager_profile_ids.0']);
+    }
+
+    public function test_update_changing_establishment_to_one_where_manager_is_not_linked_returns_422(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $linked = $this->createManagerProfileForClient($this->client); // linked to the first establishment only
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'manager_profile_ids' => [$linked->guid],
+            ]));
+        $created->assertStatus(201);
+        $guid = $created->json('data.guid');
+        $other = $this->createSecondEstablishment();
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'establishment_id' => $other->guid,
+                'targets' => [['guid' => $created->json('data.targets.0.guid'), 'target_date' => '2026-08-01', 'animals' => []]],
+                'manager_profile_ids' => [$linked->guid],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['manager_profile_ids.0']);
     }
 }

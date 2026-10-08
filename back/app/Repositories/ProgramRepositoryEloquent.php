@@ -5,7 +5,10 @@ namespace App\Repositories;
 use App\Contracts\Repositories\ProgramRepositoryInterface;
 use App\Models\Program;
 use App\Models\Technique;
+use App\Models\UserProfile;
+use App\Notifications\Enums\AlertType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class ProgramRepositoryEloquent extends BaseRepositoryEloquent implements ProgramRepositoryInterface
 {
@@ -87,6 +90,103 @@ class ProgramRepositoryEloquent extends BaseRepositoryEloquent implements Progra
     {
         /** @var Program */
         return parent::create($data);
+    }
+
+    public function unlinkedClientManagerIds(int $establishmentId, array $profileIds): array
+    {
+        if ($profileIds === []) {
+            return [];
+        }
+
+        return UserProfile::query()
+            ->whereIn('id', $profileIds)
+            ->where('authenticatable_type', 'client')
+            ->whereDoesntHave('establishments', fn ($q) => $q->where('establishments.id', $establishmentId))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    public function detachManagersFromActivePrograms(int $establishmentId, array $profileIds): array
+    {
+        if ($profileIds === []) {
+            return [];
+        }
+
+        $affected = [];
+
+        Program::query()
+            ->where('establishment_id', $establishmentId)
+            ->whereNull('cancelled_at')
+            ->whereHas('managers', fn ($q) => $q->whereIn('user_profiles.id', $profileIds))
+            ->get()
+            ->each(function (Program $program) use ($profileIds, &$affected) {
+                $program->managers()->detach($profileIds);
+                $affected[] = $program->id;
+            });
+
+        return $affected;
+    }
+
+    public function findActiveProgramsWithUnlinkedClientManagers(): array
+    {
+        $rows = DB::table('program_manager as pm')
+            ->join('programs as p', 'p.id', '=', 'pm.program_id')
+            ->join('user_profiles as up', 'up.id', '=', 'pm.user_profile_id')
+            ->whereNull('p.cancelled_at')
+            ->where('up.authenticatable_type', 'client')
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))
+                ->from('establishment_user_profile as eup')
+                ->whereColumn('eup.establishment_id', 'p.establishment_id')
+                ->whereColumn('eup.user_profile_id', 'up.id'))
+            ->select('pm.program_id', 'p.establishment_id', 'up.id as profile_id')
+            ->get();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int) $row->program_id]['establishment_id'] = (int) $row->establishment_id;
+            $result[(int) $row->program_id]['profile_ids'][]    = (int) $row->profile_id;
+        }
+
+        return $result;
+    }
+
+    public function findActiveProgramsWithStaleAlertRecipients(): array
+    {
+        $rows = DB::table('alert_recipients as ar')
+            ->join('alerts as a', 'a.id', '=', 'ar.alert_id')
+            ->join('programs as p', 'p.id', '=', 'a.subject_id')
+            ->where('a.subject_type', 'program')
+            ->where('a.type', AlertType::ProgramTaskDue->value)
+            ->where('a.status', 'pending')
+            ->whereNull('p.cancelled_at')
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))
+                ->from('program_manager as pm')
+                ->whereColumn('pm.program_id', 'p.id')
+                ->whereColumn('pm.user_profile_id', 'ar.user_profile_id'))
+            ->select('p.id as program_id', 'p.establishment_id', 'ar.user_profile_id as profile_id')
+            ->distinct()
+            ->get();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int) $row->program_id]['establishment_id'] = (int) $row->establishment_id;
+            $result[(int) $row->program_id]['profile_ids'][]    = (int) $row->profile_id;
+        }
+
+        return $result;
+    }
+
+    public function detachManagers(int $programId, array $profileIds): void
+    {
+        Program::query()->whereKey($programId)->first()?->managers()->detach($profileIds);
+    }
+
+    public function findForAlertRegeneration(int $programId): ?Program
+    {
+        return Program::query()
+            ->with('targets', 'protocol.tasks.alerts', 'managers.role')
+            ->find($programId);
     }
 
     /**

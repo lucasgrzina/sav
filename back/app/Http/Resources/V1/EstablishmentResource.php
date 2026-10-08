@@ -20,6 +20,13 @@ class EstablishmentResource extends JsonResource
             'latitude'   => $this->latitude,
             'longitude'  => $this->longitude,
             'created_at' => $this->created_at?->toISOString(),
+            // Staff carries personal data (email, names): only serialized for actors with
+            // `clients.staff.read` (tenant vet / admin). Others (e.g. vet-assistant) get `staff_count` only.
+            'staff'       => $this->when(
+                $request->user()?->can('clients.staff.read') && $this->relationLoaded('staff'),
+                fn () => UserProfileResource::collection($this->staff),
+            ),
+            'staff_count' => $this->whenCounted('staff'),
         ];
     }
 }

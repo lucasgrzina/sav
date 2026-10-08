@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasGuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Establishment extends Model
 {
@@ -27,5 +28,10 @@ class Establishment extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function staff(): BelongsToMany
+    {
+        return $this->belongsToMany(UserProfile::class, 'establishment_user_profile')->withTimestamps();
     }
 }

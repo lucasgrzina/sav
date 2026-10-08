@@ -41,7 +41,7 @@ class EstablishmentHealthPlanServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent());
+        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent(), new \App\Services\EstablishmentService(new \App\Repositories\EstablishmentRepositoryEloquent(), new \App\Repositories\UserProfileRepositoryEloquent(), new \App\Repositories\ProgramRepositoryEloquent()));
 
         $this->vet = $this->createVet();
         $this->client = $this->createClient('AR');
@@ -158,22 +158,19 @@ class EstablishmentHealthPlanServiceTest extends TestCase
     {
         $plan = $this->service->create($this->basePayload(), $this->vet->id, null);
 
-        $this->assertEquals('2026-07-01', $plan->starts_on->toDateString());
-        $this->assertEquals('2027-06-30', $plan->ends_on->toDateString());
+        $this->assertEquals('2026-01-01', $plan->starts_on->toDateString());
+        $this->assertEquals('2026-12-31', $plan->ends_on->toDateString());
     }
 
-    public function test_create_computes_due_dates_relative_to_ganadero_year(): void
+    public function test_create_computes_due_dates_within_calendar_year(): void
     {
         $plan = $this->service->create($this->basePayload(), $this->vet->id, null);
 
         $dueDatesByMonth = $plan->activities->groupBy('month')->map(fn ($rows) => $rows->first()->due_date->toDateString());
 
-        // mes 1 (enero) < mes de inicio (julio) -> cae en el año calendario siguiente
-        $this->assertEquals('2027-01-01', $dueDatesByMonth[1]);
-        // mes 3 (marzo) < mes de inicio -> también año siguiente
-        $this->assertEquals('2027-03-01', $dueDatesByMonth[3]);
-        // mes 6 (junio) < mes de inicio -> también año siguiente
-        $this->assertEquals('2027-06-01', $dueDatesByMonth[6]);
+        $this->assertEquals('2026-01-01', $dueDatesByMonth[1]);
+        $this->assertEquals('2026-03-01', $dueDatesByMonth[3]);
+        $this->assertEquals('2026-06-01', $dueDatesByMonth[6]);
     }
 
     public function test_create_computes_due_dates_for_non_ar_country_within_same_calendar_year(): void
@@ -377,5 +374,52 @@ class EstablishmentHealthPlanServiceTest extends TestCase
 
         // El segundo intento (con otro perfil) no pisa quién confirmó primero.
         $this->assertEquals($profileA->id, $second->confirmed_by_profile_id);
+    }
+
+    private function createClientProfile(string $roleName): UserProfile
+    {
+        $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web'], ['guid' => Str::uuid()->toString(), 'type' => Role::TYPE_TENANT]);
+        $user = User::factory()->create(['guid' => Str::uuid()->toString()]);
+
+        return UserProfile::create([
+            'guid'                 => Str::uuid()->toString(),
+            'user_id'              => $user->id,
+            'authenticatable_type' => 'client',
+            'authenticatable_id'   => $this->client->id,
+            'role_id'              => $role->id,
+        ]);
+    }
+
+    public function test_confirm_activity_allows_client_owner_linked_to_the_establishment(): void
+    {
+        $plan = $this->service->create($this->basePayload(), $this->vet->id, null);
+        $activity = $plan->activities->first();
+        $profile = $this->createClientProfile('client-owner');
+        $this->establishment->staff()->attach($profile->id);
+
+        $confirmed = $this->service->confirmActivity($activity, $profile);
+
+        $this->assertNotNull($confirmed->confirmed_at);
+        $this->assertEquals($profile->id, $confirmed->confirmed_by_profile_id);
+    }
+
+    public function test_confirm_activity_rejects_client_owner_not_linked_to_the_establishment(): void
+    {
+        $plan = $this->service->create($this->basePayload(), $this->vet->id, null);
+        $activity = $plan->activities->first();
+        $profile = $this->createClientProfile('client-owner');
+
+        $this->expectException(EstablishmentHealthPlanActivityConfirmationNotAllowedException::class);
+
+        $this->service->confirmActivity($activity, $profile);
+    }
+
+    public function test_confirm_activity_vet_role_is_exempt_from_the_link_check(): void
+    {
+        $plan = $this->service->create($this->basePayload(), $this->vet->id, null);
+        $activity = $plan->activities->first();
+        $profile = $this->createProfile('vet'); // not linked to any establishment
+
+        $this->assertNotNull($this->service->confirmActivity($activity, $profile)->confirmed_at);
     }
 }

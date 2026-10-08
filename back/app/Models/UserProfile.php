@@ -6,6 +6,7 @@ use App\Traits\HasContacts;
 use App\Traits\HasGuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class UserProfile extends Model
@@ -33,5 +34,10 @@ class UserProfile extends Model
     public function authenticatable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function establishments(): BelongsToMany
+    {
+        return $this->belongsToMany(Establishment::class, 'establishment_user_profile')->withTimestamps();
     }
 }

@@ -38,7 +38,7 @@ class CancelHealthPlanMonthAlertsListenerTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent());
+        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent(), new \App\Services\EstablishmentService(new \App\Repositories\EstablishmentRepositoryEloquent(), new \App\Repositories\UserProfileRepositoryEloquent(), new \App\Repositories\ProgramRepositoryEloquent()));
         $this->vet = $this->createVet();
 
         $category = HealthPlanCategory::create(['guid' => Str::uuid()->toString(), 'name' => 'Categoria Test']);

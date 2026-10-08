@@ -7,6 +7,7 @@ use App\Contracts\Repositories\ProgramRepositoryInterface;
 use App\Events\ProgramCancelledEvent;
 use App\Events\ProgramCreatedEvent;
 use App\Events\ProgramTargetsChangedEvent;
+use App\Exceptions\ProgramManagerNotLinkedException;
 use App\Exceptions\ProgramMustHaveOneTargetException;
 use App\Exceptions\ProgramNotEditableException;
 use App\Models\Program;
@@ -43,9 +44,13 @@ class ProgramService
      * @param array $data {client_id, establishment_id, protocol_id (ints ya resueltos),
      *                     comments?, targets: [{target_date, animals?: [{id?: int, rp: string}]}],
      *                     manager_profile_ids: int[]}
+     *
+     * @throws ProgramManagerNotLinkedException si un manager de cliente no está vinculado al establecimiento
      */
     public function create(array $data, int $vetId): Program
     {
+        $this->assertClientManagersLinked($data['establishment_id'], $data['manager_profile_ids']);
+
         return DB::transaction(function () use ($data, $vetId) {
             $targets = $data['targets'];
             unset($data['targets']);
@@ -72,6 +77,7 @@ class ProgramService
     /**
      * @throws ProgramNotEditableException si el programa está cancelado
      * @throws ProgramMustHaveOneTargetException si el resultado final dejaría 0 targets
+     * @throws ProgramManagerNotLinkedException si un manager de cliente no está vinculado al establecimiento
      */
     public function update(Program $program, array $data): Program
     {
@@ -91,6 +97,8 @@ class ProgramService
             throw new ProgramMustHaveOneTargetException();
         }
 
+        $this->assertClientManagersLinked($data['establishment_id'], $data['manager_profile_ids']);
+
         $managerProfileIds = $data['manager_profile_ids'];
         unset($data['manager_profile_ids']);
 
@@ -107,6 +115,19 @@ class ProgramService
 
             return $program;
         });
+    }
+
+    /**
+     * Client-type managers must be linked to the program's establishment; vet-type managers are exempt.
+     *
+     * @param int[] $managerProfileIds
+     * @throws ProgramManagerNotLinkedException
+     */
+    private function assertClientManagersLinked(int $establishmentId, array $managerProfileIds): void
+    {
+        if ($this->programRepository->unlinkedClientManagerIds($establishmentId, $managerProfileIds) !== []) {
+            throw new ProgramManagerNotLinkedException();
+        }
     }
 
     /** Marca cancelled_at = now(). No borra targets/animals (trazabilidad). */
@@ -193,6 +214,9 @@ class ProgramService
      * calculando fechas concretas y mapeando receptores por rol. Es una vista de solo lectura/
      * simulación: no persiste nada, no genera Alert ni dispara notificaciones reales.
      * Se invoca únicamente desde findByGuidForVet (detalle), nunca desde paginateForVet (listado).
+     * `occurs_at` se devuelve deliberadamente como hora LOCAL del vet (sin zona): es lo que el
+     * usuario configuró y espera ver. Solo el Alert persistido se guarda en UTC (ver
+     * GenerateProgramTaskDueAlertsListener), así el contrato del frontend no cambia.
      */
     private function projectTargetTasks(Program $program): void
     {

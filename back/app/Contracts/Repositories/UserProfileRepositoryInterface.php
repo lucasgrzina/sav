@@ -24,9 +24,11 @@ interface UserProfileRepositoryInterface
     public function listForClient(Client $client): Collection;
 
     /**
-     * Lista los UserProfiles con role 'client-owner' de un Client dado.
+     * Finds the client-type profiles of the given client matching the guids (scoped by client).
+     *
+     * @param string[] $guids
      */
-    public function listOwnersForClient(Client $client): Collection;
+    public function findManyByGuidsForClient(array $guids, Client $client): Collection;
 
     /**
      * Busca un UserProfile de tipo 'client' para un User y Client específicos.

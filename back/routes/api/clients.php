@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\V1\AdminClientController;
 use App\Http\Controllers\V1\ClientController;
-use App\Http\Controllers\V1\ClientOwnerController;
 use App\Http\Controllers\V1\ClientStaffController;
 use App\Http\Controllers\V1\ContactController;
 use App\Http\Controllers\V1\EstablishmentController;
@@ -27,6 +26,7 @@ Route::prefix('v1/admin/clients')->middleware('auth:sanctum')->group(function ()
     Route::get('/{guid}/establishments',          [AdminClientController::class, 'establishmentIndex'])  ->middleware('can:establishments.read');
     Route::post('/{guid}/establishments',         [AdminClientController::class, 'establishmentStore'])  ->middleware('can:establishments.create');
     Route::put('/{guid}/establishments/{estGuid}',[AdminClientController::class, 'establishmentUpdate']) ->middleware('can:establishments.update');
+    Route::put('/{guid}/establishments/{estGuid}/staff',[AdminClientController::class, 'establishmentSyncStaff'])->middleware('can:establishments.update');
     Route::delete('/{guid}/establishments/{estGuid}',[AdminClientController::class, 'establishmentDestroy'])->middleware('can:establishments.delete');
 
     // Staff de client (panel admin)
@@ -55,12 +55,6 @@ Route::prefix('v1/vets/{vet}')->middleware(['auth:sanctum', 'vet.tenant'])->grou
         // Vincular client existente al tenant
         Route::post('/{guid}/link', [ClientController::class, 'link'])->middleware('can:clients.create');
 
-        // Owners de un client
-        Route::prefix('/{guid}/owners')->group(function () {
-            Route::get('/',  [ClientOwnerController::class, 'index'])->middleware('can:clients.owners.read');
-            Route::post('/', [ClientOwnerController::class, 'store'])->middleware('can:clients.owners.create');
-        });
-
         // Contactos de un client
         Route::prefix('/{client}/contacts')->group(function () {
             Route::get('/',          [ContactController::class, 'index'])->middleware('can:clients.read');
@@ -74,6 +68,9 @@ Route::prefix('v1/vets/{vet}')->middleware(['auth:sanctum', 'vet.tenant'])->grou
             Route::get('/',          [EstablishmentController::class, 'index'])->middleware('can:establishments.read');
             Route::post('/',         [EstablishmentController::class, 'store'])->middleware('can:establishments.create');
             Route::put('/{guid}',    [EstablishmentController::class, 'update'])->middleware('can:establishments.update');
+            Route::put('/{guid}/staff', [EstablishmentController::class, 'syncStaff'])->middleware('can:establishments.update');
+            // Minimal data ({guid, name, role}) for the program form.
+            Route::get('/{guid}/manager-options', [EstablishmentController::class, 'managerOptions'])->middleware('can:programs.managers.read');
             Route::delete('/{guid}', [EstablishmentController::class, 'destroy'])->middleware('can:establishments.delete');
         });
 

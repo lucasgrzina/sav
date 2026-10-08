@@ -20,7 +20,10 @@ use Illuminate\Support\Str;
 
 class EstablishmentHealthPlanService
 {
-    public function __construct(private EstablishmentHealthPlanRepositoryInterface $repository) {}
+    public function __construct(
+        private EstablishmentHealthPlanRepositoryInterface $repository,
+        private EstablishmentService $establishmentService,
+    ) {}
 
     public function paginateForVet(int $vetId, array $filters, int $perPage): LengthAwarePaginator
     {
@@ -120,6 +123,15 @@ class EstablishmentHealthPlanService
     {
         if (!in_array($profile->role->name, EstablishmentHealthPlanActivity::CONFIRM_ROLES, true)) {
             throw new EstablishmentHealthPlanActivityConfirmationNotAllowedException();
+        }
+
+        // Client staff may only confirm activities of establishments they are linked to.
+        if (str_starts_with($profile->role->name, 'client-')) {
+            $activity->loadMissing('plan.establishment');
+
+            if (!$this->establishmentService->isProfileLinked($activity->plan->establishment, $profile)) {
+                throw new EstablishmentHealthPlanActivityConfirmationNotAllowedException();
+            }
         }
 
         if ($activity->confirmed_at !== null) {

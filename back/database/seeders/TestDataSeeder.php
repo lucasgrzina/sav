@@ -19,9 +19,9 @@ use Illuminate\Support\Str;
 /**
  * Seeder de datos de prueba para entorno de desarrollo.
  *
- * A diferencia de un seeder con datos genéricos ("Veterinaria Test 1",
+ * A diferencia de un seeder con datos genéricos ("Empresa Test 1",
  * "Cliente 1-2"), este arma un dataset verosímil del dominio ganadero
- * argentino: consultoras veterinarias con matrícula y CUIT válido, clientes
+ * argentino: consultoras empresas con matrícula y CUIT válido, clientes
  * agropecuarios con domicilio real de partido/departamento, y establecimientos
  * con RENSPA y coordenadas geográficas coherentes con su localidad.
  *
@@ -61,18 +61,18 @@ class TestDataSeeder extends Seeder
     private const DEFAULT_ALERT_WHATSAPP = '5491134290838';
 
     /**
-     * Dataset de veterinarias, sus clientes, establecimientos y staff.
+     * Dataset de empresas, sus clientes, establecimientos y staff.
      *
      * `tax_id_base` son los 10 primeros dígitos del CUIT; el dígito
      * verificador se calcula en {@see cuit()}.
      */
     private const VETS = [
         [
-            'name'                => 'Veterinaria SAV',
-            'slug'                => 'veterinaria-sav',
+            'name'                => 'Empresa SAV',
+            'slug'                => 'empresa-sav',
             'tax_id_base'         => '3071094825',
             'registration_number' => 'MP 4821',
-            'pdf_title'           => 'Veterinaria SAV',
+            'pdf_title'           => 'Empresa SAV',
             'pdf_subtitle'        => 'Reproducción y sanidad bovina · Cañuelas, Buenos Aires',
             'domain'              => 'imtesa.com.ar',
             'staff'               => [
@@ -352,16 +352,18 @@ class TestDataSeeder extends Seeder
 
                 $this->createAlertContacts($client, "administracion@{$clientData['domain']}", 'Administración');
 
+                $establishments = [];
                 foreach ($clientData['establishments'] as $establishmentData) {
-                    Establishment::create([
+                    $establishments[] = Establishment::create([
                         'guid'      => Str::uuid()->toString(),
                         'client_id' => $client->id,
                         ...$establishmentData,
                     ]);
                 }
 
+                $clientProfileIds = [];
                 foreach ($clientData['staff'] as $roleName => [$firstName, $lastName, $mailbox]) {
-                    $this->createTenantUser(
+                    $clientProfileIds[] = $this->createTenantUser(
                         $client,
                         'client',
                         $roleName,
@@ -369,7 +371,12 @@ class TestDataSeeder extends Seeder
                         $lastName,
                         "{$mailbox}@{$clientData['domain']}",
                         $clientData['name'],
-                    );
+                    )->id;
+                }
+
+                // Link all client staff to every establishment of the client (same result as the backfill migration).
+                foreach ($establishments as $establishment) {
+                    $establishment->staff()->syncWithoutDetaching($clientProfileIds);
                 }
             }
         }
@@ -388,7 +395,7 @@ class TestDataSeeder extends Seeder
         string $lastName,
         string $email,
         string $tenantName,
-    ): void {
+    ): UserProfile {
         $user = User::factory()->create([
             'guid'       => Str::uuid()->toString(),
             'first_name' => $firstName,
@@ -408,6 +415,8 @@ class TestDataSeeder extends Seeder
         $this->createAlertContacts($profile, $email, 'Personal');
 
         $this->credentials[] = [$tenantName, $roleName, $email];
+
+        return $profile;
     }
 
     /**
