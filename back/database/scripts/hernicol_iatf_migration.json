@@ -19,7 +19,7 @@
     {
       "technique": "IATF",
       "subtechnique": "Vacas - Carne",
-      "name": "Rodeo 2° Servicio",
+      "name": "Rodeo Vaca",
       "color": "#ffc000",
       "vet_id": null,
       "tasks": [
@@ -40,7 +40,7 @@
     {
       "technique": "IATF",
       "subtechnique": "Vacas - Carne",
-      "name": "Rodeo General",
+      "name": "Vaquillona primer parto",
       "color": "#92d050",
       "vet_id": null,
       "tasks": [
