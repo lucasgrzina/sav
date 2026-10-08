@@ -4,6 +4,7 @@ import type { ContactFormItem } from '@/modules/vets/types/vet.types'
 
 const props = defineProps<{
   modelValue: ContactFormItem[]
+  fieldErrors?: Record<string, string> | null
 }>()
 
 const emit = defineEmits<{
@@ -65,6 +66,12 @@ function tagLabel(type: ContactFormItem['type']): string {
   return 'Teléfono'
 }
 
+function rowError(idx: number): string | null {
+  const errs = props.fieldErrors
+  if (!errs) return null
+  return errs[`contacts.${idx}.value`] ?? errs[`contacts.${idx}.type`] ?? errs[`contacts.${idx}.label`] ?? null
+}
+
 function valuePlaceholder(type: ContactFormItem['type']): string {
   if (type === 'email') return 'correo@ejemplo.com'
   return '+5491112345678'
@@ -89,6 +96,7 @@ function valuePlaceholder(type: ContactFormItem['type']): string {
         <a-input
           v-model:value="contact.value"
           :placeholder="valuePlaceholder(contact.type)"
+          :status="rowError(idx) ? 'error' : undefined"
           class="contact-value-input"
         />
 
@@ -116,6 +124,8 @@ function valuePlaceholder(type: ContactFormItem['type']): string {
         >
           Quitar
         </a-button>
+
+        <div v-if="rowError(idx)" class="contact-error">{{ rowError(idx) }}</div>
       </div>
     </div>
 
@@ -170,6 +180,12 @@ function valuePlaceholder(type: ContactFormItem['type']): string {
 
 .contact-remove-btn {
   flex-shrink: 0;
+}
+
+.contact-error {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--ant-color-error, #ff4d4f);
 }
 
 .contacts-empty {

@@ -1,4 +1,4 @@
-import { computed, toValue } from 'vue'
+import { computed, ref, toValue } from 'vue'
 import type { MaybeRef } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { updateVetStaffApi } from '../api/vet-staff.api'
@@ -11,9 +11,16 @@ export function useUpdateVetStaff(vetGuid: MaybeRef<string>) {
   const { success, error } = useNotification()
   const vGuid = computed(() => toValue(vetGuid))
 
+  const fieldErrors = ref<Record<string, string> | null>(null)
+  const generalError = ref<string | null>(null)
+
   const mutation = useMutation({
     mutationFn: ({ profileGuid, payload }: { profileGuid: string; payload: UpdateVetStaffPayload }) =>
       updateVetStaffApi(vGuid.value, profileGuid, payload),
+    onMutate: () => {
+      fieldErrors.value = null
+      generalError.value = null
+    },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['vet-staff', vGuid.value] })
       queryClient.invalidateQueries({ queryKey: ['vet-staff-member', vGuid.value, vars.profileGuid] })
@@ -21,9 +28,17 @@ export function useUpdateVetStaff(vetGuid: MaybeRef<string>) {
     },
     onError: (err: unknown) => {
       const apiError = parseApiError(err)
-      error(apiError.message ?? 'Error al actualizar el perfil.')
+      fieldErrors.value = apiError.fieldErrors ?? null
+      generalError.value = apiError.fieldErrors ? null : (apiError.message ?? 'Error al actualizar el perfil.')
+      if (apiError.message || !apiError.fieldErrors) error(apiError.message ?? 'Error al actualizar el perfil.')
     },
   })
 
-  return mutation
+  function resetErrors() {
+    fieldErrors.value = null
+    generalError.value = null
+    mutation.reset()
+  }
+
+  return { ...mutation, fieldErrors, generalError, resetErrors }
 }

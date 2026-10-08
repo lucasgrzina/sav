@@ -195,7 +195,7 @@ const onSubmit = handleSubmit((values) => {
       title="Contactos del cliente"
       subtitle="Emails y teléfonos de contacto. El contacto principal es el que se muestra por defecto."
     >
-      <ContactsInput v-model="localContacts" />
+      <ContactsInput v-model="localContacts" :field-errors="fieldErrors" />
     </FormSection>
 
     <FormSection title="Dirección" subtitle="Datos opcionales de ubicación.">

@@ -19,7 +19,7 @@ const { data: member, isLoading, isError } = useAdminClientStaffMember(
 )
 
 const { clientRoles, isLoading: isLoadingRoles } = useClientRoles()
-const { mutate, isPending } = useAdminUpdateClientStaff(computed(() => props.guid))
+const { mutate, isPending, fieldErrors } = useAdminUpdateClientStaff(computed(() => props.guid))
 
 function handleSubmit(payload: UpdateClientStaffPayload): void {
   mutate(
@@ -61,6 +61,7 @@ function handleSubmit(payload: UpdateClientStaffPayload): void {
       :client-roles="clientRoles"
       :is-loading-roles="isLoadingRoles"
       :is-pending="isPending"
+      :field-errors="fieldErrors"
       @submit="handleSubmit"
     />
   </div>

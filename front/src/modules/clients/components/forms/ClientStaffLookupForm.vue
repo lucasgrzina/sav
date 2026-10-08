@@ -51,6 +51,7 @@ const {
 const {
   mutateAsync: assignAsync,
   isPending: isAssigning,
+  fieldErrors: assignFieldErrors,
   generalError: assignError,
 } = useAssignClientStaff()
 
@@ -176,7 +177,7 @@ async function handleCreate(values: ClientStaffCreatePayload): Promise<void> {
       <ClientStaffAssignForm
         :user="state.user"
         :loading="isAssigning"
-        :field-errors="null"
+        :field-errors="assignFieldErrors"
         @submit="handleAssign"
         @cancel="resetSearch"
       />

@@ -16,7 +16,7 @@ const profileGuid = computed(() => route.params.profileGuid as string)
 
 const { data: member, isLoading, isError } = useVetStaffMember(vetGuid, profileGuid)
 const { vetRoles, isLoading: isLoadingRoles } = useVetRoles()
-const { mutate, isPending } = useUpdateVetStaff(vetGuid)
+const { mutate, isPending, fieldErrors } = useUpdateVetStaff(vetGuid)
 
 function handleSubmit(payload: UpdateVetStaffPayload | UpdateMyVetProfilePayload): void {
   // Esta página siempre usa VetStaffEditForm con origin="manage", así que el
@@ -63,6 +63,7 @@ function handleSubmit(payload: UpdateVetStaffPayload | UpdateMyVetProfilePayload
       :vet-roles="vetRoles"
       :is-loading-roles="isLoadingRoles"
       :is-pending="isPending"
+      :field-errors="fieldErrors"
       @submit="handleSubmit"
     />
   </div>

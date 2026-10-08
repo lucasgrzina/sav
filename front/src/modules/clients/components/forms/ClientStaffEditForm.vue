@@ -9,6 +9,7 @@ const props = defineProps<{
   clientRoles: ClientStaffRoleItem[]
   isLoadingRoles: boolean
   isPending: boolean
+  fieldErrors?: Record<string, string> | null
 }>()
 
 const emit = defineEmits<{
@@ -83,7 +84,7 @@ function onSubmit(): void {
     </FormSection>
 
     <FormSection title="Contactos" subtitle="Teléfonos y emails de contacto de este usuario en el cliente.">
-      <ContactsInput v-model="localContacts" />
+      <ContactsInput v-model="localContacts" :field-errors="fieldErrors" />
     </FormSection>
 
     <FormFooter save-label="Guardar cambios" :loading="isPending" />

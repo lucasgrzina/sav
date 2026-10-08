@@ -15,6 +15,7 @@ const props = withDefaults(
     origin: 'manage' | 'self'
     member: VetStaffItem
     isPending: boolean
+    fieldErrors?: Record<string, string> | null
     vetRoles?: VetStaffRoleItem[]
     isLoadingRoles?: boolean
   }>(),
@@ -110,7 +111,7 @@ function onSubmit(): void {
 
     <!-- manage: rol editable via select -->
     <template v-if="origin === 'manage'">
-      <FormSection title="Rol en esta veterinaria">
+      <FormSection title="Rol en esta empresa">
         <a-form-item label="Rol">
           <a-select
             v-model:value="selectedRoleGuid"
@@ -132,7 +133,7 @@ function onSubmit(): void {
 
     <!-- self: rol deshabilitado (solo lectura) -->
     <template v-else>
-      <FormSection title="Rol en esta veterinaria">
+      <FormSection title="Rol en esta empresa">
         <a-form-item label="Rol">
           <a-input :value="getRoleLabel(member.role.name)" disabled style="max-width: 320px" />
         </a-form-item>
@@ -141,9 +142,9 @@ function onSubmit(): void {
 
     <FormSection
       title="Contactos"
-      subtitle="Teléfonos y emails de contacto en esta veterinaria."
+      subtitle="Teléfonos y emails de contacto en esta empresa."
     >
-      <ContactsInput v-model="localContacts" />
+      <ContactsInput v-model="localContacts" :field-errors="fieldErrors" />
     </FormSection>
 
     <FormFooter save-label="Guardar cambios" :loading="isPending" />

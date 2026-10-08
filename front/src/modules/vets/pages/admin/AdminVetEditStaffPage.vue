@@ -19,7 +19,7 @@ const { data: member, isLoading, isError } = useAdminVetStaffMember(
 )
 
 const { vetRoles, isLoading: isLoadingRoles } = useVetRoles()
-const { mutate, isPending } = useAdminUpdateVetStaff(computed(() => props.guid))
+const { mutate, isPending, fieldErrors } = useAdminUpdateVetStaff(computed(() => props.guid))
 
 function handleSubmit(payload: UpdateVetStaffPayload | UpdateMyVetProfilePayload): void {
   // Esta página siempre usa VetStaffEditForm con origin="manage", así que el
@@ -38,7 +38,7 @@ function handleSubmit(payload: UpdateVetStaffPayload | UpdateMyVetProfilePayload
     <div class="avesp-header">
       <BaseButton variant="tertiary" @click="router.push(`/admin/vets/${guid}`)">
         <template #icon><ArrowLeftOutlined /></template>
-        Volver a la veterinaria
+        Volver a la empresa
       </BaseButton>
     </div>
 
@@ -66,6 +66,7 @@ function handleSubmit(payload: UpdateVetStaffPayload | UpdateMyVetProfilePayload
       :vet-roles="vetRoles"
       :is-loading-roles="isLoadingRoles"
       :is-pending="isPending"
+      :field-errors="fieldErrors"
       @submit="handleSubmit"
     />
   </div>

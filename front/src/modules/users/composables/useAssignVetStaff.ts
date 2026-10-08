@@ -28,7 +28,7 @@ export function useAssignVetStaff() {
     onError: (err: unknown) => {
       const apiError     = parseApiError(err)
       fieldErrors.value  = apiError.fieldErrors
-      generalError.value = apiError.message ?? 'Error al incorporar al personal.'
+      generalError.value = apiError.fieldErrors ? null : (apiError.message ?? 'Error al incorporar al personal.')
       if (apiError.message) error('Error al incorporar al personal')
     },
   })

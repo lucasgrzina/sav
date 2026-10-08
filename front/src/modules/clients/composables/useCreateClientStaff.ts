@@ -29,7 +29,7 @@ export function useCreateClientStaff() {
     onError: (err: unknown) => {
       const apiError     = parseApiError(err)
       fieldErrors.value  = apiError.fieldErrors
-      generalError.value = apiError.message ?? 'Error al crear el usuario.'
+      generalError.value = apiError.fieldErrors ? null : (apiError.message ?? 'Error al crear el usuario.')
       if (apiError.message) error('Error al crear el usuario')
     },
   })
