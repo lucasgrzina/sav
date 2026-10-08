@@ -118,20 +118,8 @@ export const establishmentSchema = z.object({
     .optional(),
 })
 
-export const ownerCreateSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'El email es requerido')
-    .email('Formato de email inválido')
-    .max(255, 'Máximo 255 caracteres'),
-  first_name: z
-    .string()
-    .min(1, 'El nombre es requerido')
-    .max(100, 'Máximo 100 caracteres'),
-  last_name: z
-    .string()
-    .min(1, 'El apellido es requerido')
-    .max(100, 'Máximo 100 caracteres'),
+export const establishmentStaffSchema = z.object({
+  user_profile_guids: z.array(z.string().uuid('Personal inválido')),
 })
 
 export const contactSchema = z.object({
@@ -154,5 +142,5 @@ export const contactSchema = z.object({
 export type ClientCreateForm  = z.infer<typeof clientCreateSchema>
 export type ClientUpdateForm  = z.infer<typeof clientUpdateSchema>
 export type EstablishmentForm = z.infer<typeof establishmentSchema>
-export type OwnerCreateForm   = z.infer<typeof ownerCreateSchema>
+export type EstablishmentStaffForm = z.infer<typeof establishmentStaffSchema>
 export type ContactForm       = z.infer<typeof contactSchema>

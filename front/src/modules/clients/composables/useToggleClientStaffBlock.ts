@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { PROGRAM_MANAGER_OPTIONS_KEY } from '@/modules/programs/composables/useClientManagerOptions'
 import { toggleBlockClientStaffApi } from '../api/client-staff.api'
 import { useNotification } from '@/core/composables/useNotification'
 import { useConfirm } from '@/core/composables/useConfirm'
@@ -14,6 +15,10 @@ export function useToggleClientStaffBlock(vetGuid: string, clientGuid: string) {
     mutationFn: (profileGuid: string) => toggleBlockClientStaffApi(vetGuid, clientGuid, profileGuid),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['client-staff', vetGuid, clientGuid] })
+      // Staff changes affect the staff shown per establishment
+      queryClient.invalidateQueries({ queryKey: ['client-establishments', vetGuid, clientGuid] })
+      // Program form: client manager options depend on linked/unblocked staff
+      queryClient.invalidateQueries({ queryKey: [PROGRAM_MANAGER_OPTIONS_KEY, vetGuid, clientGuid] })
       const msg = data.blocked_at
         ? 'Acceso bloqueado para este cliente.'
         : 'Acceso desbloqueado correctamente.'

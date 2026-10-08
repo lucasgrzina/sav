@@ -30,11 +30,18 @@ export interface ClientStaffRoleItem {
   name: ClientStaffRoleName
 }
 
+export interface ClientStaffEstablishmentRef {
+  guid: string
+  name: string
+}
+
 export interface ClientStaffItem {
   guid: string
   user: ClientStaffUserItem
   role: ClientStaffRoleItem
   contacts: ContactItem[]
+  // Presente en el listado de staff del cliente (whenLoaded en el backend)
+  establishments?: ClientStaffEstablishmentRef[]
   blocked_at: string | null
   created_at: string
 }
@@ -96,6 +103,9 @@ export interface ContactItem {
   use_for_alerts: boolean
 }
 
+// Staff embedded in an establishment: personal data without contacts nor the inverse establishments list
+export type EstablishmentStaffItem = Omit<ClientStaffItem, 'contacts' | 'establishments'>
+
 export interface EstablishmentItem {
   guid: string
   name: string
@@ -107,22 +117,10 @@ export interface EstablishmentItem {
   latitude: number | null
   longitude: number | null
   created_at: string
-}
-
-export interface OwnerItem {
-  guid: string
-  user: {
-    guid: string
-    name: string
-    first_name: string
-    last_name: string
-    email: string
-  }
-  role: {
-    guid: string
-    name: string
-  }
-  created_at: string
+  // Personal de cliente vinculado. `staff` (datos personales) solo viene si el actor tiene
+  // `clients.staff.read`; sin ese permiso el backend devuelve solo `staff_count`.
+  staff?: EstablishmentStaffItem[]
+  staff_count?: number
 }
 
 // --- Client principal ---
@@ -200,6 +198,11 @@ export interface EstablishmentCreatePayload {
 
 export type EstablishmentUpdatePayload = Partial<EstablishmentCreatePayload>
 
+// Sincronización total: estado final deseado del personal vinculado ([] desvincula a todos)
+export interface EstablishmentStaffSyncPayload {
+  user_profile_guids: string[]
+}
+
 export interface ContactCreatePayload {
   type: string
   value: string
@@ -209,12 +212,6 @@ export interface ContactCreatePayload {
 }
 
 export type ContactUpdatePayload = Partial<ContactCreatePayload>
-
-export interface OwnerCreatePayload {
-  email: string
-  first_name: string
-  last_name: string
-}
 
 // --- Resultado del lookup ---
 

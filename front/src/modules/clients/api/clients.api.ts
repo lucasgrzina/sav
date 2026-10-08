@@ -9,11 +9,10 @@ import type {
   EstablishmentItem,
   EstablishmentCreatePayload,
   EstablishmentUpdatePayload,
+  EstablishmentStaffSyncPayload,
   ContactItem,
   ContactCreatePayload,
   ContactUpdatePayload,
-  OwnerItem,
-  OwnerCreatePayload,
   LookupResult,
 } from '../types/client.types'
 
@@ -115,6 +114,19 @@ export async function updateEstablishmentApi(
   return res.data
 }
 
+export async function syncEstablishmentStaffApi(
+  vetGuid: string,
+  clientGuid: string,
+  estGuid: string,
+  payload: EstablishmentStaffSyncPayload,
+): Promise<EstablishmentItem> {
+  const res = await http.put<EstablishmentItem>(
+    `/v1/vets/${vetGuid}/clients/${clientGuid}/establishments/${estGuid}/staff`,
+    payload,
+  )
+  return res.data
+}
+
 export async function deleteEstablishmentApi(
   vetGuid: string,
   clientGuid: string,
@@ -152,6 +164,18 @@ export async function adminUpdateEstablishmentApi(
 ): Promise<EstablishmentItem> {
   const res = await http.put<EstablishmentItem>(
     `/v1/admin/clients/${clientGuid}/establishments/${estGuid}`,
+    payload,
+  )
+  return res.data
+}
+
+export async function adminSyncEstablishmentStaffApi(
+  clientGuid: string,
+  estGuid: string,
+  payload: EstablishmentStaffSyncPayload,
+): Promise<EstablishmentItem> {
+  const res = await http.put<EstablishmentItem>(
+    `/v1/admin/clients/${clientGuid}/establishments/${estGuid}/staff`,
     payload,
   )
   return res.data
@@ -207,28 +231,4 @@ export async function deleteContactApi(
   contactGuid: string,
 ): Promise<void> {
   await http.delete(`/v1/vets/${vetGuid}/clients/${clientGuid}/contacts/${contactGuid}`)
-}
-
-// --- Owners ---
-
-export async function listOwnersApi(
-  vetGuid: string,
-  clientGuid: string,
-): Promise<OwnerItem[]> {
-  const res = await http.get<OwnerItem[]>(
-    `/v1/vets/${vetGuid}/clients/${clientGuid}/owners`,
-  )
-  return res.data
-}
-
-export async function createOwnerApi(
-  vetGuid: string,
-  clientGuid: string,
-  payload: OwnerCreatePayload,
-): Promise<OwnerItem> {
-  const res = await http.post<OwnerItem>(
-    `/v1/vets/${vetGuid}/clients/${clientGuid}/owners`,
-    payload,
-  )
-  return res.data
 }

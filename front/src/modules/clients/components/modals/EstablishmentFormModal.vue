@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { establishmentSchema } from '../../validators/client.validator'
 import { useCreateEstablishment } from '../../composables/useCreateEstablishment'
 import { useUpdateEstablishment } from '../../composables/useUpdateEstablishment'
+import { useSyncEstablishmentStaff } from '../../composables/useSyncEstablishmentStaff'
+import { useClientStaff } from '../../composables/useClientStaff'
+import EstablishmentStaffField from '../forms/EstablishmentStaffField.vue'
+import { haveSameGuids } from '../../utils/establishment-staff'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
+import { usePermission } from '@/core/composables/usePermissions'
 import type { EstablishmentItem } from '../../types/client.types'
 import type { EstablishmentForm } from '../../validators/client.validator'
 
@@ -35,8 +41,20 @@ const [zip_code, zipCodeAttrs]  = defineField('zip_code')
 
 const createMutation = useCreateEstablishment()
 const updateMutation = useUpdateEstablishment()
+const syncStaffMutation = useSyncEstablishmentStaff()
 
-const isPending  = props.mode === 'create' ? createMutation.isPending : updateMutation.isPending
+const { can } = usePermission()
+const canManageStaff = computed(() => can('establishments.update'))
+
+const route = useRoute()
+const vetGuid = computed(() => route.params.vetGuid as string)
+const { data: clientStaff, isLoading: isLoadingStaff } = useClientStaff(vetGuid, computed(() => props.clientGuid))
+
+// Linked staff is not part of the establishment payload: it is synced in a second step.
+const staffGuids   = ref<string[]>([])
+const initialStaff = ref<string[]>([])
+
+const isPending  = computed(() => createMutation.isPending.value || updateMutation.isPending.value || syncStaffMutation.isPending.value)
 const fieldErrors = props.mode === 'create' ? createMutation.fieldErrors : updateMutation.fieldErrors
 
 watch(() => props.initial, (vals) => {
@@ -49,6 +67,12 @@ watch(() => props.initial, (vals) => {
       state:    vals.state ?? null,
       zip_code: vals.zip_code ?? null,
     })
+    initialStaff.value = (vals.staff ?? []).map((member) => member.guid)
+    staffGuids.value   = [...initialStaff.value]
+  } else if (props.mode === 'create') {
+    // "New establishment" must not inherit the staff selection of a previous one
+    initialStaff.value = []
+    staffGuids.value   = []
   }
 }, { immediate: true, deep: true })
 
@@ -56,34 +80,65 @@ watch(fieldErrors, (errs) => {
   setErrors(errs ?? {})
 })
 
+// Second step: only when the user can manage staff and the selection actually changed.
+// Returns false when the sync failed (the establishment itself is already saved).
+async function syncStaffIfNeeded(estGuid: string): Promise<boolean> {
+  if (!canManageStaff.value) return true
+  if (haveSameGuids(initialStaff.value, staffGuids.value)) return true
+  try {
+    await syncStaffMutation.mutateAsync({
+      clientGuid: props.clientGuid,
+      estGuid,
+      payload: { user_profile_guids: staffGuids.value },
+    })
+    initialStaff.value = [...staffGuids.value]
+    return true
+  } catch {
+    // The mutation composable already notified the error
+    return false
+  }
+}
+
+function closeAndReset(): void {
+  resetForm()
+  syncStaffMutation.resetErrors()
+  staffGuids.value   = []
+  initialStaff.value = []
+  isOpen.value       = false
+  emit('success')
+}
+
 const onSubmit = handleSubmit(async (values) => {
   if (props.mode === 'create') {
-    await createMutation.mutateAsync(
-      { clientGuid: props.clientGuid, payload: values },
-      {
-        onSuccess: () => {
-          resetForm()
-          isOpen.value = false
-          emit('success')
-        },
-      },
-    )
+    let created: EstablishmentItem
+    try {
+      created = await createMutation.mutateAsync({ clientGuid: props.clientGuid, payload: values })
+    } catch {
+      return
+    }
+    // The establishment exists now: on sync failure close anyway, retry from edit mode
+    // (re-submitting create would duplicate it).
+    await syncStaffIfNeeded(created.guid)
+    closeAndReset()
   } else if (props.initial?.guid) {
-    await updateMutation.mutateAsync(
-      { clientGuid: props.clientGuid, estGuid: props.initial.guid, payload: values },
-      {
-        onSuccess: () => {
-          isOpen.value = false
-          emit('success')
-        },
-      },
-    )
+    try {
+      await updateMutation.mutateAsync({ clientGuid: props.clientGuid, estGuid: props.initial.guid, payload: values })
+    } catch {
+      return
+    }
+    const synced = await syncStaffIfNeeded(props.initial.guid)
+    if (!synced) return // keep the modal open so the user can retry the link
+    initialStaff.value = [...staffGuids.value]
+    isOpen.value = false
+    emit('success')
   }
 })
 
 function handleCancel(): void {
   isOpen.value = false
   resetForm()
+  syncStaffMutation.resetErrors()
+  staffGuids.value = [...initialStaff.value]
 }
 </script>
 
@@ -168,6 +223,17 @@ function handleCancel(): void {
           </a-form-item>
         </a-col>
       </a-row>
+
+      <PermissionGuard permission="establishments.update">
+        <EstablishmentStaffField
+          v-model="staffGuids"
+          :staff-options="clientStaff ?? []"
+          :initial-guids="initialStaff"
+          :loading="isLoadingStaff"
+          :error="syncStaffMutation.generalError.value ?? ''"
+          @change="syncStaffMutation.resetErrors()"
+        />
+      </PermissionGuard>
     </a-form>
 
     <template #footer>

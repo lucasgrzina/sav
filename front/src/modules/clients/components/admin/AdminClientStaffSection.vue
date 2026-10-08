@@ -23,6 +23,7 @@ function goToEdit(member: ClientStaffItem): void {
 const columns = [
   { title: 'Nombre / Email', key: 'user',       dataIndex: 'user' },
   { title: 'Rol',            key: 'role' },
+  { title: 'Establecimientos', key: 'establishments' },
   { title: 'Alta',           key: 'created_at' },
   { title: 'Acciones',       key: 'actions', width: 110 },
 ]
@@ -41,7 +42,7 @@ const columns = [
       :data-source="staff ?? []"
       :loading="isLoading || isRemoving"
       row-key="guid"
-      :scroll="{ x: 600 }"
+      :scroll="{ x: 800 }"
       :pagination="false"
     >
       <template #bodyCell="{ column, record }">
@@ -54,6 +55,13 @@ const columns = [
 
         <template v-else-if="column.key === 'role'">
           <a-tag>{{ getRoleLabel(record.role.name) }}</a-tag>
+        </template>
+
+        <template v-else-if="column.key === 'establishments'">
+          <div v-if="record.establishments?.length" class="acss-chips">
+            <a-tag v-for="est in record.establishments" :key="est.guid">{{ est.name }}</a-tag>
+          </div>
+          <span v-else class="acss-muted">Sin establecimientos</span>
         </template>
 
         <template v-else-if="column.key === 'created_at'">
@@ -99,6 +107,8 @@ const columns = [
   flex-direction: column;
   gap: 2px;
 }
+.acss-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.acss-muted { font-style: italic; color: var(--dt-muted, #6B8CAE); }
 .acss-name  { font-weight: 600; color: var(--dt-title, #fff); }
 .acss-email { font-family: monospace; font-size: 12px; color: var(--dt-muted, #6B8CAE); }
 </style>

@@ -6,16 +6,18 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import ProgramClientSection from '../../components/tenant/form-sections/ProgramClientSection.vue'
+import ProgramManagersSection from '../../components/tenant/form-sections/ProgramManagersSection.vue'
 import ProgramTechniqueSection from '../../components/tenant/form-sections/ProgramTechniqueSection.vue'
 import ProgramGroupsSection from '../../components/tenant/form-sections/ProgramGroupsSection.vue'
 import ProgramOtherDataSection from '../../components/tenant/form-sections/ProgramOtherDataSection.vue'
 import { useClients } from '@/modules/clients/composables/useClients'
 import { useClientEstablishments } from '@/modules/clients/composables/useClientEstablishments'
 import { useVetStaff } from '@/modules/vets/composables/useVetStaff'
-import { useClientStaff } from '@/modules/clients/composables/useClientStaff'
 import { useTechniqueTree } from '@/modules/protocols/composables/useTechniqueTree'
 import { useVetProtocolList } from '@/modules/protocols/composables/useVetProtocolList'
+import { useVetProtocolDetail } from '@/modules/protocols/composables/useVetProtocolDetail'
 import { useAnimalSearch } from '../../composables/useAnimalSearch'
+import { useClientManagerOptions } from '../../composables/useClientManagerOptions'
 import { useProgramDetail } from '../../composables/useProgramDetail'
 import { useCreateProgram, useUpdateProgram } from '../../composables/useProgramMutations'
 import { programSchema } from '../../validators/program.validator'
@@ -80,7 +82,7 @@ const [managerProfileIds] = defineField('manager_profile_ids')
 // mientras se está precargando el form desde un programa existente (resetForm + refs de cascada).
 const isResettingForm = ref(false)
 
-// --- Técnica / sub-técnica / protocolo (DEC-13) ---
+// --- Técnica / programa / protocolo (DEC-13) ---
 // El campo de negocio que persiste el programa es `technique_id` (resuelto de `protocol_id`,
 // DEC-06) — acá solo se pilotea la cascada de selects con dos refs locales.
 const rootTechniqueId = ref('')
@@ -148,7 +150,7 @@ const resolvedSubTechnique = computed(
   () => currentRoot.value?.children.find((c) => c.guid === subTechniqueId.value) ?? null,
 )
 
-// DEC-13: labels dinámicos leídos de la SUB-técnica seleccionada (no de la raíz).
+// DEC-13: labels dinámicos leídos del programa seleccionado (no de la raíz).
 const protocolLabel = computed(() => resolvedSubTechnique.value?.protocols_name ?? 'Protocolo')
 const dateLabel = computed(() => resolvedSubTechnique.value?.target_date_name ?? 'Fecha objetivo')
 
@@ -176,10 +178,76 @@ const vetStaffOptions = computed(
   () => vetStaffResponse.value?.map((p) => ({ guid: p.guid, label: p.user.name, role: p.role.name })) ?? [],
 )
 
-const { data: clientStaffResponse, isLoading: isLoadingClientStaff } = useClientStaff(vetGuid, clientId)
+// Client managers come from a dedicated endpoint that returns only {guid, name, role} of the
+// staff linked (and not blocked) to the chosen establishment. It does not depend on the
+// establishments list, whose embedded staff needs `clients.staff.read` (vet-assistant lacks it).
+const {
+  data: clientManagerOptions,
+  isLoading: isLoadingClientManagers,
+  isFetching: isFetchingClientManagers,
+} = useClientManagerOptions(clientId, establishmentId)
 const clientStaffOptions = computed(
-  () => clientStaffResponse.value?.map((p) => ({ guid: p.guid, label: p.user.name, role: p.role.name })) ?? [],
+  () => clientManagerOptions.value?.map((p) => ({ guid: p.guid, label: p.name, role: p.role })) ?? [],
 )
+
+// Drops client managers that are not linked to the current establishment (change of
+// establishment, or a stale manager when editing). Vet managers are always kept.
+// Never prunes while the sources are loading/hydrating or failed: unknown is not "not linked".
+watch(
+  [clientStaffOptions, vetStaffResponse, isFetchingClientManagers, isLoadingVetStaff, isResettingForm],
+  () => {
+    if (isResettingForm.value || isFetchingClientManagers.value || isLoadingVetStaff.value) return
+    if (!vetStaffResponse.value) return
+    // Establishment chosen but its options are not available (loading, error): cannot tell who is linked.
+    if (establishmentId.value && clientManagerOptions.value === undefined) return
+    const allowed = new Set([
+      ...vetStaffResponse.value.map((p) => p.guid),
+      ...clientStaffOptions.value.map((o) => o.guid),
+    ])
+    const pruned = managerProfileIds.value.filter((guid) => allowed.has(guid))
+    if (pruned.length !== managerProfileIds.value.length) {
+      managerProfileIds.value = pruned
+    }
+  },
+)
+
+// --- Responsables según los roles de las alertas del protocolo ---
+
+const { data: protocolDetail } = useVetProtocolDetail(protocolId)
+
+// Roles that receive at least one alert of the protocol. null = no restriction (protocol not
+// loaded yet, or it defines no alerts — disabling everyone would make the form unsubmittable).
+const allowedRoles = computed<string[] | null>(() => {
+  const tasks = protocolDetail.value?.tasks
+  if (!protocolId.value || !tasks) return null
+  const roles = new Set(tasks.flatMap((task) => task.alerts.flatMap((alert) => alert.roles)))
+  return roles.size ? [...roles] : null
+})
+
+// Keyed by guid set (not by array identity) so a background refetch of the options does not
+// overwrite the user's manual changes.
+const eligibleManagersKey = computed(() => {
+  if (!allowedRoles.value) return ''
+  return [...vetStaffOptions.value, ...clientStaffOptions.value]
+    .filter((o) => allowedRoles.value?.includes(o.role))
+    .map((o) => o.guid)
+    .join(',')
+})
+
+// Create mode only: in edit mode the saved managers are the source of truth.
+watch(eligibleManagersKey, (key) => {
+  if (isEditMode.value || isResettingForm.value) return
+  managerProfileIds.value = key ? key.split(',') : []
+})
+
+// Changing the establishment invalidates the client managers picked for the previous one.
+watch(establishmentId, (newValue, oldValue) => {
+  if (isResettingForm.value) return
+  if (newValue === oldValue) return
+  managerProfileIds.value = managerProfileIds.value.filter((guid) =>
+    (vetStaffResponse.value ?? []).some((p) => p.guid === guid),
+  )
+})
 
 // --- Búsqueda de animales (compartida entre todas las filas del repeater, DEC-10) ---
 
@@ -240,6 +308,14 @@ const onSubmit = handleSubmit((values) => {
   }
 })
 
+// The backend reports client-manager errors per index (`manager_profile_ids.{i}`):
+// collapse them into a single message for the managers block.
+const managerProfileIdsError = computed(() => {
+  if (errors.value.manager_profile_ids) return errors.value.manager_profile_ids
+  const indexed = Object.entries(errors.value).find(([key]) => key.startsWith('manager_profile_ids.'))
+  return indexed?.[1]
+})
+
 const title = computed(() => (isEditMode.value ? 'Editar programa' : 'Nuevo programa'))
 </script>
 
@@ -259,19 +335,13 @@ const title = computed(() => (isEditMode.value ? 'Editar programa' : 'Nuevo prog
         <ProgramClientSection
           v-model:client-id="clientId"
           v-model:establishment-id="establishmentId"
-          v-model:manager-profile-ids="managerProfileIds"
           :client-options="clientOptions"
           :establishment-options="establishmentOptions"
-          :vet-staff-options="vetStaffOptions"
-          :client-staff-options="clientStaffOptions"
           :loading-clients="isLoadingClients"
           :loading-establishments="isLoadingEstablishments"
-          :loading-vet-staff="isLoadingVetStaff"
-          :loading-client-staff="isLoadingClientStaff"
           :errors="{
             client_id: errors.client_id,
             establishment_id: errors.establishment_id,
-            manager_profile_ids: errors.manager_profile_ids,
           }"
         />
 
@@ -286,6 +356,18 @@ const title = computed(() => (isEditMode.value ? 'Editar programa' : 'Nuevo prog
           :loading-techniques="isLoadingTechniques"
           :loading-protocols="isLoadingProtocols"
           :errors="{ technique_id: errors.protocol_id, protocol_id: errors.protocol_id }"
+        />
+
+        <ProgramManagersSection
+          v-model:manager-profile-ids="managerProfileIds"
+          :client-id="clientId"
+          :establishment-id="establishmentId"
+          :vet-staff-options="vetStaffOptions"
+          :client-staff-options="clientStaffOptions"
+          :loading-vet-staff="isLoadingVetStaff"
+          :loading-client-staff="isLoadingClientManagers"
+          :allowed-roles="allowedRoles"
+          :error="managerProfileIdsError"
         />
 
         <ProgramGroupsSection

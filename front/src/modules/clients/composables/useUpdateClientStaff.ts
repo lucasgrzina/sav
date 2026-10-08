@@ -2,6 +2,7 @@ import { computed, ref, toValue } from 'vue'
 import type { MaybeRef } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { updateClientStaffApi } from '../api/client-staff.api'
+import { PROGRAM_MANAGER_OPTIONS_KEY } from '@/modules/programs/composables/useClientManagerOptions'
 import { useNotification } from '@/core/composables/useNotification'
 import { parseApiError } from '@/core/composables/parseApiError'
 import type { UpdateClientStaffPayload } from '../types/client.types'
@@ -24,13 +25,17 @@ export function useUpdateClientStaff(vetGuid: MaybeRef<string>, clientGuid: Mayb
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['client-staff', vGuid.value, cGuid.value] })
+      // Staff changes affect the staff shown per establishment
+      queryClient.invalidateQueries({ queryKey: ['client-establishments', vGuid.value, cGuid.value] })
+      // Program form: client manager options depend on linked/unblocked staff
+      queryClient.invalidateQueries({ queryKey: [PROGRAM_MANAGER_OPTIONS_KEY, vGuid.value, cGuid.value] })
       queryClient.invalidateQueries({ queryKey: ['client-staff-member', vGuid.value, cGuid.value, vars.profileGuid] })
       success('Perfil actualizado correctamente.')
     },
     onError: (err: unknown) => {
       const apiError = parseApiError(err)
       fieldErrors.value = apiError.fieldErrors ?? null
-      generalError.value = apiError.message ?? 'Error al actualizar el perfil.'
+      generalError.value = apiError.fieldErrors ? null : (apiError.message ?? 'Error al actualizar el perfil.')
       if (apiError.message) error(apiError.message)
     },
   })

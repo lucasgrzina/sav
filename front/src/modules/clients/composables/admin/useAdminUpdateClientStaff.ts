@@ -5,6 +5,7 @@ import { adminUpdateClientStaffApi } from '../../api/client-staff.api'
 import { useNotification } from '@/core/composables/useNotification'
 import { parseApiError } from '@/core/composables/parseApiError'
 import type { UpdateClientStaffPayload } from '../../types/client.types'
+import { PROGRAM_MANAGER_OPTIONS_KEY } from '@/modules/programs/composables/useClientManagerOptions'
 
 export function useAdminUpdateClientStaff(clientGuid: MaybeRef<string>) {
   const queryClient = useQueryClient()
@@ -23,13 +24,17 @@ export function useAdminUpdateClientStaff(clientGuid: MaybeRef<string>) {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['admin-client-staff', cGuid.value] })
+      // Staff changes affect the staff shown per establishment
+      queryClient.invalidateQueries({ queryKey: ['admin-client-establishments', cGuid.value] })
+      // Program form: client manager options (any vet) depend on linked/unblocked staff
+      queryClient.invalidateQueries({ queryKey: [PROGRAM_MANAGER_OPTIONS_KEY] })
       queryClient.invalidateQueries({ queryKey: ['admin-client-staff-member', cGuid.value, vars.profileGuid] })
       success('Perfil actualizado correctamente.')
     },
     onError: (err: unknown) => {
       const apiError = parseApiError(err)
       fieldErrors.value = apiError.fieldErrors ?? null
-      generalError.value = apiError.message ?? 'Error al actualizar el perfil.'
+      generalError.value = apiError.fieldErrors ? null : (apiError.message ?? 'Error al actualizar el perfil.')
       if (apiError.message) error(apiError.message)
     },
   })

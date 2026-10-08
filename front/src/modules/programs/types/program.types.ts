@@ -52,6 +52,14 @@ export interface ProgramManagerOption {
   role: string
 }
 
+// Client-staff option returned by GET .../establishments/{guid}/manager-options
+// (minimal data: no email, contacts or internal ids).
+export interface ClientManagerOptionItem {
+  guid: string
+  name: string
+  role: string
+}
+
 export interface ProgramManagerRef {
   guid: string
   name: string

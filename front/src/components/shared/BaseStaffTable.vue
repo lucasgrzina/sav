@@ -15,6 +15,8 @@ export interface StaffRecord {
   guid: string
   user: { name: string; email: string }
   role: { name: string }
+  // Solo presente en el staff de clientes (establecimientos vinculados)
+  establishments?: { guid: string; name: string }[]
   blocked_at: string | null
   created_at: string
 }
@@ -69,6 +71,13 @@ const resolvedColumns = computed(() => props.columns ?? defaultColumns)
       <template v-else-if="column.key === 'role'">
         <a-tag>{{ getRoleLabel(record.role.name) }}</a-tag>
       </template>
+
+        <template v-else-if="column.key === 'establishments'">
+          <div v-if="record.establishments?.length" class="bst-chips">
+            <a-tag v-for="est in record.establishments" :key="est.guid">{{ est.name }}</a-tag>
+          </div>
+          <span v-else class="bst-muted">Sin establecimientos</span>
+        </template>
 
       <template v-else-if="column.key === 'status'">
         <a-tag v-if="record.blocked_at" color="error">{{ blockedLabel }}</a-tag>
@@ -126,6 +135,8 @@ const resolvedColumns = computed(() => props.columns ?? defaultColumns)
   flex-direction: column;
   gap: 2px;
 }
+.bst-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.bst-muted { font-style: italic; color: var(--dt-muted, #6B8CAE); }
 .bst-name  { font-weight: 600; color: var(--dt-title, #fff); }
 .bst-email { font-family: monospace; font-size: 12px; color: var(--dt-muted, #6B8CAE); }
 </style>
