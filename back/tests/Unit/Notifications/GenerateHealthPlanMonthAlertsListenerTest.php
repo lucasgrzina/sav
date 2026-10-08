@@ -43,7 +43,7 @@ class GenerateHealthPlanMonthAlertsListenerTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent());
+        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent(), new \App\Services\EstablishmentService(new \App\Repositories\EstablishmentRepositoryEloquent(), new \App\Repositories\UserProfileRepositoryEloquent(), new \App\Repositories\ProgramRepositoryEloquent()));
 
         $this->vet = $this->createVet();
         $this->client = $this->createClient();
@@ -176,6 +176,26 @@ class GenerateHealthPlanMonthAlertsListenerTest extends TestCase
         // solo importa el delta "-7 días, 16hs" que aplica el listener sobre esa fecha.
         $this->assertSame(
             \Carbon\Carbon::create($year, 8, 1)->subDays(7)->setTime(16, 0)->toDateTimeString(),
+            $alert->scheduled_at->toDateTimeString(),
+        );
+    }
+
+    public function test_scheduled_at_16h_local_is_converted_to_utc_using_the_vet_country_timezone(): void
+    {
+        $this->vet->country->update(['timezone' => 'America/Argentina/Buenos_Aires']);
+        $this->createProfile('vet');
+
+        $activity = HealthActivity::create(['guid' => Str::uuid()->toString(), 'name' => 'Vacunación']);
+        $this->template->activities()->sync([$activity->id => ['months' => [8], 'sort_order' => 0]]);
+
+        $year = now()->year + 10;
+        $this->service->create($this->basePayload(['year' => $year]), $this->vet->id, null);
+
+        $alert = Alert::where('type', AlertType::HealthPlanMonth)->firstOrFail();
+
+        // 16:00 in Buenos Aires (UTC-3) == 19:00 UTC
+        $this->assertSame(
+            \Carbon\Carbon::create($year, 8, 1)->subDays(7)->setTime(19, 0)->toDateTimeString(),
             $alert->scheduled_at->toDateTimeString(),
         );
     }

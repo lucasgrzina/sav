@@ -10,7 +10,7 @@ class Country extends Model
 {
     use HasGuid;
 
-    protected $fillable = ['guid', 'name', 'iso_code', 'phone_prefix'];
+    protected $fillable = ['guid', 'name', 'iso_code', 'phone_prefix', 'timezone'];
 
     public function documentTypes(): HasMany
     {

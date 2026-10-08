@@ -10,6 +10,7 @@ use App\Notifications\Enums\AlertType;
 use App\Notifications\Models\Alert;
 use App\Notifications\Services\AlertRecipientFactory;
 use App\Support\HealthPlanYear;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -48,9 +49,12 @@ class GenerateHealthPlanMonthAlertsListener
 
     private function generateAlertForMonth(EstablishmentHealthPlan $plan, Country $country, int $month, Collection $recipients): void
     {
-        $scheduledAt = HealthPlanYear::dateForMonth($country, $plan->year, $month)
+        $localAt = HealthPlanYear::dateForMonth($country, $plan->year, $month)
             ->subDays(7)
             ->setTime(16, 0);
+
+        // 16:00 is the vet's local time: interpret it in the vet country's timezone, store as UTC.
+        $scheduledAt = Carbon::parse($localAt->format('Y-m-d H:i:s'), $plan->vet->timezone())->utc();
 
         if ($scheduledAt->isPast()) {
             return; // RF-01 AC#3 — descarte silencioso, sin log (mismo criterio que ProgramTaskDue)

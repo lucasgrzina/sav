@@ -12,6 +12,7 @@ use App\Notifications\Models\Alert;
 use App\Notifications\Services\AlertRecipientFactory;
 use App\Support\DateOffset;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Mirrors ProgramService::projectTargetTasks (read-only preview) but persists real
@@ -26,15 +27,18 @@ class GenerateProgramTaskDueAlertsListener
     public function handle(ProgramTargetsChangedEvent $event): void
     {
         $program = $event->program;
-        $program->loadMissing('targets', 'protocol.tasks.alerts', 'managers.role');
+        $program->loadMissing('targets', 'protocol.tasks.alerts', 'managers.role', 'vet.country');
 
-        $this->deletePendingTaskDueAlerts($program);
+        // Delete + recreate must be atomic: a failure midway must not leave the program without alerts.
+        DB::transaction(function () use ($program) {
+            $this->deletePendingTaskDueAlerts($program);
 
-        foreach ($program->targets as $target) {
-            foreach ($program->protocol->tasks as $task) {
-                $this->generateAlertsForTask($program, $target, $task);
+            foreach ($program->targets as $target) {
+                foreach ($program->protocol->tasks as $task) {
+                    $this->generateAlertsForTask($program, $target, $task);
+                }
             }
-        }
+        });
     }
 
     private function deletePendingTaskDueAlerts(Program $program): void
@@ -60,7 +64,9 @@ class GenerateProgramTaskDueAlertsListener
     private function generateAlertForProtocolTaskAlert(Program $program, Carbon $taskDate, ProtocolTaskAlert $protocolTaskAlert): void
     {
         $alertDate = DateOffset::apply($taskDate, $protocolTaskAlert->offset_days, $protocolTaskAlert->time_of_day);
-        $scheduledAt = Carbon::parse($alertDate->toDateString() . ' ' . $protocolTaskAlert->time);
+        // The configured time is the vet's local time: interpret it in the vet country's timezone
+        // and store it as UTC (also used for the isPast() comparison).
+        $scheduledAt = Carbon::parse($alertDate->toDateString() . ' ' . $protocolTaskAlert->time, $program->vet->timezone())->utc();
 
         if ($scheduledAt->isPast()) {
             return; // descarte silencioso, sin log — regla 2.1

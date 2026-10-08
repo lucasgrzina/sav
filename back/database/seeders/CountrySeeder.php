@@ -21,6 +21,7 @@ class CountrySeeder extends Seeder
                 'guid'         => Str::uuid()->toString(),
                 'name'         => 'Argentina',
                 'phone_prefix' => '54',
+                'timezone'     => 'America/Argentina/Buenos_Aires',
             ]
         );
 
@@ -47,6 +48,7 @@ class CountrySeeder extends Seeder
                 'guid'         => Str::uuid()->toString(),
                 'name'         => 'Uruguay',
                 'phone_prefix' => '598',
+                'timezone'     => 'America/Montevideo',
             ]
         );
 
