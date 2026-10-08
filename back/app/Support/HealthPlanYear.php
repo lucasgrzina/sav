@@ -12,8 +12,11 @@ use Carbon\Carbon;
  */
 final class HealthPlanYear
 {
-    /** iso_code => mes de inicio del año ganadero. Default 1 (enero) para cualquier otro país. */
-    private const START_MONTH_BY_ISO = ['AR' => 7];
+    /**
+     * iso_code => mes de inicio del año del plan. Default 1 (enero): año calendario.
+     * Vacío a propósito: hoy todos los países usan enero-diciembre; agregar ['XX' => mes] para overrides.
+     */
+    private const START_MONTH_BY_ISO = [];
 
     public static function startMonth(Country $country): int
     {

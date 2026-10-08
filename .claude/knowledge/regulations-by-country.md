@@ -60,9 +60,9 @@ Web: senasa.gob.ar | Dependencia: Ministerio de Economía (ex-MINAGRO)
 ### Plan Sanitario (mapa directo al modelo `HealthPlan`)
 - Obligatorio para establecimientos con más de 50 animales en algunas provincias
 - Presentación ante SENASA o Colegio de Veterinarios provincial
-- Año ganadero: **1 julio al 30 junio** (no año calendario)
+- Año del plan sanitario en SAV: **1 enero al 31 diciembre** (decisión 2026-09-30; el año ganadero legal es julio–junio, pero SAV planifica por año calendario)
 - Debe incluir: actividades programadas por mes, responsable veterinario (matrícula), establecimiento (RENSPA)
-- **Impacto en SAV**: `HealthPlan.year` refiere al año ganadero (julio N - junio N+1)
+- **Impacto en SAV**: `HealthPlan.year` refiere al año calendario (enero N - diciembre N)
 
 ### Documentación de movimiento
 - **DT-e (Documento de Tránsito electrónico)**: reemplazó la guía de hacienda papel
@@ -212,4 +212,4 @@ Web: woah.org
 | `animal_national_id` | Caravana/SIRTRAC | SINIIGA | SENASA | CICLOVAC | SIPEC | SISBOV |
 | `regulatory_body` | SENASA | SENASICA | SENASA Perú | ICA | SAG | MAPA |
 | `aftosa_vaccine_months` | [4, 10] | [3, 9] | [4, 10] | [4, 10] | N/A (libre) | [4, 10] |
-| `health_plan_year_start` | julio | enero | enero | enero | enero | enero |
+| `health_plan_year_start` | enero | enero | enero | enero | enero | enero |

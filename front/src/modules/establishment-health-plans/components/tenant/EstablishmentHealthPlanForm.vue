@@ -95,7 +95,7 @@ function monthsLabel(months: number[]): string {
 
       <a-col :xs="24" :md="12">
         <a-form-item
-          label="Año (ciclo ganadero)"
+          label="Año"
           :validate-status="errors.year ? 'error' : ''"
           :help="errors.year ?? ''"
           required

@@ -32,7 +32,7 @@ const emit = defineEmits<{
         <tr v-for="activity in activities" :key="activity.guid" class="ehpc-row">
           <td class="ehpc-td ehpc-td--activity">{{ activity.health_activity.name }}</td>
           <td class="ehpc-td">{{ MONTH_LABELS[activity.month - 1] }}</td>
-          <td class="ehpc-td">{{ new Date(activity.due_date).toLocaleDateString('es-AR') }}</td>
+          <td class="ehpc-td">{{ new Date(`${activity.due_date}T00:00:00`).toLocaleDateString('es-AR') }}</td>
           <td class="ehpc-td">
             <a-tag v-if="activity.status === 'confirmed'" color="green">
               <CheckCircleOutlined /> Confirmada
