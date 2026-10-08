@@ -32,10 +32,10 @@ class CreateTechniqueRequest extends FormRequest
             'name.max'                 => 'El nombre no puede superar 255 caracteres.',
             'type.required'            => 'El tipo es requerido.',
             'type.in'                  => 'El tipo debe ser "technique" o "vaccine".',
-            'children.array'           => 'Las programas deben ser un array.',
+            'children.array'           => 'Los programas deben ser un array.',
             'children.max'             => 'No se pueden agregar más de 50 programas.',
-            'children.*.name.required' => 'El nombre de la programa es requerido.',
-            'children.*.name.max'      => 'El nombre de la programa no puede superar 255 caracteres.',
+            'children.*.name.required' => 'El nombre de el programa es requerido.',
+            'children.*.name.max'      => 'El nombre de el programa no puede superar 255 caracteres.',
         ];
     }
 }

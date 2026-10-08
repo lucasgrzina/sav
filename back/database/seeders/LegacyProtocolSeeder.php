@@ -104,7 +104,7 @@ class LegacyProtocolSeeder extends Seeder
         foreach ($protocols as $protocolData) {
             $subtechnique = $subtechniques[$protocolData['subtechnique']] ?? null;
             if (!$subtechnique) {
-                throw new RuntimeException("Programa '{$protocolData['subtechnique']}' no encontrada para el protocolo '{$protocolData['name']}'.");
+                throw new RuntimeException("Programa '{$protocolData['subtechnique']}' no encontrado para el protocolo '{$protocolData['name']}'.");
             }
 
             $protocol = Protocol::create([

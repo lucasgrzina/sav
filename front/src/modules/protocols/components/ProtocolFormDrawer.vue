@@ -113,7 +113,7 @@ function onCountrySelect(value: string | number | null) {
       v-if="hasNoChildren"
       type="warning"
       show-icon
-      message="Primero creá una programa para poder cargar protocolos."
+      message="Primero creá un programa para poder cargar protocolos."
       class="pfd-alert"
     />
 
@@ -128,7 +128,7 @@ function onCountrySelect(value: string | number | null) {
           v-model="techniqueId"
           v-bind="techniqueIdAttrs"
           :options="techniqueOptions"
-          placeholder="Seleccioná una programa"
+          placeholder="Seleccioná un programa"
         />
       </a-form-item>
 
@@ -178,7 +178,7 @@ function onCountrySelect(value: string | number | null) {
         >
           <template #description>
             Cada tarea es un paso del protocolo. El campo <strong>Días de diferencia</strong>
-            indica cuántos días hay entre la fecha objetivo de la programa (el "Label fecha
+            indica cuántos días hay entre la fecha objetivo de el programa (el "Label fecha
             objetivo" cargado en la técnica) y el momento en que se ejecuta la tarea —
             <strong>0</strong> significa el mismo día. El selector de al lado
             (<strong>Antes / Después</strong>) define la dirección: si la tarea ocurre antes o

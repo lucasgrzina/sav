@@ -70,7 +70,7 @@ function updateAlerts(value: ProtocolTaskFormValues['alerts']) {
     />
 
     <div class="ptfi-row">
-      <a-tooltip title="Cantidad de días respecto a la fecha objetivo de la programa. 0 = mismo día. La dirección (antes/después) se elige en el selector de al lado.">
+      <a-tooltip title="Cantidad de días respecto a la fecha objetivo de el programa. 0 = mismo día. La dirección (antes/después) se elige en el selector de al lado.">
         <a-input-number
           :value="task.days_offset"
           :min="0"

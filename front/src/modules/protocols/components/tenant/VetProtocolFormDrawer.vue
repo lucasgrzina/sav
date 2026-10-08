@@ -188,7 +188,7 @@ const title = computed(() => {
           :model-value="techniqueId"
           :options="subTechniqueOptions"
           :disabled="isVersionMode || !rootTechniqueId"
-          placeholder="Seleccioná una programa"
+          placeholder="Seleccioná un programa"
           @update:model-value="onSubTechniqueSelect"
         />
       </a-form-item>

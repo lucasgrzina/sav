@@ -62,7 +62,7 @@ function handleSubmit(values: TechniqueFormValues) {
       </div>
 
       <div v-if="childConflicts.length > 0" class="tep-conflicts-alert">
-        <strong>Las siguientes programas tienen programas vinculados y no pueden eliminarse:</strong>
+        <strong>Los siguientes programas tienen programas vinculados y no pueden eliminarse:</strong>
         <ul class="tep-conflicts-list">
           <li v-for="c in childConflicts" :key="c.guid">
             {{ c.name }} ({{ c.programs_count }} programa(s))

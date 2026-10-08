@@ -58,7 +58,7 @@ const blockedMessage = computed(() => {
         ¿Estás seguro de que querés eliminar <strong>{{ technique?.name }}</strong>?
       </p>
       <p class="tdm-hint">
-        Esta acción eliminará también todas sus programas. No se puede deshacer.
+        Esta acción eliminará también todos sus programas. No se puede deshacer.
       </p>
       <div class="tdm-footer">
         <a-space>

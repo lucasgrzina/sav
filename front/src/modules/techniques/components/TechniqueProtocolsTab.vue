@@ -152,7 +152,7 @@ const columns = [
   <div>
     <a-empty
       v-if="technique.children.length === 0"
-      description="Primero creá una programa para poder cargar protocolos."
+      description="Primero creá un programa para poder cargar protocolos."
     />
 
     <template v-else>

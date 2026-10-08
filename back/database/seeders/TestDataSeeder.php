@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
  *
  * A diferencia de un seeder con datos genéricos ("Empresa Test 1",
  * "Cliente 1-2"), este arma un dataset verosímil del dominio ganadero
- * argentino: consultoras empresas con matrícula y CUIT válido, clientes
+ * argentino: empresas con matrícula y CUIT válido, clientes
  * agropecuarios con domicilio real de partido/departamento, y establecimientos
  * con RENSPA y coordenadas geográficas coherentes con su localidad.
  *

@@ -32,7 +32,7 @@ export const protocolTaskSchema = z.object({
 })
 
 export const protocolSchema = z.object({
-  technique_id: z.string().uuid('Seleccioná una programa'),
+  technique_id: z.string().uuid('Seleccioná un programa'),
   name: z.string().min(1, 'El nombre es requerido').max(255),
   color: z
     .string()
