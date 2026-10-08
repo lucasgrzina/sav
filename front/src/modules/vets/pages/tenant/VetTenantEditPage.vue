@@ -37,7 +37,7 @@ function handleSubmit(payload: VetFormSubmit) {
     </div>
 
     <AppHeader
-      title="Editar perfil de la veterinaria"
+      title="Editar perfil de la empresa"
       :subtitle="vet?.name ?? ''"
       size="default"
     />

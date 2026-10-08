@@ -22,7 +22,7 @@ const { can, hasTenantContext } = usePermission()
 const vetGuid = computed(() => route.params.vetGuid as string)
 
 const vetNavItems = computed(() => [
-  { path: `/vets/${vetGuid.value}/perfil`,   label: 'Perfil',    icon: IdcardOutlined },
+  { path: `/vets/${vetGuid.value}/perfil`,   label: 'Empresa',    icon: IdcardOutlined },
   { path: `/vets/${vetGuid.value}/clients`,  label: 'Clientes',  icon: TeamOutlined },
   { path: `/vets/${vetGuid.value}/usuarios`, label: 'Usuarios',  icon: UserOutlined },
 ])
@@ -62,7 +62,7 @@ const visibleSanidadItems = computed(() =>
 <template>
   <nav class="dash-nav">
     <Transition name="label-fade">
-      <span v-if="!collapsed" class="dash-nav-section">Veterinaria</span>
+      <span v-if="!collapsed" class="dash-nav-section">Empresa</span>
     </Transition>
 
     <RouterLink

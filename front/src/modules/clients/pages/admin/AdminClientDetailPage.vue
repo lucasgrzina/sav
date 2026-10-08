@@ -43,7 +43,7 @@ const { data: client, isLoading } = useAdminClient(computed(() => props.guid))
       <a-alert
         type="info"
         message="Qué hacer en esta vista"
-        description="Cargá los establecimientos del cliente y vinculalo a una o más veterinarias para que puedan gestionarlo. El staff son los usuarios que acceden al sistema en representación del cliente."
+        description="Cargá los establecimientos del cliente y vinculalo a una o más empresas para que puedan gestionarlo. El staff son los usuarios que acceden al sistema en representación del cliente."
         show-icon
         class="acdp-tabs-guide"
       />
@@ -54,7 +54,7 @@ const { data: client, isLoading } = useAdminClient(computed(() => props.guid))
           <EstablishmentsSection :client-guid="props.guid" mode="admin" />
         </a-tab-pane>
 
-        <a-tab-pane key="vets" tab="Veterinarias vinculadas">
+        <a-tab-pane key="vets" tab="Empresas vinculadas">
           <ClientVetsSection
             :client-guid="props.guid"
             :vets="client.vets ?? []"

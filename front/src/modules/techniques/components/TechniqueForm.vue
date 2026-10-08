@@ -130,7 +130,7 @@ watch(
       />
     </a-form-item>
 
-    <a-form-item label="Sub-técnicas">
+    <a-form-item label="Programas">
       <SubTechniqueRepeater v-model="childrenModel" />
     </a-form-item>
 

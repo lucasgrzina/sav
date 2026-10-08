@@ -25,7 +25,7 @@ export function useUnlinkVetStaff(vetGuid: string) {
   async function unlinkStaff(member: VetStaffItem): Promise<void> {
     await confirm({
       title:        'Desvincular usuario',
-      message:      `¿Estás seguro de que querés desvincular a "${member.user.name}" de esta veterinaria? El usuario seguirá existiendo en el sistema.`,
+      message:      `¿Estás seguro de que querés desvincular a "${member.user.name}" de esta empresa? El usuario seguirá existiendo en el sistema.`,
       confirmLabel: 'Desvincular',
       danger:       true,
       onConfirm:    () => mutation.mutateAsync(member.guid),

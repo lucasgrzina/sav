@@ -95,7 +95,7 @@ export function useUpdateProtocol() {
           reason: 'technique_locked',
           count: raw.errors.count as number,
         }
-        generalError.value = raw.message ?? 'La sub-técnica no puede modificarse.'
+        generalError.value = raw.message ?? 'La programa no puede modificarse.'
       } else {
         const apiError = parseApiError(err)
         fieldErrors.value = apiError.fieldErrors

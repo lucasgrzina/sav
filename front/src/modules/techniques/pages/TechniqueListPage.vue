@@ -57,7 +57,7 @@ function onDeleteConfirm() {
 const columns = [
   { title: 'Nombre', key: 'name', dataIndex: 'name' },
   { title: 'Tipo', key: 'type', width: 120 },
-  { title: 'Sub-técnicas', key: 'children_count', dataIndex: 'children_count', width: 140 },
+  { title: 'Programas', key: 'children_count', dataIndex: 'children_count', width: 140 },
   { title: 'Acciones', key: 'actions', width: 140, alwaysVisible: true },
 ]
 </script>

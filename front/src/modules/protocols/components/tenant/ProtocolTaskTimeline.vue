@@ -5,7 +5,7 @@ import type { ProtocolTask, ProtocolTaskAlert } from '../../types/protocol.types
 
 defineProps<{ tasks: ProtocolTask[] }>()
 
-// Un protocolo no tiene fecha ancla propia (esa la aporta la sub-técnica al crear un
+// Un protocolo no tiene fecha ancla propia (esa la aporta la programa al crear un
 // programa) — por eso acá se muestra el offset relativo (días antes/después) en vez de
 // una fecha calculada, a diferencia de ProgramTargetsTimeline.
 function formatOffset(days: number, timeOfDay: 'before' | 'after', time: string): string {

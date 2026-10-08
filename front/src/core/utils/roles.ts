@@ -1,8 +1,8 @@
 const ROLE_LABELS: Record<string, string> = {
   'client-owner':         'Propietario',
-  'client-manager':       'Encargado',
+  'client-manager':       'Receptor',
   'client-administrative':'Administrativo',
-  'vet':                  'Veterinario',
+  'vet':                  'Veterinario a cargo',
   'vet-administrative':   'Administrativo de Veterinario',
   'vet-assistant':        'Asistente de Veterinario',
 }

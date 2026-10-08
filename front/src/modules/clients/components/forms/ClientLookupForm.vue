@@ -125,7 +125,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
       v-if="state.status === 'idle'"
       type="info"
       message="Buscá antes de crear"
-      description="Ingresá el CUIT o identificador fiscal del cliente. Si ya existe en el sistema, vas a poder vincularlo a esta veterinaria; si no existe, se crea automáticamente y queda vinculado."
+      description="Ingresá el CUIT o identificador fiscal del cliente. Si ya existe en el sistema, vas a poder vincularlo a esta empresa; si no existe, se crea automáticamente y queda vinculado."
       show-icon
     />
 
@@ -147,7 +147,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
       <a-alert
         type="info"
         message="Cliente encontrado en el sistema"
-        description="Este cliente existe pero no está vinculado a esta veterinaria."
+        description="Este cliente existe pero no está vinculado a esta empresa."
         show-icon
       />
 
@@ -177,7 +177,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
           :loading="isLinking"
           @click="handleLink(state.client.guid)"
         >
-          Vincular a esta veterinaria
+          Vincular a esta empresa
         </BaseButton>
         <BaseButton variant="secondary" @click="resetSearch">Cancelar</BaseButton>
       </div>
@@ -187,7 +187,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
     <template v-else-if="state.status === 'found-linked'">
       <a-alert
         type="warning"
-        message="Este cliente ya está vinculado a esta veterinaria"
+        message="Este cliente ya está vinculado a esta empresa"
         show-icon
       />
 
@@ -216,7 +216,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
       <a-alert
         type="info"
         message="No se encontró ningún cliente con ese identificador"
-        description="Completá los datos para crear el cliente en el sistema y vincularlo a esta veterinaria."
+        description="Completá los datos para crear el cliente en el sistema y vincularlo a esta empresa."
         show-icon
       />
 

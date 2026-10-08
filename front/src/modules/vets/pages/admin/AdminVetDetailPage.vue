@@ -21,11 +21,11 @@ const { data: vet, isLoading } = useVet(computed(() => props.guid))
   <div>
     <BaseButton variant="tertiary" class="avd-back" @click="router.push('/admin/vets')">
       <template #icon><ArrowLeftOutlined /></template>
-      Volver a veterinarias
+      Volver a empresas
     </BaseButton>
 
     <div v-if="isLoading" class="avd-loading">
-      Cargando veterinaria...
+      Cargando empresa...
     </div>
 
     <template v-else-if="vet">
@@ -70,7 +70,7 @@ const { data: vet, isLoading } = useVet(computed(() => props.guid))
     </template>
 
     <div v-else class="avd-loading">
-      No se encontró la veterinaria.
+      No se encontró la empresa.
     </div>
   </div>
 </template>

@@ -14,16 +14,16 @@ export function useValidateVet() {
     onSuccess: (_, guid) => {
       queryClient.invalidateQueries({ queryKey: ['vets'] })
       queryClient.invalidateQueries({ queryKey: ['vet', guid] })
-      success('Veterinaria validada correctamente')
+      success('Empresa validada correctamente')
     },
     onError: () => {
-      error('Error al validar la veterinaria')
+      error('Error al validar la empresa')
     },
   })
 
   async function validateVet(vet: VetItem) {
     await confirm.confirm({
-      title: 'Validar veterinaria',
+      title: 'Validar empresa',
       message: `¿Confirmás la validación de "${vet.name}"? Esto le permitirá operar en el sistema.`,
       confirmLabel: 'Validar',
       danger: false,

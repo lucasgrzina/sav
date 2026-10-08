@@ -29,7 +29,7 @@ function updateProtocolsName(index: number, value: string) {
 <template>
   <div class="str-root">
     <p v-if="children.length === 0" class="str-empty">
-      Sin sub-técnicas. Podés agregar hasta 50.
+      Sin programas. Podés agregar hasta 50.
     </p>
 
     <div
@@ -39,7 +39,7 @@ function updateProtocolsName(index: number, value: string) {
     >
       <a-input
         :value="child.name"
-        placeholder="Nombre de la sub-técnica *"
+        placeholder="Nombre de la programa *"
         @update:value="(v: string) => updateName(idx, v)"
       />
       <a-input
@@ -51,7 +51,7 @@ function updateProtocolsName(index: number, value: string) {
         variant="row-action"
         size="small"
         danger
-        tooltip="Eliminar sub-técnica"
+        tooltip="Eliminar programa"
         @click="removeChild(idx)"
       >
         <template #icon><DeleteOutlined /></template>
@@ -61,7 +61,7 @@ function updateProtocolsName(index: number, value: string) {
     <div class="str-add">
       <BaseButton variant="secondary" size="small" @click="addChild">
         <template #icon><PlusOutlined /></template>
-        Agregar sub-técnica
+        Agregar programa
       </BaseButton>
     </div>
   </div>

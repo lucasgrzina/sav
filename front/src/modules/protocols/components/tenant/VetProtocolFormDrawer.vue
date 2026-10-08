@@ -15,7 +15,7 @@ import type { VetProtocolDetail } from '../../types/vet-protocol.types'
 // DEC-11: este drawer es propio del panel vet — NO reutiliza ProtocolFormDrawer.vue
 // (ese vive acoplado a una técnica raíz con hijos, embebido en el tab de una técnica).
 // Acá el vet elige la técnica desde cero mediante un selector de dos niveles
-// (técnica raíz -> sub-técnica), alimentado por GET /v1/techniques (useTechniqueTree).
+// (técnica raíz -> programa), alimentado por GET /v1/techniques (useTechniqueTree).
 const props = withDefaults(
   defineProps<{
     loading?: boolean
@@ -179,7 +179,7 @@ const title = computed(() => {
       </a-form-item>
 
       <a-form-item
-        label="Sub-técnica"
+        label="Programa"
         :validate-status="errors.technique_id ? 'error' : ''"
         :help="errors.technique_id ?? ''"
         required
@@ -188,7 +188,7 @@ const title = computed(() => {
           :model-value="techniqueId"
           :options="subTechniqueOptions"
           :disabled="isVersionMode || !rootTechniqueId"
-          placeholder="Seleccioná una sub-técnica"
+          placeholder="Seleccioná una programa"
           @update:model-value="onSubTechniqueSelect"
         />
       </a-form-item>

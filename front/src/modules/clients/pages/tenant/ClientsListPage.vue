@@ -35,7 +35,7 @@ async function handleUnlink(client: ClientItem): Promise<void> {
   <div>
     <AppHeader
       title="Clientes"
-      subtitle="Clientes vinculados a esta veterinaria."
+      subtitle="Clientes vinculados a esta empresa."
     >
       <template #actions="{ buttonSize }">
         <PermissionGuard permission="clients.create">
@@ -51,7 +51,7 @@ async function handleUnlink(client: ClientItem): Promise<void> {
 
     <EmptyState
       v-if="!isLoading && !data?.data.length"
-      message="No se encontraron clientes vinculados a esta veterinaria."
+      message="No se encontraron clientes vinculados a esta empresa."
       icon="🐄"
     >
       <PermissionGuard permission="clients.create">

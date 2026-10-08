@@ -118,7 +118,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
   <div class="avcc-root">
     <BaseButton variant="tertiary" class="avcc-back" @click="router.push(`/admin/vets/${props.guid}`)">
       <template #icon><ArrowLeftOutlined /></template>
-      Volver a la veterinaria
+      Volver a la empresa
     </BaseButton>
     <AppHeader title="Agregar cliente" size="default" />
 
@@ -161,7 +161,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
       <a-alert
         type="info"
         message="Cliente encontrado en el sistema"
-        description="Este cliente existe pero no está vinculado a esta veterinaria."
+        description="Este cliente existe pero no está vinculado a esta empresa."
         show-icon
       />
 
@@ -195,7 +195,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
           :loading="isLinking"
           @click="handleLink(state.client.guid)"
         >
-          Vincular a esta veterinaria
+          Vincular a esta empresa
         </BaseButton>
         <BaseButton variant="secondary" @click="resetSearch">Cancelar</BaseButton>
       </div>
@@ -205,7 +205,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
     <template v-else-if="state.status === 'found-linked'">
       <a-alert
         type="warning"
-        message="Este cliente ya está vinculado a esta veterinaria"
+        message="Este cliente ya está vinculado a esta empresa"
         show-icon
       />
 
@@ -234,7 +234,7 @@ async function handleCreate(values: ClientFormSubmit): Promise<void> {
       <a-alert
         type="info"
         message="No se encontró ningún cliente con ese identificador"
-        description="Completá los datos para crear el cliente en el sistema y vincularlo a esta veterinaria."
+        description="Completá los datos para crear el cliente en el sistema y vincularlo a esta empresa."
         show-icon
       />
 

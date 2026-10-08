@@ -135,7 +135,7 @@ defineExpose({ resetForm })
 
 <template>
   <a-form class="form" layout="vertical" @submit.prevent="onSubmit">
-    <FormSection title="Información de la veterinaria">
+    <FormSection title="Información de la empresa">
       <a-row :gutter="[16, 0]">
         <a-col :xs="24" :sm="12">
           <a-form-item
@@ -146,7 +146,7 @@ defineExpose({ resetForm })
             <a-input
               v-model:value="name"
               v-bind="nameAttrs"
-              placeholder="Ej: Veterinaria San Martín"
+              placeholder="Ej: Empresa San Martín"
             />
           </a-form-item>
         </a-col>
@@ -223,10 +223,10 @@ defineExpose({ resetForm })
     </FormSection>
 
     <FormSection
-      title="Contactos de la veterinaria"
+      title="Contactos de la empresa"
       subtitle="Emails y teléfonos de contacto. El contacto principal es el que se muestra por defecto."
     >
-      <ContactsInput v-model="localContacts" />
+      <ContactsInput v-model="localContacts" :field-errors="fieldErrors" />
     </FormSection>
 
     <FormSection title="Personalización de documentos" subtitle="Datos opcionales para encabezados de PDF generados.">
@@ -264,7 +264,7 @@ defineExpose({ resetForm })
     <FormFooter
       :loading="loading"
       :cancel-to="resolvedCancelTo"
-      :save-label="mode === 'create' ? 'Crear veterinaria' : 'Guardar cambios'"
+      :save-label="mode === 'create' ? 'Crear empresa' : 'Guardar cambios'"
     />
   </a-form>
 </template>

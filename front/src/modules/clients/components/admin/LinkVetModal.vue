@@ -42,7 +42,7 @@ async function handleSelect(vet: VetItem): Promise<void> {
 <template>
   <a-modal
     open
-    title="Vincular veterinaria"
+    title="Vincular empresa"
     :footer="null"
     @cancel="emit('close')"
   >
@@ -62,7 +62,7 @@ async function handleSelect(vet: VetItem): Promise<void> {
     <div v-if="isFetching" class="lvm-loading">Buscando...</div>
 
     <div v-else-if="vets.length === 0 && debouncedSearch.length >= 2" class="lvm-empty">
-      No se encontraron veterinarias.
+      No se encontraron empresas.
     </div>
 
     <ul v-else class="lvm-list">

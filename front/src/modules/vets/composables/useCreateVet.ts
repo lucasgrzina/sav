@@ -19,14 +19,14 @@ export function useCreateVet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vets'] })
-      success('Veterinaria creada correctamente')
+      success('Empresa creada correctamente')
     },
     onError: (err: unknown) => {
       const apiError = parseApiError(err)
       fieldErrors.value = apiError.fieldErrors
-      generalError.value = apiError.message ?? 'Error al crear la veterinaria.'
+      generalError.value = apiError.message ?? 'Error al crear la empresa.'
       if (apiError.message) {
-        error('Error al crear la veterinaria')
+        error('Error al crear la empresa')
       }
     },
   })

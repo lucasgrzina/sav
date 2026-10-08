@@ -33,7 +33,7 @@ export function useAdminUnlinkClientFromVet(vetGuid: string) {
   async function unlinkClient(client: ClientItem): Promise<void> {
     await confirm.confirm({
       title:        'Desvincular cliente',
-      message:      `¿Estás seguro de que querés desvincular a "${client.name}" de esta veterinaria?`,
+      message:      `¿Estás seguro de que querés desvincular a "${client.name}" de esta empresa?`,
       confirmLabel: 'Desvincular',
       danger:       true,
       onConfirm:    () => mutation.mutateAsync(client.guid),

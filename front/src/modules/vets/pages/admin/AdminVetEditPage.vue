@@ -23,13 +23,13 @@ function handleSubmit(values: VetUpdateForm) {
 <template>
   <div>
     <AppHeader
-      title="Editar veterinaria"
-      subtitle="Modificá los datos de la veterinaria."
+      title="Editar empresa"
+      subtitle="Modificá los datos de la empresa."
       size="default"
     />
 
     <div v-if="isLoading" class="ve-loading">
-      Cargando veterinaria...
+      Cargando empresa...
     </div>
 
     <template v-else>

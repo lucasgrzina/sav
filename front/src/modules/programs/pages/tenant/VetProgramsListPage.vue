@@ -78,7 +78,7 @@ function onOpenShareModal(program: ProgramListItem) {
 
 <template>
   <div>
-    <AppHeader title="Programas" subtitle="Programas de reproducción de tu veterinaria.">
+    <AppHeader title="Programas" subtitle="Programas de reproducción de tu empresa.">
       <template #actions="{ buttonSize }">
         <PermissionGuard permission="programs.create">
           <BaseButton :size="buttonSize" @click="goToCreate">

@@ -21,7 +21,7 @@ function handleSubmit(payload: unknown): void {
   <div>
     <AppHeader
       title="Mis datos"
-      subtitle="Gestioná tu información personal en esta veterinaria."
+      subtitle="Gestioná tu información personal en esta empresa."
       size="default"
     />
 

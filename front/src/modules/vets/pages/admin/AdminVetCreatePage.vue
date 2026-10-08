@@ -21,8 +21,8 @@ function handleSubmit(values: VetFormSubmit) {
 <template>
   <div>
     <AppHeader
-      title="Nueva veterinaria"
-      subtitle="Completá los datos para registrar una nueva veterinaria en el sistema."
+      title="Nueva empresa"
+      subtitle="Completá los datos para registrar una nueva empresa en el sistema."
       size="default"
     />
 

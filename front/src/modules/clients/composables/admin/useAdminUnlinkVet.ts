@@ -19,18 +19,18 @@ export function useAdminUnlinkVet(clientGuid: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-client', clientGuid] })
-      success('Veterinaria desvinculada correctamente')
+      success('Empresa desvinculada correctamente')
     },
     onError: (err: unknown) => {
       const apiError = parseApiError(err)
-      generalError.value = apiError.message ?? 'Error al desvincular la veterinaria.'
+      generalError.value = apiError.message ?? 'Error al desvincular la empresa.'
       error(generalError.value)
     },
   })
 
   async function unlinkVet(vet: VetItem): Promise<void> {
     await confirm.confirm({
-      title:        'Desvincular veterinaria',
+      title:        'Desvincular empresa',
       message:      `¿Estás seguro de que querés desvincular a "${vet.name}" de este cliente?`,
       confirmLabel: 'Desvincular',
       danger:       true,

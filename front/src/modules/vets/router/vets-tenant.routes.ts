@@ -19,19 +19,19 @@ export const vetsTenantRoutes: RouteRecordRaw[] = [
         path: 'perfil',
         name: 'vet-tenant-perfil',
         component: () => import('@/modules/vets/pages/tenant/VetProfilePage.vue'),
-        meta: { requiresAuth: true, title: 'Perfil de la veterinaria' },
+        meta: { requiresAuth: true, title: 'Perfil de la empresa' },
       },
       {
         path: 'perfil/editar',
         name: 'vet-tenant-perfil-editar',
         component: () => import('@/modules/vets/pages/tenant/VetTenantEditPage.vue'),
-        meta: { requiresAuth: true, title: 'Editar perfil de la veterinaria' },
+        meta: { requiresAuth: true, title: 'Editar perfil de la empresa' },
       },
       {
         path: 'usuarios',
         name: 'vet-tenant-usuarios',
         component: () => import('@/modules/vets/pages/tenant/VetUsersPage.vue'),
-        meta: { requiresAuth: true, title: 'Usuarios de la veterinaria' },
+        meta: { requiresAuth: true, title: 'Usuarios de la empresa' },
       },
       {
         path: 'usuarios/crear',

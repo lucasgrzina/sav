@@ -21,14 +21,14 @@ export function useUpdateVet() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['vets'] })
       queryClient.invalidateQueries({ queryKey: ['vet', variables.guid] })
-      success('Veterinaria actualizada correctamente')
+      success('Empresa actualizada correctamente')
     },
     onError: (err: unknown) => {
       const apiError = parseApiError(err)
       fieldErrors.value = apiError.fieldErrors
-      generalError.value = apiError.message ?? 'Error al actualizar la veterinaria.'
+      generalError.value = apiError.message ?? 'Error al actualizar la empresa.'
       if (apiError.message) {
-        error('Error al actualizar la veterinaria')
+        error('Error al actualizar la empresa')
       }
     },
   })

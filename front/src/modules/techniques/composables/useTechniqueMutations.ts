@@ -91,7 +91,7 @@ export function useUpdateTechnique() {
       // Error 422 de negocio: hijos con programas vinculados → errors.conflicts
       if (raw.status === 422 && raw.errors && 'conflicts' in raw.errors) {
         childConflicts.value = raw.errors.conflicts as TechniqueChildConflict[]
-        generalError.value = raw.message ?? 'Hay sub-técnicas con programas vinculados.'
+        generalError.value = raw.message ?? 'Hay programas con programas vinculados.'
       } else {
         const apiError = parseApiError(err)
         fieldErrors.value = apiError.fieldErrors

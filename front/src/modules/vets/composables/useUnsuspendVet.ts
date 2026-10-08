@@ -14,16 +14,16 @@ export function useUnsuspendVet() {
     onSuccess: (_, guid) => {
       queryClient.invalidateQueries({ queryKey: ['vets'] })
       queryClient.invalidateQueries({ queryKey: ['vet', guid] })
-      success('Veterinaria reactivada correctamente')
+      success('Empresa reactivada correctamente')
     },
     onError: () => {
-      error('Error al reactivar la veterinaria')
+      error('Error al reactivar la empresa')
     },
   })
 
   async function unsuspendVet(vet: VetItem) {
     await confirm.confirm({
-      title: 'Reactivar veterinaria',
+      title: 'Reactivar empresa',
       message: `¿Confirmás la reactivación de "${vet.name}"?`,
       confirmLabel: 'Reactivar',
       danger: false,

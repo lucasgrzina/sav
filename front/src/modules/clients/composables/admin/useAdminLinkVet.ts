@@ -16,11 +16,11 @@ export function useAdminLinkVet(clientGuid: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-client', clientGuid] })
-      success('Veterinaria vinculada correctamente')
+      success('Empresa vinculada correctamente')
     },
     onError: (err: unknown) => {
       const apiError = parseApiError(err)
-      generalError.value = apiError.message ?? 'Error al vincular la veterinaria.'
+      generalError.value = apiError.message ?? 'Error al vincular la empresa.'
       error(generalError.value)
     },
   })
