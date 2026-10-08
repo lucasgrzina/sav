@@ -20,9 +20,9 @@ const isVetContext = computed(() => route.path.startsWith('/vets/'))
     <div class="dash-logo">
       
       <Transition name="label-fade">
-        <img src="@/assets/logo.png" alt="VetAlert" style="max-width: 100%;width: 100px;" />
-        <!--img v-if="collapsed" src="@/assets/logo.png" alt="VetAlert" width="20" height="20" />
-        <span v-if="!collapsed" class="dash-logo-name">Vet<span>Alert</span></span-->
+        <img src="@/assets/logo.png" alt="SAV" style="max-width: 100%;width: 100px;" />
+        <!--img v-if="collapsed" src="@/assets/logo.png" alt="SAV" width="20" height="20" />
+        <span v-if="!collapsed" class="dash-logo-name">SAV</span-->
       </Transition>
     </div>
 
