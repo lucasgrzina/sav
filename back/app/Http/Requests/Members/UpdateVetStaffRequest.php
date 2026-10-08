@@ -37,7 +37,7 @@ class UpdateVetStaffRequest extends FormRequest
         return array_merge(
             [
                 'role_guid.required' => 'El rol es obligatorio.',
-                'role_guid.exists'   => 'El rol seleccionado no es válido para un miembro de veterinaria.',
+                'role_guid.exists'   => 'El rol seleccionado no es válido para un miembro de empresa.',
             ],
             $this->contactsMessages(),
         );

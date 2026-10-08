@@ -66,7 +66,7 @@ class LegacyProtocolSeeder extends Seeder
         }
     }
 
-    /** @return array<string, Technique> nombre de sub-técnica => modelo */
+    /** @return array<string, Technique> nombre de programa => modelo */
     private function seedTechniques(array $techniques): array
     {
         $subtechniques = [];
@@ -104,7 +104,7 @@ class LegacyProtocolSeeder extends Seeder
         foreach ($protocols as $protocolData) {
             $subtechnique = $subtechniques[$protocolData['subtechnique']] ?? null;
             if (!$subtechnique) {
-                throw new RuntimeException("Sub-técnica '{$protocolData['subtechnique']}' no encontrada para el protocolo '{$protocolData['name']}'.");
+                throw new RuntimeException("Programa '{$protocolData['subtechnique']}' no encontrada para el protocolo '{$protocolData['name']}'.");
             }
 
             $protocol = Protocol::create([

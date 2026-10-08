@@ -55,7 +55,7 @@ class UpdateVetProtocolRequest extends FormRequest
                 return; // ya cubierto por exists:
             }
             if ($technique->parent_id === null) {
-                $v->errors()->add('technique_id', 'El protocolo debe asociarse a una sub-técnica, nunca a la técnica raíz.');
+                $v->errors()->add('technique_id', 'El protocolo debe asociarse a una programa, nunca a la técnica raíz.');
                 return;
             }
 
@@ -63,7 +63,7 @@ class UpdateVetProtocolRequest extends FormRequest
             $currentGuid = $this->route('guid');
 
             if ($this->protocolRepository->existsDuplicate($technique->id, null, (string) $this->input('name'), $vet->id, $currentGuid)) {
-                $v->errors()->add('name', 'Ya tenés un protocolo con este nombre para esta sub-técnica.');
+                $v->errors()->add('name', 'Ya tenés un protocolo con este nombre para esta programa.');
                 return;
             }
 
@@ -71,7 +71,7 @@ class UpdateVetProtocolRequest extends FormRequest
             if ($current && $current->technique_id !== $technique->id) {
                 $currentTechnique = Technique::find($current->technique_id);
                 if ($currentTechnique && $currentTechnique->parent_id !== $technique->parent_id) {
-                    $v->errors()->add('technique_id', 'La nueva sub-técnica debe pertenecer a la misma técnica raíz.');
+                    $v->errors()->add('technique_id', 'La nueva programa debe pertenecer a la misma técnica raíz.');
                 }
             }
         });
@@ -80,8 +80,8 @@ class UpdateVetProtocolRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'technique_id.required'         => 'La sub-técnica es requerida.',
-            'technique_id.exists'           => 'La sub-técnica seleccionada no existe.',
+            'technique_id.required'         => 'La programa es requerida.',
+            'technique_id.exists'           => 'La programa seleccionada no existe.',
             'name.required'                 => 'El nombre es requerido.',
             'name.max'                      => 'El nombre no puede superar 255 caracteres.',
             'tasks.array'                   => 'Las tareas deben ser un array.',

@@ -142,7 +142,7 @@ class ClientService
     public function linkToVet(Client $client, Vet $vet): void
     {
         if ($this->clientRepository->isLinkedToVet($client, $vet)) {
-            throw new \RuntimeException('Este cliente ya está vinculado a esta veterinaria.');
+            throw new \RuntimeException('Este cliente ya está vinculado a esta empresa.');
         }
 
         $this->clientRepository->attachToVet($client, $vet);

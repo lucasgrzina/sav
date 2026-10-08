@@ -147,11 +147,11 @@ class UserService
 
                 if ($isTenantVet) {
                     if (empty($profileData['vet_guid'])) {
-                        throw new \RuntimeException("Perfil #{$index}: el rol '{$role->name}' requiere seleccionar una veterinaria.");
+                        throw new \RuntimeException("Perfil #{$index}: el rol '{$role->name}' requiere seleccionar una empresa.");
                     }
                     $tenant = $this->vetRepository->findByGuid($profileData['vet_guid']);
                     if (! $tenant) {
-                        throw new \RuntimeException("Perfil #{$index}: veterinaria no encontrada.");
+                        throw new \RuntimeException("Perfil #{$index}: empresa no encontrada.");
                     }
                     $authenticatableType = 'vet';
                 } elseif ($isTenantClient) {
@@ -197,11 +197,11 @@ class UserService
 
         if ($isTenantVet) {
             if (empty($profileData['vet_guid'])) {
-                throw new \RuntimeException("El rol '{$role->name}' requiere seleccionar una veterinaria.");
+                throw new \RuntimeException("El rol '{$role->name}' requiere seleccionar una empresa.");
             }
             $tenant = $this->vetRepository->findByGuid($profileData['vet_guid']);
             if (! $tenant) {
-                throw new \RuntimeException('Veterinaria no encontrada.');
+                throw new \RuntimeException('Empresa no encontrada.');
             }
             $authenticatableType = 'vet';
             $authenticatableId   = $tenant->id;
@@ -225,7 +225,7 @@ class UserService
             ->exists();
 
         if ($duplicate) {
-            $tenantLabel = $isTenantVet ? 'veterinaria' : 'cliente';
+            $tenantLabel = $isTenantVet ? 'empresa' : 'cliente';
             throw new \RuntimeException("El usuario ya tiene un perfil en esa {$tenantLabel}.");
         }
 

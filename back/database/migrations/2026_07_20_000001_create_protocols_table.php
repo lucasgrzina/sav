@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('protocols', function (Blueprint $table) {
             $table->id();
             $table->char('guid', 36)->unique()->comment('UUID generado por HasGuid trait');
-            $table->unsignedBigInteger('technique_id')->comment('Siempre una sub-técnica (parent_id NOT NULL), nunca la raíz');
+            $table->unsignedBigInteger('technique_id')->comment('Siempre una programa (parent_id NOT NULL), nunca la raíz');
             $table->unsignedBigInteger('country_id')->nullable()->comment('null = protocolo global, visible en todos los países');
             $table->unsignedBigInteger('vet_id')->nullable()->comment('null en esta iteración (solo SuperAdmin); reservado para protocolos propios de un vet');
             $table->string('created_by_type', 20)->default('superadmin')->comment("'superadmin' | 'vet'");

@@ -9,7 +9,7 @@ class TechniqueChildHasProgramsException extends \RuntimeException
      */
     public function __construct(
         private readonly array $conflicts,
-        string $message = 'Algunos sub-técnicas tienen programas vinculados y no pueden eliminarse.'
+        string $message = 'Algunos programas tienen programas vinculados y no pueden eliminarse.'
     ) {
         parent::__construct($message);
     }

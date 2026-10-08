@@ -55,7 +55,7 @@ class CreateTenantUserRequest extends FormRequest
             'profiles.min'                   => 'Debe agregar al menos un perfil de acceso.',
             'profiles.*.role_guid.required'  => 'Cada perfil debe tener un rol seleccionado.',
             'profiles.*.role_guid.exists'    => 'El rol seleccionado no es válido.',
-            'profiles.*.vet_guid.exists'     => 'La veterinaria seleccionada no es válida.',
+            'profiles.*.vet_guid.exists'     => 'La empresa seleccionada no es válida.',
             'profiles.*.client_guid.exists'  => 'El cliente seleccionado no es válido.',
         ];
     }

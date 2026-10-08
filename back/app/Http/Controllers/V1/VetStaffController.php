@@ -76,7 +76,7 @@ class VetStaffController extends Controller
 
             $profile = $this->userProfileService->findByGuidForVet($guid, $vet);
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             if ($currentProfile && $profile->id === $currentProfile->id) {
@@ -99,7 +99,7 @@ class VetStaffController extends Controller
             $profile = $this->userProfileService->findByGuidForVet($guid, $vet);
 
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             $role = $this->userProfileService->resolveRole($request->validated()['role_guid']);
@@ -159,7 +159,7 @@ class VetStaffController extends Controller
             $profile = $this->userProfileService->findByGuidForVet($guid, $vet);
 
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             $data    = $request->validated();
@@ -188,7 +188,7 @@ class VetStaffController extends Controller
             $profile = $this->userProfileService->findByGuidForVet($guid, $vet);
 
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             return $this->makeSuccess(
@@ -208,7 +208,7 @@ class VetStaffController extends Controller
 
             $profile = $this->userProfileService->findByGuidForVet($guid, $vet);
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             if ($currentProfile && $profile->id === $currentProfile->id) {
@@ -217,7 +217,7 @@ class VetStaffController extends Controller
 
             $profile = $this->userProfileService->toggleBlock($profile);
 
-            $msg = $profile->blocked_at ? 'Acceso bloqueado para esta veterinaria.' : 'Acceso desbloqueado correctamente.';
+            $msg = $profile->blocked_at ? 'Acceso bloqueado para esta empresa.' : 'Acceso desbloqueado correctamente.';
             return $this->makeSuccess(new UserProfileResource($profile->load(['user', 'role', 'contacts'])), $msg);
         } catch (\Exception $e) {
             return $this->makeFromException($e);

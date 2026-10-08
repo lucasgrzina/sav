@@ -42,7 +42,7 @@ class StoreEstablishmentHealthPlanRequest extends FormRequest
             }
 
             if (!$vet->clients()->whereKey($establishment->client_id)->exists()) {
-                $v->errors()->add('establishment_id', 'El establecimiento no pertenece a esta veterinaria.');
+                $v->errors()->add('establishment_id', 'El establecimiento no pertenece a esta empresa.');
                 return;
             }
 

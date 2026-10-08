@@ -100,7 +100,7 @@ class VetService
     /**
      * Genera un slug único. Si hay colisión, agrega sufijo numérico (-2, -3, ...).
      *
-     * @param string   $name      Nombre de la veterinaria
+     * @param string   $name      Nombre de la empresa
      * @param int|null $exceptId  ID a excluir del check de unicidad (para updates)
      */
     private function generateUniqueSlug(string $name, ?int $exceptId = null): string

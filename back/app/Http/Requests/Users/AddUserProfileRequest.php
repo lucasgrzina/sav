@@ -25,7 +25,7 @@ class AddUserProfileRequest extends FormRequest
         return [
             'role_guid.required'   => 'El rol es requerido.',
             'role_guid.exists'     => 'El rol seleccionado no es válido.',
-            'vet_guid.exists'      => 'La veterinaria seleccionada no es válida.',
+            'vet_guid.exists'      => 'La empresa seleccionada no es válida.',
             'client_guid.exists'   => 'El cliente seleccionado no es válido.',
         ];
     }
