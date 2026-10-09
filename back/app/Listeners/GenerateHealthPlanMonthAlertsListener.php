@@ -49,15 +49,22 @@ class GenerateHealthPlanMonthAlertsListener
 
     private function generateAlertForMonth(EstablishmentHealthPlan $plan, Country $country, int $month, Collection $recipients): void
     {
-        $localAt = HealthPlanYear::dateForMonth($country, $plan->year, $month)
-            ->subDays(7)
-            ->setTime(16, 0);
+        $monthStart = HealthPlanYear::dateForMonth($country, $plan->year, $month);
+        $localAt = $monthStart->copy()->subDays(7)->setTime(16, 0);
 
         // 16:00 is the vet's local time: interpret it in the vet country's timezone, store as UTC.
         $scheduledAt = Carbon::parse($localAt->format('Y-m-d H:i:s'), $plan->vet->timezone())->utc();
 
         if ($scheduledAt->isPast()) {
-            return; // RF-01 AC#3 — descarte silencioso, sin log (mismo criterio que ProgramTaskDue)
+            // The 7-day lead time is already gone. A month still in progress must not lose its
+            // reminder, so send it right away; only months that are fully over are discarded.
+            $nowLocal = now($plan->vet->timezone());
+
+            if (! $monthStart->isSameMonth($nowLocal)) {
+                return; // RF-01 AC#3 — silent discard, no log (same criterion as ProgramTaskDue)
+            }
+
+            $scheduledAt = now()->utc();
         }
 
         $alert = new Alert([

@@ -213,6 +213,21 @@ class GenerateHealthPlanMonthAlertsListenerTest extends TestCase
         $this->assertSame(0, Alert::where('type', AlertType::HealthPlanMonth)->count());
     }
 
+    public function test_the_current_month_alert_is_created_for_immediate_dispatch_when_the_lead_time_has_passed(): void
+    {
+        $this->createProfile('vet');
+
+        $activity = HealthActivity::create(['guid' => Str::uuid()->toString(), 'name' => 'Vacunación']);
+        $this->template->activities()->sync([$activity->id => ['months' => [now()->month], 'sort_order' => 0]]);
+
+        $this->service->create($this->basePayload(['year' => now()->year]), $this->vet->id, null);
+
+        $alert = Alert::where('type', AlertType::HealthPlanMonth)->firstOrFail();
+
+        $this->assertSame('pending', $alert->status);
+        $this->assertTrue($alert->scheduled_at->lte(now()->addSecond()));
+    }
+
     public function test_no_alert_is_created_when_the_plan_has_no_materialized_activities(): void
     {
         $this->createProfile('vet');
