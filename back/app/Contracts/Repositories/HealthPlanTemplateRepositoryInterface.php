@@ -15,4 +15,9 @@ interface HealthPlanTemplateRepositoryInterface
     public function destroy(Model $model): bool|null;
     // Sincroniza el pivot. $activityData = [activity_id => ['months' => '[1,3]']]
     public function syncActivities(HealthPlanTemplate $template, array $activityData): void;
+
+    public function paginateForVetScope(int $vetId, array $filters, int $perPage): LengthAwarePaginator;
+    public function findByGuidForVetScope(string $guid, int $vetId): ?HealthPlanTemplate;
+    public function findOwnByGuidForVet(string $guid, int $vetId): ?HealthPlanTemplate;
+    public function hasInstantiatedPlans(int $templateId): bool;
 }

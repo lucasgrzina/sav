@@ -22,7 +22,7 @@ export const vetCreateSchema = z.object({
   tax_id: z
     .string()
     .min(1, 'El CUIT/identificador fiscal es requerido')
-    .max(30, 'Máximo 30 caracteres'),
+    .max(50, 'Máximo 50 caracteres'),
   registration_number: z
     .string()
     .max(50, 'Máximo 50 caracteres')
@@ -59,7 +59,7 @@ export const vetUpdateSchema = z.object({
   tax_id: z
     .string()
     .min(1, 'El CUIT/identificador fiscal es requerido')
-    .max(30, 'Máximo 30 caracteres')
+    .max(50, 'Máximo 50 caracteres')
     .optional(),
   registration_number: z
     .string()
@@ -89,6 +89,20 @@ export const vetTenantUpdateSchema = z.object({
     .string()
     .min(1, 'El nombre es requerido')
     .max(150, 'Máximo 150 caracteres'),
+  document_type_guid: z
+    .string()
+    .min(1, 'El tipo de documento es requerido')
+    .optional(),
+  tax_id: z
+    .string()
+    .min(1, 'El CUIT/identificador fiscal es requerido')
+    .max(50, 'Máximo 50 caracteres')
+    .optional(),
+  registration_number: z
+    .string()
+    .max(50, 'Máximo 50 caracteres')
+    .nullable()
+    .optional(),
   pdf_title: z
     .string()
     .max(200, 'Máximo 200 caracteres')

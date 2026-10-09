@@ -58,7 +58,7 @@ class ClientController extends Controller
                 return $this->makeNotFound('Cliente no encontrado.');
             }
 
-            $client->load(['country', 'documentType', 'contacts', 'establishments']);
+            $client->load(['country', 'documentType', 'contacts', 'establishments.province']);
 
             return $this->makeSuccess(new ClientResource($client));
         } catch (\Exception $e) {

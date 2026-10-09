@@ -6,17 +6,28 @@ use App\Traits\HasGuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class HealthPlanTemplate extends Model
 {
     use HasGuid;
 
-    protected $fillable = ['name', 'health_plan_category_id'];
+    protected $fillable = ['name', 'health_plan_category_id', 'vet_id'];
     protected $hidden   = ['id'];
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(HealthPlanCategory::class, 'health_plan_category_id');
+    }
+
+    public function vet(): BelongsTo
+    {
+        return $this->belongsTo(Vet::class);
+    }
+
+    public function establishmentHealthPlans(): HasMany
+    {
+        return $this->hasMany(EstablishmentHealthPlan::class);
     }
 
     public function activities(): BelongsToMany

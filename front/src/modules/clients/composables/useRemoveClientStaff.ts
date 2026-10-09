@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { PROGRAM_MANAGER_OPTIONS_KEY } from '@/modules/programs/composables/useClientManagerOptions'
 import { removeClientStaffApi } from '../api/client-staff.api'
 import { useNotification } from '@/core/composables/useNotification'
 import { useConfirm } from '@/core/composables/useConfirm'
@@ -14,6 +15,10 @@ export function useRemoveClientStaff(vetGuid: string, clientGuid: string) {
     mutationFn: (profileGuid: string) => removeClientStaffApi(vetGuid, clientGuid, profileGuid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-staff', vetGuid, clientGuid] })
+      // Staff changes affect the staff shown per establishment
+      queryClient.invalidateQueries({ queryKey: ['client-establishments', vetGuid, clientGuid] })
+      // Program form: client manager options depend on linked/unblocked staff
+      queryClient.invalidateQueries({ queryKey: [PROGRAM_MANAGER_OPTIONS_KEY, vetGuid, clientGuid] })
       success('Miembro eliminado correctamente.')
     },
     onError: (err: unknown) => {

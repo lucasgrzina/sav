@@ -53,13 +53,13 @@ class StoreVetProtocolRequest extends FormRequest
                 return; // ya cubierto por exists:
             }
             if ($technique->parent_id === null) {
-                $v->errors()->add('technique_id', 'El protocolo debe asociarse a una sub-técnica, nunca a la técnica raíz.');
+                $v->errors()->add('technique_id', 'El protocolo debe asociarse a un programa, nunca a la técnica raíz.');
                 return;
             }
 
             $vet = $this->attributes->get('current_vet'); // Request::$attributes, disponible tras vet.tenant
             if ($this->protocolRepository->existsDuplicate($technique->id, null, (string) $this->input('name'), $vet->id)) {
-                $v->errors()->add('name', 'Ya tenés un protocolo con este nombre para esta sub-técnica.');
+                $v->errors()->add('name', 'Ya tenés un protocolo con este nombre para este programa.');
             }
         });
     }
@@ -67,8 +67,8 @@ class StoreVetProtocolRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'technique_id.required'         => 'La sub-técnica es requerida.',
-            'technique_id.exists'           => 'La sub-técnica seleccionada no existe.',
+            'technique_id.required'         => 'El programa es requerido.',
+            'technique_id.exists'           => 'El programa seleccionado no existe.',
             'name.required'                 => 'El nombre es requerido.',
             'name.max'                      => 'El nombre no puede superar 255 caracteres.',
             'tasks.array'                   => 'Las tareas deben ser un array.',

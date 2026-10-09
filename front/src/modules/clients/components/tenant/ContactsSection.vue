@@ -63,7 +63,14 @@ const columns = [
       </PermissionGuard>
     </div>
 
+    <EmptyState
+      v-if="!isLoading && !contacts?.length"
+      message="Este cliente todavía no tiene contactos cargados. Agregá al menos uno para poder enviarle alertas y notificaciones."
+      icon="📞"
+    />
+
     <BaseDataTable
+      v-else
       :columns="columns"
       :data-source="contacts ?? []"
       :loading="isLoading"

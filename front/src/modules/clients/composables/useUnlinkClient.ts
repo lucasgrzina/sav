@@ -25,7 +25,7 @@ export function useUnlinkClient() {
   async function unlinkClient(client: ClientItem): Promise<void> {
     await confirm.confirm({
       title:        'Desvincular cliente',
-      message:      `¿Estás seguro de que querés desvincular a "${client.name}" de esta veterinaria? El cliente seguirá existiendo en el sistema.`,
+      message:      `¿Estás seguro de que querés desvincular a "${client.name}" de esta empresa? El cliente seguirá existiendo en el sistema.`,
       confirmLabel: 'Desvincular',
       danger:       true,
       onConfirm:    () => mutation.mutateAsync(client.guid),

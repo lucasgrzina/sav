@@ -17,7 +17,7 @@ const profileGuid = computed(() => route.params.profileGuid as string)
 
 const { data: member, isLoading, isError } = useClientStaffMember(vetGuid, clientGuid, profileGuid)
 const { clientRoles, isLoading: isLoadingRoles } = useClientRoles()
-const { mutate, isPending } = useUpdateClientStaff(vetGuid, clientGuid)
+const { mutate, isPending, fieldErrors } = useUpdateClientStaff(vetGuid, clientGuid)
 
 function handleSubmit(payload: UpdateClientStaffPayload): void {
   mutate(
@@ -59,6 +59,7 @@ function handleSubmit(payload: UpdateClientStaffPayload): void {
       :client-roles="clientRoles"
       :is-loading-roles="isLoadingRoles"
       :is-pending="isPending"
+      :field-errors="fieldErrors"
       @submit="handleSubmit"
     />
   </div>

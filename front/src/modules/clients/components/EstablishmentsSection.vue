@@ -9,9 +9,12 @@ import { useAdminClientEstablishments } from '../composables/admin/useAdminClien
 import { useAdminDeleteEstablishment } from '../composables/admin/useAdminDeleteEstablishment'
 import type { EstablishmentItem } from '../types/client.types'
 import { formatDate } from '@/core/utils/date'
+import { getRoleLabel } from '@/core/utils/roles'
 
 const props = defineProps<{
   clientGuid: string
+  // Country of the client: scopes the province list of the establishment form
+  countryGuid?: string
   mode: 'tenant' | 'admin'
 }>()
 
@@ -43,6 +46,8 @@ const columns = [
   { title: 'Nombre',       key: 'name' },
   { title: 'RENSPA',       key: 'renspa' },
   { title: 'Ciudad/Prov.', key: 'location' },
+  { title: 'Coordenadas',  key: 'coordinates' },
+  { title: 'Personal vinculado', key: 'staff' },
   { title: 'Alta',         key: 'created_at' },
   { title: 'Acciones',     key: 'actions', width: 100 },
 ]
@@ -60,13 +65,20 @@ const columns = [
       </PermissionGuard>
     </div>
 
+    <EmptyState
+      v-if="!isLoading && !establishments?.length"
+      message="Todavía no cargaste establecimientos para este cliente. Agregá el primero: las alertas y protocolos se configuran a nivel establecimiento."
+      icon="🏡"
+    />
+
     <BaseDataTable
+      v-else
       :columns="columns"
       :data-source="establishments ?? []"
       :loading="isLoading"
       row-key="guid"
       :pagination="false"
-      :scroll="{ x: 600 }"
+      :scroll="{ x: 1000 }"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'name'">
@@ -83,6 +95,29 @@ const columns = [
           <span v-if="record.city || record.state">
             {{ [record.city, record.state].filter(Boolean).join(', ') }}
           </span>
+          <span v-else class="es-muted">—</span>
+        </template>
+
+        <template v-else-if="column.key === 'coordinates'">
+          <span
+            v-if="record.latitude !== null && record.longitude !== null"
+            class="es-mono"
+            data-testid="establishment-coordinates"
+          >
+            {{ record.latitude.toFixed(6) }}, {{ record.longitude.toFixed(6) }}
+          </span>
+          <span v-else class="es-muted">Sin coordenadas</span>
+        </template>
+
+        <template v-else-if="column.key === 'staff'">
+          <div v-if="record.staff?.length" class="es-chips">
+            <a-tag v-for="member in record.staff" :key="member.guid">
+              {{ member.user.name }} · {{ getRoleLabel(member.role.name) }}
+            </a-tag>
+          </div>
+          <a-tag v-else-if="(record.staff_count ?? record.staff?.length ?? 0) === 0" color="warning">
+            Sin personal vinculado
+          </a-tag>
           <span v-else class="es-muted">—</span>
         </template>
 
@@ -124,6 +159,7 @@ const columns = [
       :is="mode === 'admin' ? AdminEstablishmentFormModal : EstablishmentFormModal"
       v-model="isModalOpen"
       :client-guid="clientGuid"
+      :country-guid="countryGuid"
       :mode="modalMode"
       :initial="editingEstablishment"
     />
@@ -148,6 +184,7 @@ const columns = [
   margin: 0;
 }
 
+.es-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .es-mono  { font-family: monospace; font-size: 12px; }
 .es-muted { color: var(--dt-muted, #6B8CAE); font-style: italic; }
 </style>

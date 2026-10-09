@@ -31,14 +31,14 @@ const columns = [
       <PermissionGuard permission="clients.create">
         <BaseButton @click="isModalOpen = true">
           <template #icon><PlusOutlined /></template>
-          Vincular veterinaria
+          Vincular empresa
         </BaseButton>
       </PermissionGuard>
     </div>
 
     <EmptyState
       v-if="!vets.length"
-      message="Este cliente no tiene veterinarias vinculadas."
+      message="Este cliente no tiene empresas vinculadas. Vinculá una para que pueda gestionar sus establecimientos y protocolos."
       icon="🏥"
     />
 
@@ -71,7 +71,7 @@ const columns = [
             <BaseButton
               variant="row-action"
               size="small"
-              tooltip="Ver veterinaria"
+              tooltip="Ver empresa"
               @click="router.push(`/admin/vets/${record.guid}`)"
             >
               <template #icon><EyeOutlined /></template>

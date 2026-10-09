@@ -5,30 +5,19 @@
     <div class="brand-content">
         <!-- Logo -->
         <div class="auth-brand-logo" style="position: relative; z-index: 1">
-            <div class="auth-brand-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2C9.5 2 7.5 3.8 7.5 6s2 4 4.5 4 4.5-1.8 4.5-4S14.5 2 12 2Z" fill="#fff" opacity="0.9"/>
-                    <circle cx="6.5" cy="6.5" r="2" fill="#fff" opacity="0.6"/>
-                    <circle cx="17.5" cy="6.5" r="2" fill="#fff" opacity="0.6"/>
-                    <circle cx="4" cy="11" r="1.8" fill="#fff" opacity="0.5"/>
-                    <circle cx="20" cy="11" r="1.8" fill="#fff" opacity="0.5"/>
-                    <path d="M12 13c-4.5 0-8 2.5-8 6 0 2 3.5 3 8 3s8-1 8-3c0-3.5-3.5-6-8-6Z" fill="#fff" opacity="0.8"/>
-                </svg>
-            </div>
-            <span class="auth-brand-name">Vet<span>Alert</span></span>
+            <img src="@/assets/logo.png" alt="SAV" style="width: 110px; max-width: 100%; background: #fff; padding: 8px 12px; border-radius: 12px" />
         </div>
 
         <!-- Headline -->
         <div style="position: relative; z-index: 1; margin-top: auto; padding-top: 48px">
             <p style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.8); margin: 0 0 16px">
-                Sistema de monitoreo
+                SISTEMA DE ALERTA VETERINARIA
             </p>
             <h1 class="auth-brand-headline">
-                Alertas en<br />tiempo real<br />
-                <span style="color: rgba(255,255,255,0.85)">para tu clínica.</span>
+                Alertas en<br />tiempo real
             </h1>
             <p class="auth-brand-sub">
-                Monitoreá el estado de tus pacientes, recibí alertas críticas y respondé en segundos desde cualquier dispositivo.
+                Actualizá los próximos trabajos en los establecimientos.
             </p>
         </div>
 
@@ -56,7 +45,6 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                     />
-                    <!-- Faint duplicate for depth -->
                     <polyline
                         points="
                             0,40 60,40 75,32 88,48 95,8 104,72 112,40
@@ -81,7 +69,7 @@
         </div>
 
         <!-- Stats -->
-        <div class="auth-stats" style="position: relative; z-index: 1">
+        <!--div class="auth-stats" style="position: relative; z-index: 1">
             <div class="auth-stat">
                 <div class="auth-stat-value">247</div>
                 <div class="auth-stat-label">Alertas hoy</div>
@@ -94,7 +82,7 @@
                 <div class="auth-stat-value">1.2k</div>
                 <div class="auth-stat-label">Pacientes</div>
             </div>
-        </div>
+        </div-->
     </div>
 </template>
 

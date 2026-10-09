@@ -38,7 +38,7 @@ function reload(): void {
   <Transition name="banner-slide">
     <div v-if="showBanner" class="vet-changed-banner">
       <span class="vet-changed-banner__text">
-        Cambiaste de veterinaria en otra pestaña.
+        Cambiaste de empresa en otra pestaña.
       </span>
       <button class="vet-changed-banner__btn" @click="reload">
         Recargar

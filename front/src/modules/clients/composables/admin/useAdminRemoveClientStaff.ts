@@ -4,6 +4,7 @@ import { useNotification } from '@/core/composables/useNotification'
 import { useConfirm } from '@/core/composables/useConfirm'
 import { parseApiError } from '@/core/composables/parseApiError'
 import type { ClientStaffItem } from '../../types/client.types'
+import { PROGRAM_MANAGER_OPTIONS_KEY } from '@/modules/programs/composables/useClientManagerOptions'
 
 export function useAdminRemoveClientStaff(clientGuid: string) {
   const queryClient = useQueryClient()
@@ -14,6 +15,10 @@ export function useAdminRemoveClientStaff(clientGuid: string) {
     mutationFn: (profileGuid: string) => adminRemoveClientStaffApi(clientGuid, profileGuid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-client-staff', clientGuid] })
+      // Staff changes affect the staff shown per establishment
+      queryClient.invalidateQueries({ queryKey: ['admin-client-establishments', clientGuid] })
+      // Program form: client manager options (any vet) depend on linked/unblocked staff
+      queryClient.invalidateQueries({ queryKey: [PROGRAM_MANAGER_OPTIONS_KEY] })
       success('Miembro eliminado correctamente')
     },
     onError: (err: unknown) => {

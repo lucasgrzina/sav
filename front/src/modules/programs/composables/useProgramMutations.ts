@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import type { Ref } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import { useNotification } from '@/core/composables/useNotification'
@@ -16,6 +17,24 @@ interface RawApiError {
 
 function getRawError(err: unknown): RawApiError {
   return err as RawApiError
+}
+
+// 422 `reason: manager_not_linked`: a client manager is not linked to the chosen establishment.
+// The message is shown on the managers block (field `manager_profile_ids`) and as a notification.
+// Returns true when the error was handled.
+function handleManagerNotLinked(
+  err: unknown,
+  fieldErrors: Ref<Record<string, string> | null>,
+  generalError: Ref<string | null>,
+  notifyError: (message: string) => void,
+): boolean {
+  const raw = getRawError(err)
+  if (raw.status !== 422 || !raw.errors || raw.errors.reason !== 'manager_not_linked') return false
+  const message = raw.message ?? 'El responsable del cliente seleccionado no está vinculado al establecimiento elegido.'
+  fieldErrors.value = { manager_profile_ids: message }
+  generalError.value = message
+  notifyError(message)
+  return true
 }
 
 // --- useCreateProgram ---
@@ -39,6 +58,7 @@ export function useCreateProgram() {
       success('Programa creado correctamente')
     },
     onError: (err: unknown) => {
+      if (handleManagerNotLinked(err, fieldErrors, generalError, error)) return
       const apiError = parseApiError(err)
       fieldErrors.value = apiError.fieldErrors
       generalError.value = apiError.message ?? 'Error al crear el programa.'
@@ -80,6 +100,7 @@ export function useUpdateProgram() {
       success('Programa actualizado correctamente')
     },
     onError: (err: unknown) => {
+      if (handleManagerNotLinked(err, fieldErrors, generalError, error)) return
       const raw = getRawError(err)
       if (raw.status === 422 && raw.errors && (raw.errors.reason === 'not_editable' || raw.errors.reason === 'must_have_one_target')) {
         generalError.value =

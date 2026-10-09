@@ -12,11 +12,19 @@ const props = withDefaults(
     modelValue: string[]
     loading?: boolean
     emptyText?: string
+    // Roles that receive at least one alert of the selected protocol. null = no restriction.
+    allowedRoles?: string[] | null
   }>(),
-  { loading: false, emptyText: 'No hay responsables disponibles.' },
+  { loading: false, emptyText: 'No hay responsables disponibles.', allowedRoles: null },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
+
+// A checked option is never disabled, so a stale manager (edit mode) can still be removed.
+function isDisabled(option: ProgramManagerOption): boolean {
+  if (props.allowedRoles === null) return false
+  return !props.allowedRoles.includes(option.role) && !props.modelValue.includes(option.guid)
+}
 
 function onToggle(guid: string, checked: boolean) {
   const next = checked
@@ -35,6 +43,7 @@ function onToggle(guid: string, checked: boolean) {
         v-for="option in options"
         :key="option.guid"
         :checked="modelValue.includes(option.guid)"
+        :disabled="isDisabled(option)"
         @change="(e: { target: { checked: boolean } }) => onToggle(option.guid, e.target.checked)"
       >
         <span class="pmcg-option">

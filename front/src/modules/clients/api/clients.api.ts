@@ -9,11 +9,13 @@ import type {
   EstablishmentItem,
   EstablishmentCreatePayload,
   EstablishmentUpdatePayload,
+  EstablishmentStaffSyncPayload,
+  GeocodeAddressPayload,
+  GeocodeResult,
+  ProvinceItem,
   ContactItem,
   ContactCreatePayload,
   ContactUpdatePayload,
-  OwnerItem,
-  OwnerCreatePayload,
   LookupResult,
 } from '../types/client.types'
 
@@ -115,6 +117,19 @@ export async function updateEstablishmentApi(
   return res.data
 }
 
+export async function syncEstablishmentStaffApi(
+  vetGuid: string,
+  clientGuid: string,
+  estGuid: string,
+  payload: EstablishmentStaffSyncPayload,
+): Promise<EstablishmentItem> {
+  const res = await http.put<EstablishmentItem>(
+    `/v1/vets/${vetGuid}/clients/${clientGuid}/establishments/${estGuid}/staff`,
+    payload,
+  )
+  return res.data
+}
+
 export async function deleteEstablishmentApi(
   vetGuid: string,
   clientGuid: string,
@@ -152,6 +167,18 @@ export async function adminUpdateEstablishmentApi(
 ): Promise<EstablishmentItem> {
   const res = await http.put<EstablishmentItem>(
     `/v1/admin/clients/${clientGuid}/establishments/${estGuid}`,
+    payload,
+  )
+  return res.data
+}
+
+export async function adminSyncEstablishmentStaffApi(
+  clientGuid: string,
+  estGuid: string,
+  payload: EstablishmentStaffSyncPayload,
+): Promise<EstablishmentItem> {
+  const res = await http.put<EstablishmentItem>(
+    `/v1/admin/clients/${clientGuid}/establishments/${estGuid}/staff`,
     payload,
   )
   return res.data
@@ -209,26 +236,28 @@ export async function deleteContactApi(
   await http.delete(`/v1/vets/${vetGuid}/clients/${clientGuid}/contacts/${contactGuid}`)
 }
 
-// --- Owners ---
+// --- Geocoding de direcciones ---
 
-export async function listOwnersApi(
+export async function geocodeAddressApi(
   vetGuid: string,
-  clientGuid: string,
-): Promise<OwnerItem[]> {
-  const res = await http.get<OwnerItem[]>(
-    `/v1/vets/${vetGuid}/clients/${clientGuid}/owners`,
-  )
+  payload: GeocodeAddressPayload,
+  signal?: AbortSignal,
+): Promise<GeocodeResult> {
+  const res = await http.post<GeocodeResult>(`/v1/vets/${vetGuid}/establishments/geocode`, payload, { signal })
   return res.data
 }
 
-export async function createOwnerApi(
-  vetGuid: string,
-  clientGuid: string,
-  payload: OwnerCreatePayload,
-): Promise<OwnerItem> {
-  const res = await http.post<OwnerItem>(
-    `/v1/vets/${vetGuid}/clients/${clientGuid}/owners`,
-    payload,
-  )
+export async function adminGeocodeAddressApi(
+  payload: GeocodeAddressPayload,
+  signal?: AbortSignal,
+): Promise<GeocodeResult> {
+  const res = await http.post<GeocodeResult>('/v1/admin/establishments/geocode', payload, { signal })
+  return res.data
+}
+
+// --- Provinces ---
+
+export async function listProvincesApi(countryGuid: string): Promise<ProvinceItem[]> {
+  const res = await http.get<ProvinceItem[]>(`/v1/countries/${countryGuid}/provinces`)
   return res.data
 }

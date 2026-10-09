@@ -378,7 +378,7 @@ class AdminProtocolControllerTest extends TestCase
 
     /**
      * Regresión DEC-08: el listado admin (capa plantilla) NUNCA debe incluir protocolos
-     * con vet_id seteado, aunque compartan sub-técnica con un protocolo global.
+     * con vet_id seteado, aunque compartan programa con un protocolo global.
      */
     public function test_index_excludes_protocols_owned_by_a_vet(): void
     {

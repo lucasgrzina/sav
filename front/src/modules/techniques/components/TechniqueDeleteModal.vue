@@ -25,7 +25,7 @@ const blockedMessage = computed(() => {
     return `Esta técnica tiene ${count} protocolo(s) vinculado(s) y no puede eliminarse.`
   }
   if (reason === 'children_have_programs') {
-    return `Sub-técnicas de esta jerarquía tienen ${count} programa(s) vinculado(s). No se puede eliminar.`
+    return `Programas de esta jerarquía tienen ${count} programa(s) vinculado(s). No se puede eliminar.`
   }
   return 'Esta técnica no puede eliminarse por tener elementos vinculados.'
 })
@@ -58,7 +58,7 @@ const blockedMessage = computed(() => {
         ¿Estás seguro de que querés eliminar <strong>{{ technique?.name }}</strong>?
       </p>
       <p class="tdm-hint">
-        Esta acción eliminará también todas sus sub-técnicas. No se puede deshacer.
+        Esta acción eliminará también todos sus programas. No se puede deshacer.
       </p>
       <div class="tdm-footer">
         <a-space>

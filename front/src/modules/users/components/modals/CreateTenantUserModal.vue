@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useForm, useFieldArray } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { PlusOutlined } from '@ant-design/icons-vue'
@@ -9,6 +9,7 @@ import TenantProfileRow from '../forms/TenantProfileRow.vue'
 import { useCreateTenantUser } from '../../composables/useCreateTenantUser'
 import { useRolesCacheStore } from '@/modules/roles/stores/roles-cache.store'
 import { tenantUserCreateSchema } from '@/modules/users/validators/user.validator'
+import type { TenantUserProfileForm } from '@/modules/users/validators/user.validator'
 
 const isOpen = defineModel<boolean>({ default: false })
 
@@ -39,7 +40,7 @@ const [email, emailAttrs] = defineField('email')
 const [password, passwordAttrs] = defineField('password')
 const [password_confirmation, passwordConfirmationAttrs] = defineField('password_confirmation')
 
-const { fields: profileFields, push: addProfile, remove: removeProfile } = useFieldArray('profiles')
+const { fields: profileFields, push: addProfile, remove: removeProfile } = useFieldArray<TenantUserProfileForm>('profiles')
 
 watch(isOpen, (open) => {
   if (open) {

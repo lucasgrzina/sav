@@ -588,4 +588,63 @@ class ProgramServiceTest extends TestCase
         $this->assertTrue($groups[0]['tasks'][0]['notifies']);
         $this->assertTrue($groups[0]['tasks'][0]['important']);
     }
+
+    // -------------------------------------------------------------------------
+    // Client staff <-> establishment link guard
+    // -------------------------------------------------------------------------
+
+    private function createClientManager(bool $link): UserProfile
+    {
+        $role = Role::firstOrCreate(['name' => 'client-owner', 'guard_name' => 'web']);
+        $user = User::factory()->create(['guid' => Str::uuid()->toString()]);
+
+        $profile = UserProfile::create([
+            'guid'                 => Str::uuid()->toString(),
+            'user_id'              => $user->id,
+            'authenticatable_type' => 'client',
+            'authenticatable_id'   => $this->client->id,
+            'role_id'              => $role->id,
+        ]);
+
+        if ($link) {
+            $this->establishment->staff()->attach($profile->id);
+        }
+
+        return $profile;
+    }
+
+    public function test_create_throws_when_client_manager_is_not_linked_to_the_establishment(): void
+    {
+        $unlinked = $this->createClientManager(false);
+
+        $this->expectException(\App\Exceptions\ProgramManagerNotLinkedException::class);
+
+        $this->service->create($this->basePayload(['manager_profile_ids' => [$unlinked->id]]), $this->vet->id);
+    }
+
+    public function test_create_accepts_linked_client_manager_and_unlinked_vet_manager(): void
+    {
+        $linked = $this->createClientManager(true);
+        $vetManager = $this->createManagerProfile($this->vet);
+
+        $program = $this->service->create(
+            $this->basePayload(['manager_profile_ids' => [$linked->id, $vetManager->id]]),
+            $this->vet->id
+        );
+
+        $this->assertCount(2, $program->managers);
+    }
+
+    public function test_update_throws_when_client_manager_is_not_linked_to_the_establishment(): void
+    {
+        $program = $this->service->create($this->basePayload(), $this->vet->id);
+        $unlinked = $this->createClientManager(false);
+
+        $this->expectException(\App\Exceptions\ProgramManagerNotLinkedException::class);
+
+        $this->service->update($program, $this->basePayload([
+            'targets'             => [['guid' => $program->targets->first()->guid, 'target_date' => '2026-08-01', 'animals' => []]],
+            'manager_profile_ids' => [$unlinked->id],
+        ]));
+    }
 }

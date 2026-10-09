@@ -7,6 +7,7 @@ use App\Contracts\Repositories\ClientRepositoryInterface;
 use App\Contracts\Repositories\ContactRepositoryInterface;
 use App\Contracts\Repositories\CountryRepositoryInterface;
 use App\Contracts\Repositories\DocumentTypeRepositoryInterface;
+use App\Contracts\Repositories\EstablishmentHealthPlanRepositoryInterface;
 use App\Contracts\Repositories\EstablishmentRepositoryInterface;
 use App\Contracts\Repositories\HealthActivityRepositoryInterface;
 use App\Contracts\Repositories\HealthPlanCategoryRepositoryInterface;
@@ -28,6 +29,7 @@ use App\Contracts\Repositories\UserProfileRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\VetRepositoryInterface;
 use App\Models\Client;
+use App\Models\EstablishmentHealthPlan;
 use App\Models\Export;
 use App\Models\Program;
 use App\Models\User;
@@ -38,6 +40,7 @@ use App\Repositories\ClientRepositoryEloquent;
 use App\Repositories\ContactRepositoryEloquent;
 use App\Repositories\CountryRepositoryEloquent;
 use App\Repositories\DocumentTypeRepositoryEloquent;
+use App\Repositories\EstablishmentHealthPlanRepositoryEloquent;
 use App\Repositories\EstablishmentRepositoryEloquent;
 use App\Repositories\HealthActivityRepositoryEloquent;
 use App\Repositories\HealthPlanCategoryRepositoryEloquent;
@@ -81,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SystemSettingRepositoryInterface::class, SystemSettingRepositoryEloquent::class);
         $this->app->bind(CountryRepositoryInterface::class, CountryRepositoryEloquent::class);
         $this->app->bind(DocumentTypeRepositoryInterface::class, DocumentTypeRepositoryEloquent::class);
+        $this->app->bind(\App\Contracts\Repositories\ProvinceRepositoryInterface::class, \App\Repositories\ProvinceRepositoryEloquent::class);
         $this->app->bind(VetRepositoryInterface::class, VetRepositoryEloquent::class);
         $this->app->bind(UserProfileRepositoryInterface::class, UserProfileRepositoryEloquent::class);
         $this->app->bind(ContactRepositoryInterface::class, ContactRepositoryEloquent::class);
@@ -95,12 +99,23 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(HealthPlanCategoryRepositoryInterface::class, HealthPlanCategoryRepositoryEloquent::class);
         $this->app->bind(HealthPlanTemplateRepositoryInterface::class, HealthPlanTemplateRepositoryEloquent::class);
         $this->app->bind(PushSubscriptionRepositoryInterface::class, PushSubscriptionRepositoryEloquent::class);
+        $this->app->bind(EstablishmentHealthPlanRepositoryInterface::class, EstablishmentHealthPlanRepositoryEloquent::class);
     }
 
     public function boot(): void
     {
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->input('email', '').$request->ip());
+        });
+
+        // Nominatim policy: max 1 req/s. Per-user burst guard; responses are cached by GeocodingService.
+        RateLimiter::for('geocode', function (Request $request) {
+            $key = (string) ($request->user()?->getAuthIdentifier() ?? $request->ip());
+
+            return [
+                Limit::perSecond(1)->by($key),
+                Limit::perMinute(30)->by($key),
+            ];
         });
 
         Gate::policy(Export::class, ExportPolicy::class);
@@ -126,10 +141,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Relation::morphMap([
-            'vet'          => Vet::class,
-            'user_profile' => UserProfile::class,
-            'client'       => Client::class,
-            'program'      => Program::class,
+            'vet'                        => Vet::class,
+            'user_profile'               => UserProfile::class,
+            'client'                     => Client::class,
+            'program'                    => Program::class,
+            'establishment_health_plan'  => EstablishmentHealthPlan::class,
         ]);
     }
 }

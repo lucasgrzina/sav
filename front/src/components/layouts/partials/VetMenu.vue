@@ -22,7 +22,7 @@ const { can, hasTenantContext } = usePermission()
 const vetGuid = computed(() => route.params.vetGuid as string)
 
 const vetNavItems = computed(() => [
-  { path: `/vets/${vetGuid.value}/perfil`,   label: 'Perfil',    icon: IdcardOutlined },
+  { path: `/vets/${vetGuid.value}/perfil`,   label: 'Empresa',    icon: IdcardOutlined },
   { path: `/vets/${vetGuid.value}/clients`,  label: 'Clientes',  icon: TeamOutlined },
   { path: `/vets/${vetGuid.value}/usuarios`, label: 'Usuarios',  icon: UserOutlined },
 ])
@@ -31,6 +31,13 @@ const reproduccionNavItems = computed(() =>
   [
     { path: `/vets/${vetGuid.value}/protocols`, label: 'Protocolos', icon: HeartOutlined, permission: 'protocols.read' },
     { path: `/vets/${vetGuid.value}/programs`, label: 'Programas', icon: ScheduleOutlined, permission: 'programs.read' },
+  ].filter((item) => can(item.permission)),
+)
+
+const sanidadNavItems = computed(() =>
+  [
+    { path: `/vets/${vetGuid.value}/health-plans`, label: 'Planes Sanitarios', icon: HeartOutlined, permission: 'establishment-health-plans.read' },
+    { path: `/vets/${vetGuid.value}/health-plan-templates`, label: 'Plantillas', icon: HeartOutlined, permission: 'establishment-health-plans.read' },
   ].filter((item) => can(item.permission)),
 )
 
@@ -46,12 +53,16 @@ const visibleItems = computed(() =>
 const visibleReproduccionItems = computed(() =>
   props.tenantContextLoading ? [] : reproduccionNavItems.value,
 )
+
+const visibleSanidadItems = computed(() =>
+  props.tenantContextLoading ? [] : sanidadNavItems.value,
+)
 </script>
 
 <template>
   <nav class="dash-nav">
     <Transition name="label-fade">
-      <span v-if="!collapsed" class="dash-nav-section">Veterinaria</span>
+      <span v-if="!collapsed" class="dash-nav-section">Empresa</span>
     </Transition>
 
     <RouterLink
@@ -89,6 +100,27 @@ const visibleReproduccionItems = computed(() =>
       </RouterLink>
     </template>
 
+    <template v-if="visibleSanidadItems.length">
+      <div class="dash-nav-divider" />
+      <Transition name="label-fade">
+        <span v-if="!collapsed" class="dash-nav-section">Sanidad</span>
+      </Transition>
+
+      <RouterLink
+        v-for="item in visibleSanidadItems"
+        :key="item.path"
+        :to="item.path"
+        class="dash-nav-item"
+        :class="{ 'is-active': route.path.startsWith(item.path) }"
+        :title="collapsed ? item.label : undefined"
+      >
+        <component :is="item.icon" class="dash-nav-icon" />
+        <Transition name="label-fade">
+          <span v-if="!collapsed" class="dash-nav-label">{{ item.label }}</span>
+        </Transition>
+      </RouterLink>
+    </template>
+
     <div class="dash-nav-divider" />
     <Transition name="label-fade">
       <span v-if="!collapsed" class="dash-nav-section">Soporte</span>
@@ -110,17 +142,17 @@ const visibleReproduccionItems = computed(() =>
 
     <div class="dash-nav-divider" />
     <Transition name="label-fade">
-      <span v-if="!collapsed" class="dash-nav-section">Mi perfil</span>
+      <span v-if="!collapsed" class="dash-nav-section">Usuario</span>
     </Transition>
     <RouterLink
       :to="`/vets/${vetGuid}/mi-perfil`"
       class="dash-nav-item"
       :class="{ 'is-active': route.path.startsWith(`/vets/${vetGuid}/mi-perfil`) }"
-      :title="collapsed ? 'Mi perfil' : undefined"
+      :title="collapsed ? 'Mis datos' : undefined"
     >
       <ProfileOutlined class="dash-nav-icon" />
       <Transition name="label-fade">
-        <span v-if="!collapsed" class="dash-nav-label">Mi perfil</span>
+        <span v-if="!collapsed" class="dash-nav-label">Mis datos</span>
       </Transition>
     </RouterLink>
 

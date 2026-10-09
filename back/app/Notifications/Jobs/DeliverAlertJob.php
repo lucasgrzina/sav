@@ -65,6 +65,16 @@ final class DeliverAlertJob implements ShouldQueue
         }
 
         $content = $builders->for($recipient->alert->type)->build($recipient->alert, $recipientDto);
+
+        if ($content === null) {
+            // El builder recalculó el contenido en destino (ver HealthPlanMonthMessageBuilder) y
+            // determinó que la alerta ya no aplica (ej. todas las actividades se confirmaron entre
+            // la creación de la Alert y este envío). No es un fallo técnico: no hay fallback.
+            $recipient->update(['status' => DeliveryStatus::Suppressed, 'failure_reason' => 'no_longer_applicable']);
+
+            return;
+        }
+
         $message = new OutboundMessage(
             $recipientDto, $content, $recipient->channel, $recipient->idempotency_key,
         );

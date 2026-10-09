@@ -104,6 +104,24 @@ class DeliverAlertJobTest extends TestCase
         return new MessageBuilderRegistry([$builder]);
     }
 
+    /** Stub builder that always returns null — simula HealthPlanMonthMessageBuilder cuando ya no queda nada pendiente (RF-02). */
+    private function nullBuilders(): MessageBuilderRegistry
+    {
+        $builder = new class implements AlertMessageBuilder {
+            public function type(): AlertType
+            {
+                return AlertType::ProgramCreated;
+            }
+
+            public function build(Alert $alert, Recipient $recipient): ?MessageContent
+            {
+                return null;
+            }
+        };
+
+        return new MessageBuilderRegistry([$builder]);
+    }
+
     public function test_delivers_a_pending_recipient_and_marks_it_sent(): void
     {
         $profile = $this->createManagerProfile();
@@ -455,6 +473,46 @@ class DeliverAlertJobTest extends TestCase
 
         $fallback = AlertRecipient::where('alert_id', $alert->id)->where('channel', Channel::Email)->firstOrFail();
         Queue::assertPushed(DeliverAlertJob::class, fn ($job) => $job->recipientId === $fallback->id);
+    }
+
+    /**
+     * DEC2-02 / RF-02: un builder que recalcula el contenido en destino y determina que la
+     * alerta ya no aplica (ej. HealthPlanMonthMessageBuilder con todas las actividades
+     * confirmadas) retorna null. DeliverAlertJob debe tratarlo como Suppressed, sin llamar
+     * al gateway ni intentar fallback — no es un fallo técnico, es una decisión de contenido.
+     */
+    public function test_a_null_content_from_the_builder_suppresses_the_recipient_without_calling_the_gateway(): void
+    {
+        Queue::fake();
+
+        $profile = $this->createManagerProfile();
+
+        $alert = Alert::create([
+            'type' => AlertType::ProgramCreated,
+            'payload' => [],
+            'scheduled_at' => now(),
+            'status' => 'pending',
+        ]);
+        $recipient = AlertRecipient::create([
+            'alert_id' => $alert->id,
+            'user_profile_id' => $profile->id,
+            'channel' => Channel::Whatsapp,
+            'status' => DeliveryStatus::Pending,
+            'idempotency_key' => Str::uuid()->toString(),
+        ]);
+
+        $fakeGateway = new FakeGateway();
+        app()->instance(FakeGateway::class, $fakeGateway);
+        $gateways = new GatewayRegistry(app(), ['whatsapp' => ['gateway' => FakeGateway::class]]);
+
+        $job = new DeliverAlertJob($recipient->id);
+        $job->handle($this->nullBuilders(), $gateways, new DeliveryPipeline([]), new ChannelFallbackService());
+
+        $recipient->refresh();
+        $this->assertSame(DeliveryStatus::Suppressed, $recipient->status);
+        $this->assertSame('no_longer_applicable', $recipient->failure_reason);
+        $this->assertCount(0, $fakeGateway->sentMessages());
+        Queue::assertNothingPushed();
     }
 
     /** End-to-end con FakeGateway(Channel::Push): el flujo builder → pipeline → gateway → update de estado funciona igual que WhatsApp, sin tocar DeliverAlertJob. */

@@ -22,8 +22,10 @@ class DatabaseSeeder extends Seeder
             TechniquePermissionsSeeder::class,
             ProtocolPermissionsSeeder::class,
             ProgramPermissionsSeeder::class,
+            EstablishmentHealthPlanPermissionsSeeder::class,
             SystemSettingSeeder::class,
             CountrySeeder::class,
+            ProvinceSeeder::class,
             HealthPlanSeeder::class,
         ]);
 
@@ -39,7 +41,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             TestDataSeeder::class,
-            MoetProtocolSeeder::class,
+            LegacyProtocolSeeder::class,
         ]);
     }
 }

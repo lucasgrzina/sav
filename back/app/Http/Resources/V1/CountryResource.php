@@ -14,6 +14,7 @@ class CountryResource extends JsonResource
             'name'         => $this->name,
             'iso_code'     => $this->iso_code,
             'phone_prefix' => $this->phone_prefix,
+            'timezone'     => $this->timezone,
         ];
     }
 }

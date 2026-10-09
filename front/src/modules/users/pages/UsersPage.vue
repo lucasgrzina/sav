@@ -61,7 +61,7 @@ const queryParams = computed(() => ({
   ...filters,
   search:    debouncedSearch.value,
   type:      activeTab.value,
-  role_guid: activeTab.value === 'platform' ? platformRoleGuid.value : tenantRoleGuid.value,
+  role_guid: activeTab.value === 'platform' ? platformRoleGuid.value : (tenantRoleGuid.value ?? undefined),
 }))
 
 const { data, isLoading } = useUsers(queryParams)
@@ -191,7 +191,7 @@ const showChangePassword = computed({
       :page="filters.page"
       :total="data?.total ?? 0"
       :per-page="filters.per_page"
-      @change="({ page, perPage }) => { filters.page = page; filters.per_page = perPage }"
+      @change="({ page, perPage }: { page: number; perPage: number }) => { filters.page = page; filters.per_page = perPage }"
     />
 
     <CreateUserModal v-model="showCreate" />

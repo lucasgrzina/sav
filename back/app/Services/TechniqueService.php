@@ -147,7 +147,7 @@ class TechniqueService
                 throw new TechniqueCannotBeDeletedException(
                     reason: 'children_have_programs',
                     count: $count,
-                    message: 'La técnica tiene sub-técnicas con programas vinculados.',
+                    message: 'La técnica tiene programas con programas vinculados.',
                 );
             }
         }

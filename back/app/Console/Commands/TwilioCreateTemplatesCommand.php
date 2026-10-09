@@ -27,6 +27,7 @@ class TwilioCreateTemplatesCommand extends Command
     private const TEMPLATES = [
         'program.cancelled' => ['env' => 'TWILIO_TEMPLATE_PROGRAM_CANCELLED', 'friendly_name' => 'sav_program_cancelled'],
         'program.task_due'  => ['env' => 'TWILIO_TEMPLATE_PROGRAM_TASK_DUE', 'friendly_name' => 'sav_program_task_due'],
+        'health_plan.month' => ['env' => 'TWILIO_TEMPLATE_HEALTH_PLAN_MONTH', 'friendly_name' => 'sav_health_plan_month'],
     ];
 
     /**

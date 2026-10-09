@@ -99,7 +99,7 @@ class ContactController extends Controller
             $profile = $this->userProfileService->findByGuidForVet($profileGuid, $vet);
 
             if (!$profile) {
-                abort(404, 'Perfil no encontrado en esta veterinaria.');
+                abort(404, 'Perfil no encontrado en esta empresa.');
             }
 
             return $profile;
@@ -109,7 +109,7 @@ class ContactController extends Controller
             $client = $this->clientService->findByGuidForVet($clientGuid, $vet);
 
             if (!$client) {
-                abort(404, 'Cliente no encontrado en esta veterinaria.');
+                abort(404, 'Cliente no encontrado en esta empresa.');
             }
 
             return $client;

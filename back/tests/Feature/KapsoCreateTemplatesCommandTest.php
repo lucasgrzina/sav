@@ -27,6 +27,7 @@ class KapsoCreateTemplatesCommandTest extends TestCase
                 'program.cancelled' => ['name' => 'sav_program_cancelled', 'language' => 'es'],
                 'program.task_due' => ['name' => 'sav_program_task_due', 'language' => 'es'],
                 'program.pdf_shared' => ['name' => 'sav_program_pdf_shared', 'language' => 'es'],
+                'health_plan.month' => ['name' => 'sav_health_plan_month', 'language' => 'es'],
             ],
         ]);
 
@@ -108,7 +109,7 @@ class KapsoCreateTemplatesCommandTest extends TestCase
 
         $this->artisan('kapso:create-templates')->assertSuccessful();
 
-        Http::assertSentCount(5); // 1 listado de números + 4 templates
+        Http::assertSentCount(6); // 1 listado de números + 5 templates
     }
 
     public function test_an_explicit_business_account_id_skips_the_lookup(): void
@@ -199,7 +200,7 @@ class KapsoCreateTemplatesCommandTest extends TestCase
             ->assertFailed();
 
         // El fallo de uno no debe abortar a los demás.
-        Http::assertSentCount(5);
+        Http::assertSentCount(6);
     }
 
     public function test_fails_without_an_api_key(): void

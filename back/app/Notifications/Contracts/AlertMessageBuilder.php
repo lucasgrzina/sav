@@ -11,5 +11,6 @@ interface AlertMessageBuilder
 {
     public function type(): AlertType;
 
-    public function build(Alert $alert, Recipient $recipient): MessageContent;
+    /** @return MessageContent|null null si, al recalcular en destino, la alerta ya no debe enviarse (ver DeliverAlertJob). */
+    public function build(Alert $alert, Recipient $recipient): ?MessageContent;
 }

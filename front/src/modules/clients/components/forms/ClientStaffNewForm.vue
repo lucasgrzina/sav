@@ -114,7 +114,7 @@ function onSubmit(): void {
     </FormSection>
 
     <FormSection title="Contactos de acceso" subtitle="Emails y teléfonos de contacto.">
-      <ContactsInput v-model="localContacts" />
+      <ContactsInput v-model="localContacts" :field-errors="fieldErrors" />
     </FormSection>
 
     <div class="csnf-actions">

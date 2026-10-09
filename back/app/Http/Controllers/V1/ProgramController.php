@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V1;
 
+use App\Exceptions\ProgramManagerNotLinkedException;
 use App\Exceptions\ProgramMustHaveOneTargetException;
 use App\Exceptions\ProgramNotEditableException;
 use App\Http\Controllers\Controller;
@@ -50,6 +51,8 @@ class ProgramController extends Controller
             $program = $this->programService->create($data, $vet->id);
 
             return $this->makeSuccess(new ProgramResource($program), 'Programa creado correctamente.', 201);
+        } catch (ProgramManagerNotLinkedException $e) {
+            return $this->makeError(['reason' => 'manager_not_linked'], $e->getMessage(), 422);
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -89,6 +92,8 @@ class ProgramController extends Controller
             return $this->makeSuccess(new ProgramResource($program), 'Programa actualizado correctamente.');
         } catch (ProgramNotEditableException $e) {
             return $this->makeError(['reason' => 'not_editable'], $e->getMessage(), 422);
+        } catch (ProgramManagerNotLinkedException $e) {
+            return $this->makeError(['reason' => 'manager_not_linked'], $e->getMessage(), 422);
         } catch (ProgramMustHaveOneTargetException $e) {
             return $this->makeError(['reason' => 'must_have_one_target'], $e->getMessage(), 422);
         } catch (\Exception $e) {

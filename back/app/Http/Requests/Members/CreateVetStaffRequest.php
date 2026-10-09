@@ -47,7 +47,7 @@ class CreateVetStaffRequest extends FormRequest
             'email.email'         => 'El email no tiene un formato válido.',
             'email.unique'        => 'Este email ya está registrado en el sistema. Usá el flujo de búsqueda.',
             'role_guid.required'  => 'El rol es obligatorio.',
-            'role_guid.exists'    => 'El rol seleccionado no es válido para el personal de una veterinaria.',
+            'role_guid.exists'    => 'El rol seleccionado no es válido para el personal de una empresa.',
         ];
     }
 }

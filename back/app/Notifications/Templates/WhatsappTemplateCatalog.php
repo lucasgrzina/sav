@@ -54,6 +54,10 @@ final class WhatsappTemplateCatalog
                 'body' => 'Hola {{1}}, te compartimos el PDF del programa "{{2}}".',
                 'examples' => ['Lucas', 'Sincronización IATF'],
             ],
+            AlertType::HealthPlanMonth->value => [
+                'body' => 'Hola {{1}}, en {{2}} corresponde: {{3}} — plan "{{4}}" ({{5}}) de {{7}}, {{6}}.',
+                'examples' => ['Lucas', 'julio', 'Vacunación Aftosa, Desparasitación', 'Plan Ganadero Anual', 'Bovinos', 'Estancia La Esperanza', 'Establecimiento Norte'],
+            ],
         ];
     }
 

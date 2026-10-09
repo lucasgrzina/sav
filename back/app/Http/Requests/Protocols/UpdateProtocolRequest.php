@@ -57,7 +57,7 @@ class UpdateProtocolRequest extends FormRequest
                 return; // ya cubierto por exists:
             }
             if ($technique->parent_id === null) {
-                $v->errors()->add('technique_id', 'El protocolo debe asociarse a una sub-técnica, nunca a la técnica raíz.');
+                $v->errors()->add('technique_id', 'El protocolo debe asociarse a un programa, nunca a la técnica raíz.');
                 return;
             }
 
@@ -65,7 +65,7 @@ class UpdateProtocolRequest extends FormRequest
 
             $country = $this->input('country_id') ? Country::where('guid', $this->input('country_id'))->first() : null;
             if ($this->protocolRepository->existsDuplicate($technique->id, $country?->id, (string) $this->input('name'), vetId: null, excludeGuid: $currentGuid)) {
-                $v->errors()->add('name', 'Ya existe un protocolo con este nombre para esta sub-técnica y país.');
+                $v->errors()->add('name', 'Ya existe un protocolo con este nombre para este programa y país.');
                 return;
             }
 
@@ -73,7 +73,7 @@ class UpdateProtocolRequest extends FormRequest
             if ($current && $current->technique_id !== $technique->id) {
                 $currentTechnique = Technique::find($current->technique_id);
                 if ($currentTechnique && $currentTechnique->parent_id !== $technique->parent_id) {
-                    $v->errors()->add('technique_id', 'La nueva sub-técnica debe pertenecer a la misma técnica raíz.');
+                    $v->errors()->add('technique_id', 'El nuevo programa debe pertenecer a la misma técnica raíz.');
                 }
             }
         });
@@ -82,8 +82,8 @@ class UpdateProtocolRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'technique_id.required'         => 'La sub-técnica es requerida.',
-            'technique_id.exists'           => 'La sub-técnica seleccionada no existe.',
+            'technique_id.required'         => 'El programa es requerido.',
+            'technique_id.exists'           => 'El programa seleccionado no existe.',
             'name.required'                 => 'El nombre es requerido.',
             'name.max'                      => 'El nombre no puede superar 255 caracteres.',
             'country_id.exists'             => 'El país seleccionado no existe.',

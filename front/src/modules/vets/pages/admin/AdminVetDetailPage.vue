@@ -15,26 +15,17 @@ const props = defineProps<{ guid: string }>()
 
 const router = useRouter()
 const { data: vet, isLoading } = useVet(computed(() => props.guid))
-
-const initials = computed(() => {
-  if (!vet.value?.name) return '??'
-  return vet.value.name
-    .split(' ')
-    .slice(0, 2)
-    .map(w => w[0].toUpperCase())
-    .join('')
-})
 </script>
 
 <template>
   <div>
     <BaseButton variant="tertiary" class="avd-back" @click="router.push('/admin/vets')">
       <template #icon><ArrowLeftOutlined /></template>
-      Volver a veterinarias
+      Volver a empresas
     </BaseButton>
 
     <div v-if="isLoading" class="avd-loading">
-      Cargando veterinaria...
+      Cargando empresa...
     </div>
 
     <template v-else-if="vet">
@@ -79,7 +70,7 @@ const initials = computed(() => {
     </template>
 
     <div v-else class="avd-loading">
-      No se encontró la veterinaria.
+      No se encontró la empresa.
     </div>
   </div>
 </template>

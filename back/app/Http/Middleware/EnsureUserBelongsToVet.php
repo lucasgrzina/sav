@@ -24,16 +24,16 @@ class EnsureUserBelongsToVet
             return response()->json(['success' => false, 'message' => 'Tenant no especificado.'], 403);
         }
 
-        // 2. Resolver la veterinaria por guid
+        // 2. Resolver la empresa por guid
         $vet = $this->vetRepository->findByGuid($guid);
 
         if (!$vet) {
-            return response()->json(['success' => false, 'message' => 'Veterinaria no encontrada.'], 404);
+            return response()->json(['success' => false, 'message' => 'Empresa no encontrada.'], 404);
         }
 
         // 3. Verificar que la vet está activa (validada y no suspendida)
         if (!$vet->validated_at || $vet->suspended_at) {
-            return response()->json(['success' => false, 'message' => 'Veterinaria inactiva.'], 403);
+            return response()->json(['success' => false, 'message' => 'Empresa inactiva.'], 403);
         }
 
         // 4. Verificar que el usuario tiene un UserProfile en esta vet
@@ -41,11 +41,11 @@ class EnsureUserBelongsToVet
         $profile = $this->userProfileRepository->findForUserAndVet($user, $vet);
 
         if (!$profile) {
-            return response()->json(['success' => false, 'message' => 'Sin acceso a esta veterinaria.'], 403);
+            return response()->json(['success' => false, 'message' => 'Sin acceso a esta empresa.'], 403);
         }
 
         if ($profile->blocked_at) {
-            return response()->json(['success' => false, 'message' => 'Tu acceso a esta veterinaria está bloqueado.'], 403);
+            return response()->json(['success' => false, 'message' => 'Tu acceso a esta empresa está bloqueado.'], 403);
         }
 
         // 5. Compartir el vet y el profile resueltos con la request

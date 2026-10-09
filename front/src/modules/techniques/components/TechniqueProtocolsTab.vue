@@ -140,7 +140,7 @@ function openSimulateDrawer(protocol: ProtocolListItem) {
 
 const columns = [
   { title: 'Nombre', key: 'name', dataIndex: 'name' },
-  { title: 'Sub-técnica', key: 'technique', dataIndex: 'technique' },
+  { title: 'Programa', key: 'technique', dataIndex: 'technique' },
   { title: 'País', key: 'country', dataIndex: 'country' },
   { title: 'Tareas', key: 'tasks_count', dataIndex: 'tasks_count' },
   { title: 'Creado', key: 'created_at', dataIndex: 'created_at' },
@@ -152,7 +152,7 @@ const columns = [
   <div>
     <a-empty
       v-if="technique.children.length === 0"
-      description="Primero creá una sub-técnica para poder cargar protocolos."
+      description="Primero creá un programa para poder cargar protocolos."
     />
 
     <template v-else>
@@ -160,7 +160,7 @@ const columns = [
         <a-select
           v-model:value="filters.technique_id"
           allow-clear
-          placeholder="Filtrar por sub-técnica"
+          placeholder="Filtrar por programa"
           style="width: 240px"
           :options="subTechniqueOptions"
         />

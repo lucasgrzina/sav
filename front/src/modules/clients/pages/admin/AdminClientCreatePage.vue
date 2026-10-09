@@ -29,7 +29,7 @@ function handleSubmit(values: ClientCreateForm | ClientUpdateForm): void {
 
     <AppHeader
       title="Nuevo cliente"
-      subtitle="Creá un cliente sin asignarlo a ninguna veterinaria."
+      subtitle="Creá un cliente sin asignarlo a ninguna empresa."
       size="default"
     />
 

@@ -20,8 +20,8 @@ function handleSubmit(payload: unknown): void {
 <template>
   <div>
     <AppHeader
-      title="Mi perfil"
-      subtitle="Gestioná tu información personal en esta veterinaria."
+      title="Mis datos"
+      subtitle="Gestioná tu información personal en esta empresa."
       size="default"
     />
 

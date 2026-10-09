@@ -14,20 +14,20 @@ export function useSuspendVet() {
     onSuccess: (_, guid) => {
       queryClient.invalidateQueries({ queryKey: ['vets'] })
       queryClient.invalidateQueries({ queryKey: ['vet', guid] })
-      success('Veterinaria suspendida correctamente')
+      success('Empresa suspendida correctamente')
     },
     onError: () => {
-      error('Error al suspender la veterinaria')
+      error('Error al suspender la empresa')
     },
   })
 
   async function suspendVet(vet: VetItem) {
     await confirm.confirm({
-      title: 'Suspender veterinaria',
+      title: 'Suspender empresa',
       message: `¿Estás seguro de que querés suspender "${vet.name}"? No podrá operar hasta que sea reactivada.`,
       confirmLabel: 'Suspender',
       danger: true,
-      onConfirm: () => mutation.mutateAsync(vet.guid),
+      onConfirm: async () => { await mutation.mutateAsync(vet.guid) },
     })
   }
 

@@ -1,4 +1,4 @@
-# Plan de Refactorización Frontend — VetAlert
+# Plan de Refactorización Frontend — SAV
 
 **Guía base:** `docs/refactorizacion.md`
 **Stack objetivo:** Vue 3 + TS Strict + Pinia + Vue Query + Vee-Validate + Zod + Axios + Tailwind + Atomic Design + Feature Modules

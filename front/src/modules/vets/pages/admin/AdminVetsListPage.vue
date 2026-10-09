@@ -37,12 +37,12 @@ const { data, isLoading } = useVets(
 
 <template>
   <div>
-    <AppHeader title="Veterinarias" subtitle="Administración de veterinarias registradas en el sistema.">
+    <AppHeader title="Empresas" subtitle="Administración de empresas registradas en el sistema.">
       <template #actions="{ buttonSize }">
         <PermissionGuard permission="vets.create">
           <BaseButton :size="buttonSize" @click="router.push('/admin/vets/new')">
             <template #icon><PlusOutlined /></template>
-            Nueva veterinaria
+            Nueva empresa
           </BaseButton>
         </PermissionGuard>
       </template>
@@ -56,13 +56,13 @@ const { data, isLoading } = useVets(
 
     <EmptyState
       v-if="!isLoading && !data?.data.length"
-      message="No se encontraron veterinarias."
+      message="No se encontraron empresas."
       icon="🏥"
     >
       <PermissionGuard permission="vets.create">
         <BaseButton variant="primary" class="mt-3" @click="router.push('/admin/vets/new')">
           <template #icon><PlusOutlined /></template>
-          Crear primera veterinaria
+          Crear primera empresa
         </BaseButton>
       </PermissionGuard>
     </EmptyState>
@@ -78,7 +78,7 @@ const { data, isLoading } = useVets(
       :page="uiStore.filters.page"
       :total="data?.total ?? 0"
       :per-page="uiStore.filters.per_page"
-      @change="({ page, perPage }) => { uiStore.filters.page = page; uiStore.filters.per_page = perPage }"
+      @change="({ page, perPage }: { page: number; perPage: number }) => { uiStore.filters.page = page; uiStore.filters.per_page = perPage }"
     />
 
     <ColumnSelectorDrawer

@@ -37,17 +37,7 @@ const layoutTheme = {
 
             <!-- Logo -->
             <div class="fcp-logo">
-                <div class="fcp-logo-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C9.5 2 7.5 3.8 7.5 6s2 4 4.5 4 4.5-1.8 4.5-4S14.5 2 12 2Z" fill="#f00614" opacity="0.9"/>
-                        <circle cx="6.5" cy="6.5" r="2" fill="#f00614" opacity="0.6"/>
-                        <circle cx="17.5" cy="6.5" r="2" fill="#f00614" opacity="0.6"/>
-                        <circle cx="4" cy="11" r="1.8" fill="#f00614" opacity="0.5"/>
-                        <circle cx="20" cy="11" r="1.8" fill="#f00614" opacity="0.5"/>
-                        <path d="M12 13c-4.5 0-8 2.5-8 6 0 2 3.5 3 8 3s8-1 8-3c0-3.5-3.5-6-8-6Z" fill="#f00614" opacity="0.8"/>
-                    </svg>
-                </div>
-                <span class="fcp-logo-name">Vet<span>Alert</span></span>
+                <img src="@/assets/logo.png" alt="SAV" style="width: 100px; max-width: 100%" />
             </div>
 
             <!-- Card -->

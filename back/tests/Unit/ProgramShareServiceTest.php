@@ -120,13 +120,20 @@ class ProgramShareServiceTest extends TestCase
         $user = User::factory()->create(['guid' => Str::uuid()->toString()]);
         $authenticatableId = $authenticatableType === 'vet' ? $this->vet->id : $this->client->id;
 
-        return UserProfile::create([
+        $profile = UserProfile::create([
             'guid' => Str::uuid()->toString(),
             'user_id' => $user->id,
             'authenticatable_type' => $authenticatableType,
             'authenticatable_id' => $authenticatableId,
             'role_id' => $role->id,
         ]);
+
+        // Client staff must be linked to the program's establishment.
+        if ($authenticatableType === 'client') {
+            $this->establishment->staff()->attach($profile->id);
+        }
+
+        return $profile;
     }
 
     private function createProgram(array $managerProfileIds = []): Program

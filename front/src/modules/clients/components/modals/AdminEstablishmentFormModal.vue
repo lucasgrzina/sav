@@ -1,16 +1,26 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { establishmentSchema } from '../../validators/client.validator'
 import { useAdminCreateEstablishment } from '../../composables/admin/useAdminCreateEstablishment'
 import { useAdminUpdateEstablishment } from '../../composables/admin/useAdminUpdateEstablishment'
+import { useAdminSyncEstablishmentStaff } from '../../composables/admin/useAdminSyncEstablishmentStaff'
+import { useAdminClientStaff } from '../../composables/admin/useAdminClientStaff'
+import EstablishmentStaffField from '../forms/EstablishmentStaffField.vue'
+import EstablishmentCoordinatesFields from '../forms/EstablishmentCoordinatesFields.vue'
+import { useGeocodeAddress } from '../../composables/useGeocodeAddress'
+import { useEstablishmentProvince } from '../../composables/useEstablishmentProvince'
+import { adminGeocodeAddressApi } from '../../api/clients.api'
+import { haveSameGuids } from '../../utils/establishment-staff'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
+import { usePermission } from '@/core/composables/usePermissions'
 import type { EstablishmentItem } from '../../types/client.types'
 import type { EstablishmentForm } from '../../validators/client.validator'
 
 const props = defineProps<{
   clientGuid: string
+  countryGuid?: string
   mode: 'create' | 'edit'
   initial?: Partial<EstablishmentItem>
 }>()
@@ -30,13 +40,38 @@ const [name, nameAttrs]         = defineField('name')
 const [renspa, renspaAttrs]     = defineField('renspa')
 const [address, addressAttrs]   = defineField('address')
 const [city, cityAttrs]         = defineField('city')
-const [state, stateAttrs]       = defineField('state')
+const [state]                  = defineField('state')
+const [province_guid]         = defineField('province_guid')
 const [zip_code, zipCodeAttrs]  = defineField('zip_code')
+const [latitude]  = defineField('latitude')
+const [longitude] = defineField('longitude')
 
 const createMutation = useAdminCreateEstablishment()
 const updateMutation = useAdminUpdateEstablishment()
+const syncStaffMutation = useAdminSyncEstablishmentStaff()
 
-const isPending   = props.mode === 'create' ? createMutation.isPending : updateMutation.isPending
+const { can } = usePermission()
+const canManageStaff = computed(() => can('establishments.update'))
+
+const { data: clientStaff, isLoading: isLoadingStaff } = useAdminClientStaff(computed(() => props.clientGuid))
+
+// Linked staff is not part of the establishment payload: it is synced in a second step.
+const staffGuids   = ref<string[]>([])
+const initialStaff = ref<string[]>([])
+
+const geocoding = useGeocodeAddress({
+  address, city, state, zipCode: zip_code, latitude, longitude,
+  fetcher: (payload, signal) => adminGeocodeAddressApi(payload, signal),
+})
+
+const province = useEstablishmentProvince({
+  countryGuid: computed(() => props.countryGuid),
+  provinceGuid: province_guid,
+  state,
+  onUserChange: () => geocoding.scheduleGeocode(),
+})
+
+const isPending   = computed(() => createMutation.isPending.value || updateMutation.isPending.value || syncStaffMutation.isPending.value)
 const fieldErrors = props.mode === 'create' ? createMutation.fieldErrors : updateMutation.fieldErrors
 
 watch(() => props.initial, (vals) => {
@@ -47,8 +82,20 @@ watch(() => props.initial, (vals) => {
       address:  vals.address ?? null,
       city:     vals.city ?? null,
       state:    vals.state ?? null,
+      province_guid: vals.province?.guid ?? null,
       zip_code: vals.zip_code ?? null,
+      latitude:  vals.latitude ?? null,
+      longitude: vals.longitude ?? null,
     })
+    // Existing coordinates are kept until the user edits an address field
+    geocoding.reset()
+    province.matchLegacyState()
+    initialStaff.value = (vals.staff ?? []).map((member) => member.guid)
+    staffGuids.value   = [...initialStaff.value]
+  } else if (props.mode === 'create') {
+    // "New establishment" must not inherit the staff selection of a previous one
+    initialStaff.value = []
+    staffGuids.value   = []
   }
 }, { immediate: true, deep: true })
 
@@ -56,34 +103,67 @@ watch(fieldErrors, (errs) => {
   setErrors(errs ?? {})
 })
 
+// Second step: only when the user can manage staff and the selection actually changed.
+// Returns false when the sync failed (the establishment itself is already saved).
+async function syncStaffIfNeeded(estGuid: string): Promise<boolean> {
+  if (!canManageStaff.value) return true
+  if (haveSameGuids(initialStaff.value, staffGuids.value)) return true
+  try {
+    await syncStaffMutation.mutateAsync({
+      clientGuid: props.clientGuid,
+      estGuid,
+      payload: { user_profile_guids: staffGuids.value },
+    })
+    initialStaff.value = [...staffGuids.value]
+    return true
+  } catch {
+    // The mutation composable already notified the error
+    return false
+  }
+}
+
+function closeAndReset(): void {
+  resetForm()
+  geocoding.reset()
+  syncStaffMutation.resetErrors()
+  staffGuids.value   = []
+  initialStaff.value = []
+  isOpen.value       = false
+  emit('success')
+}
+
 const onSubmit = handleSubmit(async (values) => {
   if (props.mode === 'create') {
-    await createMutation.mutateAsync(
-      { clientGuid: props.clientGuid, payload: values },
-      {
-        onSuccess: () => {
-          resetForm()
-          isOpen.value = false
-          emit('success')
-        },
-      },
-    )
+    let created: EstablishmentItem
+    try {
+      created = await createMutation.mutateAsync({ clientGuid: props.clientGuid, payload: values })
+    } catch {
+      return
+    }
+    // The establishment exists now: on sync failure close anyway, retry from edit mode
+    // (re-submitting create would duplicate it).
+    await syncStaffIfNeeded(created.guid)
+    closeAndReset()
   } else if (props.initial?.guid) {
-    await updateMutation.mutateAsync(
-      { clientGuid: props.clientGuid, estGuid: props.initial.guid, payload: values },
-      {
-        onSuccess: () => {
-          isOpen.value = false
-          emit('success')
-        },
-      },
-    )
+    try {
+      await updateMutation.mutateAsync({ clientGuid: props.clientGuid, estGuid: props.initial.guid, payload: values })
+    } catch {
+      return
+    }
+    const synced = await syncStaffIfNeeded(props.initial.guid)
+    if (!synced) return // keep the modal open so the user can retry the link
+    initialStaff.value = [...staffGuids.value]
+    isOpen.value = false
+    emit('success')
   }
 })
 
 function handleCancel(): void {
   isOpen.value = false
   resetForm()
+  geocoding.reset()
+  syncStaffMutation.resetErrors()
+  staffGuids.value = [...initialStaff.value]
 }
 </script>
 
@@ -133,6 +213,7 @@ function handleCancel(): void {
         <a-input
           v-model:value="address"
           v-bind="addressAttrs"
+          @input="geocoding.scheduleGeocode"
           placeholder="Ej: Ruta 5 km 100"
         />
       </a-form-item>
@@ -144,7 +225,7 @@ function handleCancel(): void {
             :validate-status="errors.city ? 'error' : ''"
             :help="errors.city ?? ''"
           >
-            <a-input v-model:value="city" v-bind="cityAttrs" placeholder="Ej: Trenque Lauquen" />
+            <a-input v-model:value="city" v-bind="cityAttrs" @input="geocoding.scheduleGeocode" placeholder="Ej: Trenque Lauquen" />
           </a-form-item>
         </a-col>
 
@@ -154,7 +235,16 @@ function handleCancel(): void {
             :validate-status="errors.state ? 'error' : ''"
             :help="errors.state ?? ''"
           >
-            <a-input v-model:value="state" v-bind="stateAttrs" placeholder="Ej: Buenos Aires" />
+            <a-select
+              :value="province.selectValue.value"
+              :options="province.selectOptions.value"
+              :loading="province.isLoading.value"
+              show-search
+              allow-clear
+              option-filter-prop="label"
+              placeholder="Seleccioná una provincia"
+              @change="province.handleChange"
+            />
           </a-form-item>
         </a-col>
 
@@ -164,17 +254,39 @@ function handleCancel(): void {
             :validate-status="errors.zip_code ? 'error' : ''"
             :help="errors.zip_code ?? ''"
           >
-            <a-input v-model:value="zip_code" v-bind="zipCodeAttrs" placeholder="Ej: 6400" />
+            <a-input v-model:value="zip_code" v-bind="zipCodeAttrs" @input="geocoding.scheduleGeocode" placeholder="Ej: 6400" />
           </a-form-item>
         </a-col>
       </a-row>
+
+      <EstablishmentCoordinatesFields
+        v-model:latitude="latitude"
+        v-model:longitude="longitude"
+        :is-geocoding="geocoding.isGeocoding.value"
+        :not-found="geocoding.notFound.value"
+        :latitude-error="errors.latitude ?? ''"
+        :longitude-error="errors.longitude ?? ''"
+        @manual-edit="geocoding.markManualEdit"
+        @recalculate="geocoding.recalculate"
+      />
+
+      <PermissionGuard permission="establishments.update">
+        <EstablishmentStaffField
+          v-model="staffGuids"
+          :staff-options="clientStaff ?? []"
+          :initial-guids="initialStaff"
+          :loading="isLoadingStaff"
+          :error="syncStaffMutation.generalError.value ?? ''"
+          @change="syncStaffMutation.resetErrors()"
+        />
+      </PermissionGuard>
     </a-form>
 
     <template #footer>
       <BaseButton variant="secondary" @click="handleCancel">Cancelar</BaseButton>
       <BaseButton
         variant="primary"
-        :loading="isPending.value"
+        :loading="isPending"
         @click="onSubmit"
       >
         {{ mode === 'create' ? 'Crear establecimiento' : 'Guardar cambios' }}

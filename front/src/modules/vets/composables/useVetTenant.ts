@@ -49,11 +49,11 @@ export function useVetTenant() {
     vetStore.setLastVisitedGuid(null)
 
     if (e?.status === 404) {
-      notifyError('La veterinaria no existe.')
+      notifyError('La empresa no existe.')
     } else if (e?.status === 403) {
-      notifyError('Ya no tenés acceso a esta veterinaria.')
+      notifyError('Ya no tenés acceso a esta empresa.')
     } else {
-      notifyError('Esta veterinaria no está disponible actualmente.')
+      notifyError('Esta empresa no está disponible actualmente.')
     }
 
     router.replace('/dashboard')

@@ -22,6 +22,9 @@ class UserProfileResource extends JsonResource
                 'guid' => $this->role->guid,
                 'name' => $this->role->name,
             ]),
+            'establishments' => $this->whenLoaded('establishments', fn () => $this->establishments
+                ->map(fn ($e) => ['guid' => $e->guid, 'name' => $e->name])
+                ->values()),
             'contacts'   => ContactResource::collection($this->whenLoaded('contacts')),
             'blocked_at' => $this->blocked_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),

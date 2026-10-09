@@ -58,20 +58,20 @@ class UserProfileRepositoryEloquent extends BaseRepositoryEloquent implements Us
         return $profile->delete();
     }
 
-    public function listForClient(Client $client): Collection
+    public function findManyByGuidsForClient(array $guids, Client $client): Collection
     {
         return $this->newQuery()
-            ->with(['user', 'role'])
+            ->with('role')
             ->where('authenticatable_type', 'client')
             ->where('authenticatable_id', $client->id)
+            ->whereIn('guid', $guids)
             ->get();
     }
 
-    public function listOwnersForClient(Client $client): Collection
+    public function listForClient(Client $client): Collection
     {
         return $this->newQuery()
-            ->with(['user', 'role'])
-            ->whereHas('role', fn ($q) => $q->where('name', 'client-owner'))
+            ->with(['user', 'role', 'establishments'])
             ->where('authenticatable_type', 'client')
             ->where('authenticatable_id', $client->id)
             ->get();
@@ -99,5 +99,15 @@ class UserProfileRepositoryEloquent extends BaseRepositoryEloquent implements Us
         $profile->blocked_at = $profile->blocked_at ? null : now();
         $profile->save();
         return $profile;
+    }
+
+    public function listByRoleForVet(Vet $vet, string $roleName): Collection
+    {
+        return $this->newQuery()
+            ->with(['user', 'role'])
+            ->whereHas('role', fn ($q) => $q->where('name', $roleName))
+            ->where('authenticatable_type', 'vet')
+            ->where('authenticatable_id', $vet->id)
+            ->get();
     }
 }

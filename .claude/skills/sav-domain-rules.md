@@ -10,9 +10,9 @@ Toda tarea de protocolo tiene `days_offset` (int) + `time_of_day` (enum: `Before
 
 `ProtocolAlert.roles` es un JSON array. Valores válidos: `[vet, vet-assistant, client-owner, client-manager]`. "Notificar al usuario" sin especificar qué rol es una ambigüedad crítica — es una decisión de negocio que debe resolverse antes de continuar.
 
-## 3. Año ganadero (AR) = julio–junio
+## 3. Año del plan sanitario = enero–diciembre (por país)
 
-`HealthPlan.year` referencia julio N → junio N+1, NO el año calendario. Si un requerimiento toca planes sanitarios usando lógica de año calendario, es un riesgo.
+`HealthPlan.year` / `EstablishmentHealthPlan.year` es el año calendario (enero–diciembre) en todos los países, incluida Argentina (decisión 2026-09-30; antes AR era julio–junio). El mes de inicio se resuelve por país en `App\Support\HealthPlanYear::START_MONTH_BY_ISO` (hoy vacío, default enero); nunca hardcodear el mes de inicio.
 
 ## 4. Multi-tenant — scope obligatorio
 

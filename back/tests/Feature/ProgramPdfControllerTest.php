@@ -112,6 +112,7 @@ class ProgramPdfControllerTest extends TestCase
             'authenticatable_id' => $this->client->id,
             'role_id' => $clientOwnerRole->id,
         ]);
+        $this->establishment->staff()->attach($manager->id);
 
         $response = $this->actingAs($this->actor, 'sanctum')->postJson(
             "/api/v1/vets/{$this->vet->guid}/programs",

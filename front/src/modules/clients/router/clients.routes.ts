@@ -5,7 +5,7 @@ export const clientsRoutes: RouteRecordRaw[] = [
     path: 'clients',
     name: 'clients-list',
     component: () => import('@/modules/clients/pages/tenant/ClientsListPage.vue'),
-    meta: { requiresAuth: true, title: 'Clientes' },
+    meta: { requiresAuth: true, title: 'Clientes de la empresa' },
   },
   {
     // IMPORTANTE: /new DEBE estar antes que /:guid para evitar que Vue Router

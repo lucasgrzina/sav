@@ -22,7 +22,11 @@ class TwilioWebhookTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['notifications.twilio.token' => self::TOKEN]);
+        // A local tunnel override in .env would change the URL the middleware verifies against.
+        config([
+            'notifications.twilio.token' => self::TOKEN,
+            'notifications.twilio.status_callback_url' => null,
+        ]);
     }
 
     /**

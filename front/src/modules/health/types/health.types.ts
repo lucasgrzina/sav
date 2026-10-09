@@ -69,6 +69,9 @@ export interface HealthPlanTemplate {
   category: HealthPlanTemplateCategory
   activities: TemplateActivity[]
   activities_count: number
+  vet_guid: string | null
+  is_own: boolean
+  is_locked: boolean
   created_at: string
   updated_at: string
 }
@@ -78,6 +81,9 @@ export interface HealthPlanTemplateListItem {
   name: string
   category: HealthPlanTemplateCategory
   activities_count: number
+  vet_guid: string | null
+  is_own: boolean
+  is_locked: boolean
   created_at: string
   updated_at: string
 }
@@ -87,6 +93,7 @@ export interface HealthPlanTemplateListParams {
   health_plan_category_guid?: string
   page?: number
   per_page?: number
+  scope?: 'own' | 'global' | 'all'
 }
 
 export interface CreateHealthPlanTemplatePayload {

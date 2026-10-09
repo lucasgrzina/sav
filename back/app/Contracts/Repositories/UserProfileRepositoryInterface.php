@@ -24,9 +24,11 @@ interface UserProfileRepositoryInterface
     public function listForClient(Client $client): Collection;
 
     /**
-     * Lista los UserProfiles con role 'client-owner' de un Client dado.
+     * Finds the client-type profiles of the given client matching the guids (scoped by client).
+     *
+     * @param string[] $guids
      */
-    public function listOwnersForClient(Client $client): Collection;
+    public function findManyByGuidsForClient(array $guids, Client $client): Collection;
 
     /**
      * Busca un UserProfile de tipo 'client' para un User y Client específicos.
@@ -40,4 +42,11 @@ interface UserProfileRepositoryInterface
     public function listForUser(User $user): Collection;
 
     public function toggleBlock(UserProfile $profile): UserProfile;
+
+    /**
+     * Lista los UserProfiles de un Vet con el rol dado (ej. 'vet' — DU2-02, regla dura #4).
+     *
+     * @return Collection<int, UserProfile>
+     */
+    public function listByRoleForVet(Vet $vet, string $roleName): Collection;
 }

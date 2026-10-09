@@ -19,7 +19,7 @@ const emit = defineEmits<{
 
 const columns = [
   { title: 'Nombre', key: 'name', dataIndex: 'name' },
-  { title: 'Sub-técnica', key: 'technique', dataIndex: 'technique' },
+  { title: 'Programa', key: 'technique', dataIndex: 'technique' },
   { title: 'Origen', key: 'origin', dataIndex: 'origin' },
   { title: 'Tareas', key: 'tasks_count', dataIndex: 'tasks_count' },
   { title: 'Creado', key: 'created_at', dataIndex: 'created_at' },

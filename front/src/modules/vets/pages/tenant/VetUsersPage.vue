@@ -26,7 +26,7 @@ function navigateToEdit(member: { guid: string }) {
 
 <template>
   <div>
-    <AppHeader title="Usuarios" :subtitle="vetStore.currentVet?.name ?? 'Veterinaria'">
+    <AppHeader title="Usuarios" :subtitle="vetStore.currentVet?.name ?? 'Empresa'">
       <template #actions="{ buttonSize }">
         <BaseButton
           variant="primary"

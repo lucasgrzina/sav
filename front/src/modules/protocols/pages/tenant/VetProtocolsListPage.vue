@@ -143,7 +143,7 @@ const {
 
 <template>
   <div>
-    <AppHeader title="Protocolos" subtitle="Protocolos globales y propios de tu veterinaria.">
+    <AppHeader title="Protocolos" subtitle="Protocolos globales y propios de tu empresa.">
       <template #actions="{ buttonSize }">
         <PermissionGuard permission="protocols.create">
           <BaseButton :size="buttonSize" @click="openCreateDrawer">
@@ -158,7 +158,7 @@ const {
       <BaseSelect
         v-model="filters.technique_id"
         :options="techniqueFilterOptions"
-        placeholder="Filtrar por sub-técnica"
+        placeholder="Filtrar por programa"
         style="width: 260px"
         @update:model-value="onTechniqueFilterChange"
       />

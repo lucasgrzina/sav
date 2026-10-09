@@ -37,7 +37,7 @@ function switchToVet(targetGuid: string): void {
 <template>
   <div v-if="shouldShow" class="vet-switcher">
     <a-dropdown trigger="click" placement="bottomRight">
-      <button class="vet-switcher__trigger" :title="`Cambiar veterinaria (${currentVetItem?.name ?? '...'})`">
+      <button class="vet-switcher__trigger" :title="`Cambiar empresa (${currentVetItem?.name ?? '...'})`">
         <span class="vet-switcher__name">{{ currentVetItem?.name ?? '...' }}</span>
         <SwapOutlined class="vet-switcher__icon" />
       </button>

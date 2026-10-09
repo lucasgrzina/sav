@@ -21,8 +21,8 @@ class AdminLinkVetRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'vet_guid.required' => 'El guid de la veterinaria es obligatorio.',
-            'vet_guid.exists'   => 'La veterinaria seleccionada no existe.',
+            'vet_guid.required' => 'El guid de la empresa es obligatorio.',
+            'vet_guid.exists'   => 'La empresa seleccionada no existe.',
         ];
     }
 }

@@ -10,7 +10,7 @@ import type { ClientCreateForm, ClientUpdateForm } from '../../validators/client
 import type { ClientItem } from '../../types/client.types'
 import type { ContactFormItem } from '@/modules/vets/types/vet.types'
 
-type ClientFormSubmit = (ClientCreateForm & { contacts: ContactFormItem[] }) | ClientUpdateForm
+export type ClientFormSubmit = (ClientCreateForm & { contacts: ContactFormItem[] }) | ClientUpdateForm
 
 const props = withDefaults(
   defineProps<{
@@ -195,7 +195,7 @@ const onSubmit = handleSubmit((values) => {
       title="Contactos del cliente"
       subtitle="Emails y teléfonos de contacto. El contacto principal es el que se muestra por defecto."
     >
-      <ContactsInput v-model="localContacts" />
+      <ContactsInput v-model="localContacts" :field-errors="fieldErrors" />
     </FormSection>
 
     <FormSection title="Dirección" subtitle="Datos opcionales de ubicación.">

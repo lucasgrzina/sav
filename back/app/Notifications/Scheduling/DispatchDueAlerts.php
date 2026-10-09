@@ -34,7 +34,7 @@ class DispatchDueAlerts extends Command
                 }
             });
 
-        $this->info("Se despacharon {$dispatched} destinatarios.");
+        $this->info(now()->toDateTimeString()." - Se despacharon {$dispatched} destinatarios.");
 
         return Command::SUCCESS;
     }

@@ -45,7 +45,7 @@ class AdminVetController extends Controller
         try {
             $vet = $this->vetService->create($request->validated());
 
-            return $this->makeSuccess(new VetResource($vet), 'Veterinaria creada correctamente.', 201);
+            return $this->makeSuccess(new VetResource($vet), 'Empresa creada correctamente.', 201);
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -57,7 +57,7 @@ class AdminVetController extends Controller
             $vet = $this->vetService->findByGuid($guid);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $vet->load(['country', 'documentType', 'validatedBy', 'contacts']);
@@ -74,12 +74,12 @@ class AdminVetController extends Controller
             $vet = $this->vetService->findByGuid($guid);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $vet = $this->vetService->update($vet, $request->validated());
 
-            return $this->makeSuccess(new VetResource($vet), 'Veterinaria actualizada correctamente.');
+            return $this->makeSuccess(new VetResource($vet), 'Empresa actualizada correctamente.');
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -91,17 +91,17 @@ class AdminVetController extends Controller
             $vet = $this->vetService->findByGuid($guid);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             if ($vet->validated_at) {
-                return $this->makeError(null, 'La veterinaria ya está validada.', 422);
+                return $this->makeError(null, 'La empresa ya está validada.', 422);
             }
 
             // Llama al método validate() del VetService (no de Laravel).
             $vet = $this->vetService->validate($vet, $request->user());
 
-            return $this->makeSuccess(new VetResource($vet), 'Veterinaria validada correctamente.');
+            return $this->makeSuccess(new VetResource($vet), 'Empresa validada correctamente.');
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -113,16 +113,16 @@ class AdminVetController extends Controller
             $vet = $this->vetService->findByGuid($guid);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             if ($vet->suspended_at) {
-                return $this->makeError(null, 'La veterinaria ya está suspendida.', 422);
+                return $this->makeError(null, 'La empresa ya está suspendida.', 422);
             }
 
             $vet = $this->vetService->suspend($vet);
 
-            return $this->makeSuccess(new VetResource($vet), 'Veterinaria suspendida correctamente.');
+            return $this->makeSuccess(new VetResource($vet), 'Empresa suspendida correctamente.');
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -134,16 +134,16 @@ class AdminVetController extends Controller
             $vet = $this->vetService->findByGuid($guid);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             if (!$vet->suspended_at) {
-                return $this->makeError(null, 'La veterinaria no está suspendida.', 422);
+                return $this->makeError(null, 'La empresa no está suspendida.', 422);
             }
 
             $vet = $this->vetService->unsuspend($vet);
 
-            return $this->makeSuccess(new VetResource($vet), 'Veterinaria reactivada correctamente.');
+            return $this->makeSuccess(new VetResource($vet), 'Empresa reactivada correctamente.');
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -155,7 +155,7 @@ class AdminVetController extends Controller
             $vet = $this->vetService->findByGuid($guid);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $perPage   = $request->integer('per_page', 15);
@@ -173,7 +173,7 @@ class AdminVetController extends Controller
         try {
             $vet = $this->vetService->findByGuid($guid);
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $members    = $this->userProfileService->list($vet);
@@ -191,7 +191,7 @@ class AdminVetController extends Controller
         try {
             $vet = $this->vetService->findByGuid($guid);
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $data = $request->validated();
@@ -221,12 +221,12 @@ class AdminVetController extends Controller
         try {
             $vet = $this->vetService->findByGuid($guid);
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $profile = $this->userProfileService->findByGuidForVet($profileGuid, $vet);
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             $role = $this->userProfileService->resolveRole($request->validated()['role_guid']);
@@ -247,12 +247,12 @@ class AdminVetController extends Controller
         try {
             $vet = $this->vetService->findByGuid($guid);
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $profile = $this->userProfileService->findByGuidForVet($profileGuid, $vet);
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             $this->userProfileService->removeMember($profile);
@@ -268,12 +268,12 @@ class AdminVetController extends Controller
         try {
             $vet = $this->vetService->findByGuid($guid);
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $profile = $this->userProfileService->findByGuidForVet($profileGuid, $vet);
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             $profile->load(['user', 'role', 'contacts']);
@@ -289,12 +289,12 @@ class AdminVetController extends Controller
         try {
             $vet = $this->vetService->findByGuid($guid);
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $profile = $this->userProfileService->findByGuidForVet($profileGuid, $vet);
             if (!$profile) {
-                return $this->makeNotFound('Miembro no encontrado en esta veterinaria.');
+                return $this->makeNotFound('Miembro no encontrado en esta empresa.');
             }
 
             $data    = $request->validated();

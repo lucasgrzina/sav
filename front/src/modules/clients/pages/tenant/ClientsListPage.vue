@@ -35,7 +35,7 @@ async function handleUnlink(client: ClientItem): Promise<void> {
   <div>
     <AppHeader
       title="Clientes"
-      subtitle="Clientes vinculados a esta veterinaria."
+      subtitle="Clientes vinculados a esta empresa."
     >
       <template #actions="{ buttonSize }">
         <PermissionGuard permission="clients.create">
@@ -51,8 +51,8 @@ async function handleUnlink(client: ClientItem): Promise<void> {
 
     <EmptyState
       v-if="!isLoading && !data?.data.length"
-      message="No se encontraron clientes vinculados a esta veterinaria."
-      icon="🐾"
+      message="No se encontraron clientes vinculados a esta empresa."
+      icon="🐄"
     >
       <PermissionGuard permission="clients.create">
         <BaseButton variant="primary" class="mt-3" @click="router.push(`/vets/${vetGuid}/clients/new`)">

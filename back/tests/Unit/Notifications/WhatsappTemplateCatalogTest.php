@@ -128,7 +128,29 @@ class WhatsappTemplateCatalogTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        WhatsappTemplateCatalog::for(AlertType::HealthPlanMonth);
+        WhatsappTemplateCatalog::for(AlertType::EventReminder);
+    }
+
+    /**
+     * HealthPlanMonth no está en builderProvider(): su builder (HealthPlanMonthMessageBuilder)
+     * recalcula actividades pendientes contra la base de datos (RF-02) y no puede construirse
+     * con los modelos "en memoria" que usa alert()/recipient() acá — tiene su propio test
+     * dedicado (HealthPlanMonthMessageBuilderTest). Esto solo fija el contrato del catálogo:
+     * 7 variables posicionales (destinatario, mes, actividades, plan, categoría, cliente,
+     * establecimiento), mismo orden que consume el builder.
+     */
+    public function test_health_plan_month_declares_seven_placeholders_with_matching_examples(): void
+    {
+        $definition = WhatsappTemplateCatalog::for(AlertType::HealthPlanMonth);
+
+        $this->assertSame(7, WhatsappTemplateCatalog::placeholderCount($definition['body']));
+        $this->assertCount(7, WhatsappTemplateCatalog::exampleVariables(AlertType::HealthPlanMonth));
+    }
+
+    public function test_health_plan_month_is_a_valid_catalog_entry(): void
+    {
+        $this->assertNotNull(AlertType::tryFrom(AlertType::HealthPlanMonth->value));
+        $this->assertArrayHasKey(AlertType::HealthPlanMonth->value, WhatsappTemplateCatalog::definitions());
     }
 
     /**

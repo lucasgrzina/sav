@@ -28,3 +28,6 @@ auth.json
 
 # Claude Code local instructions
 CLAUDE.md
+
+# Local server credentials (never commit)
+docs/servidor.txt

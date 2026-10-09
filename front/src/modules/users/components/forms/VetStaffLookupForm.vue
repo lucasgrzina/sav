@@ -52,6 +52,7 @@ const {
 const {
   mutateAsync: assignAsync,
   isPending: isAssigning,
+  fieldErrors: assignFieldErrors,
   generalError: assignError,
 } = useAssignVetStaff()
 
@@ -177,7 +178,7 @@ async function handleCreate(values: VetStaffNewFormValues): Promise<void> {
       <VetStaffAssignForm
         :user="state.user"
         :loading="isAssigning"
-        :field-errors="null"
+        :field-errors="assignFieldErrors"
         @submit="handleAssign"
         @cancel="resetSearch"
       />

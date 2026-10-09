@@ -52,7 +52,7 @@ const showDetail = computed({
       :page="uiStore.filters.page"
       :total="data?.total ?? 0"
       :per-page="uiStore.filters.per_page"
-      @change="({ page, perPage }) => { uiStore.filters.page = page; uiStore.filters.per_page = perPage }"
+      @change="({ page, perPage }: { page: number; perPage: number }) => { uiStore.filters.page = page; uiStore.filters.per_page = perPage }"
     />
 
     <CreateSupportMessageModal v-model="showCreate" />

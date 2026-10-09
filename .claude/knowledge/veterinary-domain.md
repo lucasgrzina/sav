@@ -158,7 +158,7 @@ El plan sanitario es el documento que organiza las actividades preventivas de un
 - **DIV/CIDR**: dispositivo intravaginal de progesterona (marca comercial y genérico)
 - **Caravana**: identificación auricular plástica o electrónica
 - **Tasa de preñez**: % de animales preñados sobre total inseminados
-- **Año ganadero**: julio a junio (no coincide con año calendario)
+- **Año ganadero**: julio a junio legalmente; en SAV los planes sanitarios usan año calendario (enero a diciembre)
 
 ### México
 - **Rancho/Granja**: equivalente a Establecimiento

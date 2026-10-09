@@ -3,7 +3,7 @@ import BaseSelect from '@/components/atoms/selects/BaseSelect.vue'
 import BaseCard from '@/components/atoms/cards/BaseCard.vue'
 import type { SelectOption } from '@/core/types/ui.types'
 
-// Cascada calcada de VetProtocolFormDrawer.vue (useTechniqueTree): técnica raíz -> sub-técnica.
+// Cascada calcada de VetProtocolFormDrawer.vue (useTechniqueTree): técnica raíz -> programa.
 // El label de "Protocolo" es dinámico (subTechnique.protocols_name, DEC-13) — se resuelve en el
 // componente padre (VetProgramFormPage) y viaja como prop porque ahí vive la query de técnicas.
 withDefaults(

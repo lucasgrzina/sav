@@ -5,6 +5,7 @@ import type {
   ProgramListParams,
   CreateProgramPayload,
   UpdateProgramPayload,
+  ClientManagerOptionItem,
 } from '../types/program.types'
 import type { PaginatedResponse } from '@/core/types/pagination.types'
 
@@ -44,5 +45,16 @@ export async function updateProgramApi(
 
 export async function cancelProgramApi(vetGuid: string, guid: string): Promise<ProgramDetail> {
   const res = await http.post<ProgramDetail>(`/v1/vets/${vetGuid}/programs/${guid}/cancel`)
+  return res.data
+}
+
+export async function listClientManagerOptionsApi(
+  vetGuid: string,
+  clientGuid: string,
+  establishmentGuid: string,
+): Promise<ClientManagerOptionItem[]> {
+  const res = await http.get<ClientManagerOptionItem[]>(
+    `/v1/vets/${vetGuid}/clients/${clientGuid}/establishments/${establishmentGuid}/manager-options`,
+  )
   return res.data
 }

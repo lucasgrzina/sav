@@ -41,7 +41,7 @@ function handleSubmit(values: TechniqueFormValues) {
 
     <AppHeader
       title="Nueva Técnica"
-      subtitle="Creá una técnica de reproducción o vacuna con sus sub-técnicas"
+      subtitle="Creá una técnica de reproducción o vacuna con sus programas"
       size="default"
     />
 

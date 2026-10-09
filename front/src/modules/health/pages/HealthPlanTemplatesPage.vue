@@ -26,7 +26,7 @@ const drawerOpen = ref(false)
 const drawerMode = ref<'create' | 'edit'>('create')
 const editGuid = ref<string | null>(null)
 
-const { data: editTemplate, isLoading: editLoading } = useHealthPlanTemplate(editGuid)
+const { data: editTemplate } = useHealthPlanTemplate(editGuid)
 
 function openCreate() {
   drawerMode.value = 'create'
@@ -140,7 +140,7 @@ const columns = [
       :page="data.current_page"
       :total="data.total"
       :per-page="data.per_page"
-      @change="({ page, perPage }) => { filters.page = page; filters.per_page = perPage }"
+      @change="({ page, perPage }: { page: number; perPage: number }) => { filters.page = page; filters.per_page = perPage }"
     />
 
     <HealthPlanTemplateDrawer

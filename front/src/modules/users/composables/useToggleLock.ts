@@ -24,7 +24,7 @@ export function useToggleLock() {
     await confirm.confirm({
       title: user.locked_at ? 'Desbloquear usuario' : 'Bloquear usuario',
       message: '¿Estás seguro de que querés realizar esta acción?',
-      onConfirm: () => mutation.mutateAsync(user.guid),
+      onConfirm: async () => { await mutation.mutateAsync(user.guid) },
     })
   }
 

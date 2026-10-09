@@ -7,7 +7,7 @@ import { useVetStaffMember } from '@/modules/vets/composables/useVetStaffMember'
 import { useVetRoles }       from '@/modules/vets/composables/useVetRoles'
 import { useUpdateVetStaff } from '@/modules/vets/composables/useUpdateVetStaff'
 import VetStaffEditForm      from '@/modules/vets/components/forms/VetStaffEditForm.vue'
-import type { UpdateVetStaffPayload } from '@/modules/vets/types/vet.types'
+import type { UpdateVetStaffPayload, UpdateMyVetProfilePayload } from '@/modules/vets/types/vet.types'
 
 const router      = useRouter()
 const route       = useRoute()
@@ -16,9 +16,13 @@ const profileGuid = computed(() => route.params.profileGuid as string)
 
 const { data: member, isLoading, isError } = useVetStaffMember(vetGuid, profileGuid)
 const { vetRoles, isLoading: isLoadingRoles } = useVetRoles()
-const { mutate, isPending } = useUpdateVetStaff(vetGuid)
+const { mutate, isPending, fieldErrors } = useUpdateVetStaff(vetGuid)
 
-function handleSubmit(payload: unknown): void {
+function handleSubmit(payload: UpdateVetStaffPayload | UpdateMyVetProfilePayload): void {
+  // Esta página siempre usa VetStaffEditForm con origin="manage", así que el
+  // payload siempre es UpdateVetStaffPayload. Se descarta la otra rama por tipo.
+  if (!('role_guid' in payload)) return
+
   mutate(
     { profileGuid: profileGuid.value, payload },
     { onSuccess: () => router.push(`/vets/${vetGuid.value}/usuarios`) },
@@ -59,6 +63,7 @@ function handleSubmit(payload: unknown): void {
       :vet-roles="vetRoles"
       :is-loading-roles="isLoadingRoles"
       :is-pending="isPending"
+      :field-errors="fieldErrors"
       @submit="handleSubmit"
     />
   </div>

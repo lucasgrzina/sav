@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons-vue'
 import { useMutation } from '@tanstack/vue-query'
 import ClientForm from '@/modules/clients/components/forms/ClientForm.vue'
+import type { ClientFormSubmit } from '@/modules/clients/components/forms/ClientForm.vue'
 import { useAdminLookupClient } from '@/modules/clients/composables/admin/useAdminLookupClient'
 import { useAdminCreateAndLinkClient } from '@/modules/clients/composables/admin/useAdminCreateAndLinkClient'
 import { adminLinkVetToClientApi } from '@/modules/clients/api/admin-clients.api'
@@ -11,7 +12,6 @@ import { useNotification } from '@/core/composables/useNotification'
 import { parseApiError } from '@/core/composables/parseApiError'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import type { ClientItem } from '@/modules/clients/types/client.types'
-import type { ClientCreateForm } from '@/modules/clients/validators/client.validator'
 
 const props = defineProps<{ guid: string }>()
 
@@ -53,7 +53,6 @@ const { mutateAsync: linkAsync, isPending: isLinking } = useMutation({
 
 const {
   mutateAsync: createAsync,
-  isPending: isCreating,
   fieldErrors,
   generalError: createError,
 } = useAdminCreateAndLinkClient(props.guid)
@@ -102,7 +101,11 @@ async function handleLink(clientGuid: string): Promise<void> {
   })
 }
 
-async function handleCreate(values: ClientCreateForm): Promise<void> {
+async function handleCreate(values: ClientFormSubmit): Promise<void> {
+  // ClientForm siempre se usa con mode="create" en este flujo, así que el
+  // payload siempre trae country_guid. Se descarta la rama de edición por tipo.
+  if (!('country_guid' in values)) return
+
   state.value = { status: 'creating' }
   await createAsync(values, {
     onSuccess: () => router.push(`/admin/vets/${props.guid}`),
@@ -115,7 +118,7 @@ async function handleCreate(values: ClientCreateForm): Promise<void> {
   <div class="avcc-root">
     <BaseButton variant="tertiary" class="avcc-back" @click="router.push(`/admin/vets/${props.guid}`)">
       <template #icon><ArrowLeftOutlined /></template>
-      Volver a la veterinaria
+      Volver a la empresa
     </BaseButton>
     <AppHeader title="Agregar cliente" size="default" />
 
@@ -158,7 +161,7 @@ async function handleCreate(values: ClientCreateForm): Promise<void> {
       <a-alert
         type="info"
         message="Cliente encontrado en el sistema"
-        description="Este cliente existe pero no está vinculado a esta veterinaria."
+        description="Este cliente existe pero no está vinculado a esta empresa."
         show-icon
       />
 
@@ -192,7 +195,7 @@ async function handleCreate(values: ClientCreateForm): Promise<void> {
           :loading="isLinking"
           @click="handleLink(state.client.guid)"
         >
-          Vincular a esta veterinaria
+          Vincular a esta empresa
         </BaseButton>
         <BaseButton variant="secondary" @click="resetSearch">Cancelar</BaseButton>
       </div>
@@ -202,7 +205,7 @@ async function handleCreate(values: ClientCreateForm): Promise<void> {
     <template v-else-if="state.status === 'found-linked'">
       <a-alert
         type="warning"
-        message="Este cliente ya está vinculado a esta veterinaria"
+        message="Este cliente ya está vinculado a esta empresa"
         show-icon
       />
 
@@ -231,7 +234,7 @@ async function handleCreate(values: ClientCreateForm): Promise<void> {
       <a-alert
         type="info"
         message="No se encontró ningún cliente con ese identificador"
-        description="Completá los datos para crear el cliente en el sistema y vincularlo a esta veterinaria."
+        description="Completá los datos para crear el cliente en el sistema y vincularlo a esta empresa."
         show-icon
       />
 

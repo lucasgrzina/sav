@@ -7,7 +7,9 @@ use App\Http\Requests\Clients\IndexClientRequest;
 use App\Http\Requests\Clients\StoreClientRequest;
 use App\Http\Requests\Clients\UpdateClientRequest;
 use App\Http\Requests\Admin\Clients\AdminLinkVetRequest;
+use App\Exceptions\EstablishmentStaffMismatchException;
 use App\Http\Requests\Establishments\StoreEstablishmentRequest;
+use App\Http\Requests\Establishments\SyncEstablishmentStaffRequest;
 use App\Http\Requests\Establishments\UpdateEstablishmentRequest;
 use App\Http\Requests\Members\Client\AdminAssignClientStaffRequest;
 use App\Http\Requests\Members\Client\AdminChangeClientStaffRoleRequest;
@@ -65,7 +67,7 @@ class AdminClientController extends Controller
                 return $this->makeNotFound('Cliente no encontrado.');
             }
 
-            $client->load(['country', 'documentType', 'contacts', 'establishments', 'vets']);
+            $client->load(['country', 'documentType', 'contacts', 'establishments.province', 'vets']);
 
             return $this->makeSuccess(new ClientResource($client));
         } catch (\Exception $e) {
@@ -105,12 +107,12 @@ class AdminClientController extends Controller
             $vet = $this->vetService->findByGuid($request->validated()['vet_guid']);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $this->clientService->linkToVet($client, $vet);
 
-            return $this->makeSuccess(null, 'Veterinaria vinculada correctamente.', 201);
+            return $this->makeSuccess(null, 'Empresa vinculada correctamente.', 201);
         } catch (\RuntimeException $e) {
             return $this->makeError(null, $e->getMessage(), 422);
         } catch (\Exception $e) {
@@ -133,12 +135,12 @@ class AdminClientController extends Controller
             $vet = $this->vetService->findByGuid($vetGuid);
 
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $this->clientService->detach($client, $vet);
 
-            return $this->makeSuccess(null, 'Veterinaria desvinculada correctamente.');
+            return $this->makeSuccess(null, 'Empresa desvinculada correctamente.');
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -289,7 +291,7 @@ class AdminClientController extends Controller
         }
     }
 
-    public function establishmentIndex(string $guid): JsonResponse
+    public function establishmentIndex(Request $request, string $guid): JsonResponse
     {
         try {
             $client = $this->clientService->findByGuid($guid);
@@ -297,7 +299,10 @@ class AdminClientController extends Controller
                 return $this->makeNotFound('Cliente no encontrado.');
             }
 
-            $establishments = $this->establishmentService->listForClient($client);
+            $establishments = $this->establishmentService->listForClient(
+                $client,
+                (bool) $request->user()?->can('clients.staff.read'),
+            );
 
             return $this->makeSuccess(EstablishmentResource::collection($establishments));
         } catch (\Exception $e) {
@@ -344,6 +349,35 @@ class AdminClientController extends Controller
                 new EstablishmentResource($establishment),
                 'Establecimiento actualizado correctamente.',
             );
+        } catch (\Exception $e) {
+            return $this->makeFromException($e);
+        }
+    }
+
+    public function establishmentSyncStaff(SyncEstablishmentStaffRequest $request, string $guid, string $estGuid): JsonResponse
+    {
+        try {
+            $client = $this->clientService->findByGuid($guid);
+            if (!$client) {
+                return $this->makeNotFound('Cliente no encontrado.');
+            }
+
+            $establishment = $this->establishmentService->findByGuidForClient($estGuid, $client);
+            if (!$establishment) {
+                return $this->makeNotFound('Establecimiento no encontrado.');
+            }
+
+            $establishment = $this->establishmentService->syncStaff(
+                $establishment,
+                $request->validated('user_profile_guids'),
+            );
+
+            return $this->makeSuccess(
+                new EstablishmentResource($establishment),
+                'Personal del establecimiento actualizado correctamente.',
+            );
+        } catch (EstablishmentStaffMismatchException $e) {
+            return $this->makeError(['reason' => 'staff_client_mismatch'], $e->getMessage(), 422);
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }
@@ -400,7 +434,7 @@ class AdminClientController extends Controller
             // Validar existencia de la vet antes de buscar
             $vet = $this->vetService->findByGuid($vetGuid);
             if (!$vet) {
-                return $this->makeNotFound('Veterinaria no encontrada.');
+                return $this->makeNotFound('Empresa no encontrada.');
             }
 
             $result = $this->clientService->lookupForVet($taxId, $vetGuid);

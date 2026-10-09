@@ -37,7 +37,7 @@ const authTheme = {
             </div>
             <div class="auth-form-panel">
                 <div class="auth-form-inner">
-                    <div class="auth-mobile-logo">Vet<span>Alert</span></div>
+                    <div class="auth-mobile-logo"><img src="@/assets/logo.png" alt="SAV" style="width: 90px; max-width: 100%" /></div>
                     <RouterView />
                 </div>
             </div>

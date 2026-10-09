@@ -33,7 +33,7 @@ class ProtocolRepositoryEloquentTest extends TestCase
 
         $this->subTechnique = Technique::create([
             'guid'      => Str::uuid()->toString(),
-            'name'      => 'Sub-técnica',
+            'name'      => 'Programa',
             'type'      => 'technique',
             'parent_id' => $root->id,
         ]);

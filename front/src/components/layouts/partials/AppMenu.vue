@@ -31,7 +31,7 @@ const systemNavItems = [
 ]
 
 const adminNavItems = [
-  { path: '/admin/vets',            label: 'Veterinarias',   icon: MedicineBoxOutlined, permission: 'vets.read'              },
+  { path: '/admin/vets',            label: 'Empresas',   icon: MedicineBoxOutlined, permission: 'vets.read'              },
   { path: '/admin/clients',         label: 'Clientes',       icon: IdcardOutlined,      permission: 'clients.read'           },
   { path: '/admin/system-settings', label: 'Config. global', icon: ControlOutlined,     permission: 'system-settings.manage' },
 ]

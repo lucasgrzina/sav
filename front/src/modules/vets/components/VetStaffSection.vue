@@ -31,7 +31,7 @@ const columns = [
   <div class="vss-root">
     <EmptyState
       v-if="!isLoading && !staff?.length"
-      message="Esta veterinaria no tiene miembros de staff."
+      message="Esta empresa no tiene miembros de staff."
     />
 
     <BaseDataTable

@@ -43,7 +43,7 @@ const { data, isLoading } = useAdminClients(
     <EmptyState
       v-if="!isLoading && !data?.data.length"
       message="No se encontraron clientes en el sistema."
-      icon="🐾"
+      icon="🐄"
     >
       <PermissionGuard permission="clients.create">
         <BaseButton variant="primary" class="mt-3" @click="router.push('/admin/clients/new')">
@@ -63,7 +63,7 @@ const { data, isLoading } = useAdminClients(
       :page="uiStore.filters.page"
       :total="data?.total ?? 0"
       :per-page="uiStore.filters.per_page"
-      @change="({ page, perPage }) => { uiStore.filters.page = page; uiStore.filters.per_page = perPage }"
+      @change="({ page, perPage }: { page: number; perPage: number }) => { uiStore.filters.page = page; uiStore.filters.per_page = perPage }"
     />
   </div>
 </template>

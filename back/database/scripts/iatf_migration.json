@@ -1,0 +1,114 @@
+{
+  "techniques": [
+    {
+      "name": "IATF",
+      "target_date_name": "Fecha de inseminación",
+      "type": "technique",
+      "parent_id": null,
+      "children": [
+        {
+          "name": "Vaquillonas - Carne",
+          "target_date_name": "Fecha de inseminación",
+          "type": "subtype",
+          "protocols_name": "Protocolo 1"
+        },
+        {
+          "name": "Vacas - Carne",
+          "target_date_name": "Fecha de inseminación",
+          "type": "subtype",
+          "protocols_name": "Protocolo 2"
+        },
+        {
+          "name": "Vaquillonas - Leche",
+          "target_date_name": "Fecha de inseminación",
+          "type": "subtype",
+          "protocols_name": "Protocolo 3"
+        },
+        {
+          "name": "Vacas - Leche",
+          "target_date_name": "Fecha de inseminación",
+          "type": "subtype",
+          "protocols_name": "Protocolo 4"
+        }
+      ]
+    }
+  ],
+  "protocols": [
+    {
+      "technique": "IATF",
+      "subtechnique": "Vaquillonas - Carne",
+      "name": "Protocolo SINCRONIZACION DE CELOS para IATF ( INSEMINACION A TIEMPO FIJO )",
+      "color": "#ffff00",
+      "vet_id": null,
+      "tasks": [
+        { "description": "Selección (Tacto preservicio), alojamiento y suplementación. Sanidad (Vacuna Viral Reproductiva y VIT-MIN)", "days_offset": 32, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Colocar Dispositivo INTRAVAGINAL (De 500 gr)", "days_offset": 10, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar BENZOATO de ESTRADIOL 2 cc", "days_offset": 10, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Retirar Dispositivo INTRAVAGINAL", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar CIPIONATO DE ESTRADIOL 1 cc", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar eCG de 300 a 400 IU. Dependiendo de la condicion Corporal.", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "PINTURA en la base de la COLA", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": true },
+        { "description": "Inyectar GnRH 2,5 cc a las pintadas", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inseminar grupo con pintura PM", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true }
+      ],
+      "alerts": [
+        { "text": "MAÑANA INICIAN TRATAMIENTO DE IATF ¿Tenés planillas impresas e insumos?", "days_offset": 11, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager", "client-owner"], "require_confirmation": false },
+        { "text": "NO OLVIDAR LARGAR LOS TOROS A REPASO", "days_offset": 7, "time_of_day": "After", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "MAÑANA CONTINÚA TRATAMIENTO DE ITAF. ¿Tenés todos los insumos?", "days_offset": 3, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "MAÑANA INSEMINAMOS, ENCERRAR POR LA TARDE", "days_offset": 1, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "INSEMINACION a despintadas 48 hs del retiro.", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false }
+      ]
+    },
+    {
+      "technique": "IATF",
+      "subtechnique": "Vaquillonas - Carne",
+      "name": "CONVENCIONAL VAQUILLONA SECA",
+      "color": "#ffff00",
+      "vet_id": null,
+      "tasks": [
+        { "description": "Selección (Tacto preservicio), alojamiento y suplementación. Sanidad (Vacuna Viral Reproductiva y VIT-MIN)", "days_offset": 32, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Colocar Dispositivo INTRAVAGINAL (De 600 gr a 1 gr)", "days_offset": 9, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar BENZOATO de ESTRADIOL 2 cc", "days_offset": 9, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Retirar Dispositivo INTRAVAGINAL", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar PROSTAGLANDINA 2 cc", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar CIPIONATO DE ESTRADIOL 1 cc", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar eCG de 300 a 400 IU. Dependiendo de la condicion Corporal.", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "PINTURA en la base de la COLA", "days_offset": 2, "time_of_day": "Before", "time": "07:00:00", "important": true },
+        { "description": "Inyectar GnRH 2,5 cc a las pintadas", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "Inseminar grupo con pintura PM", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true }
+      ],
+      "alerts": [
+        { "text": "MAÑANA INICIAN TRATAMIENTO DE IATF ¿Tenés planillas impresas e insumos?", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager", "client-owner"], "require_confirmation": false },
+        { "text": "NO OLVIDAR LARGAR LOS TOROS A REPASO", "days_offset": 7, "time_of_day": "After", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "MAÑANA CONTINÚA TRATAMIENTO DE ITAF. ¿Tenés todos los insumos?", "days_offset": 3, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "MAÑANA INSEMINAMOS, ENCERRAR POR LA TARDE", "days_offset": 1, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "INSEMINACION a despintadas 48 hs del retiro.", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false }
+      ]
+    },
+    {
+      "technique": "IATF",
+      "subtechnique": "Vaquillonas - Carne",
+      "name": "J-SYNCH (VAQUILLONAS)",
+      "color": "#ffff00",
+      "vet_id": null,
+      "tasks": [
+        { "description": "Selección (Tacto preservicio), alojamiento y suplementación. Sanidad (Vacuna Viral Reproductiva y VIT-MIN)", "days_offset": 32, "time_of_day": "Before", "time": "08:00:00", "important": false },
+        { "description": "Colocar Dispositivo INTRAVAGINAL (De 500 gr)", "days_offset": 9, "time_of_day": "Before", "time": "14:00:00", "important": false },
+        { "description": "Inyectar BENZOATO de ESTRADIOL (2mg) 2 cc", "days_offset": 9, "time_of_day": "Before", "time": "14:00:00", "important": false },
+        { "description": "Retirar Dispositivo INTRAVAGINAL", "days_offset": 3, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar PROSTAGLANDINA 0,150mg (2 cc)", "days_offset": 3, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "Inyectar eCG de 200 IU. Dependiendo de la condicion Corporal.", "days_offset": 3, "time_of_day": "Before", "time": "07:00:00", "important": false },
+        { "description": "PINTURA en la base de la COLA", "days_offset": 3, "time_of_day": "Before", "time": "07:00:00", "important": true },
+        { "description": "Inyectar GnRH 2,5 cc a las pintadas SIN CELO", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "important": true },
+        { "description": "INSEMINACION grupo con pintura PM a las 72 hs", "days_offset": 0, "time_of_day": "Before", "time": "14:00:00", "important": true }
+      ],
+      "alerts": [
+        { "text": "MAÑANA INICIAN TRATAMIENTO DE IATF ¿Tenés planillas impresas e insumos?", "days_offset": 10, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager", "client-owner"], "require_confirmation": false },
+        { "text": "NO OLVIDAR LARGAR LOS TOROS A REPASO", "days_offset": 7, "time_of_day": "After", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "MAÑANA CONTINÚA TRATAMIENTO DE ITAF. ¿Tenés todos los insumos?", "days_offset": 3, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "MAÑANA INSEMINAMOS, ENCERRAR POR LA TARDE", "days_offset": 1, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false },
+        { "text": "INSEMINACION a despintadas 48 hs del retiro.", "days_offset": 0, "time_of_day": "Before", "time": "08:00:00", "roles": ["client-manager"], "require_confirmation": false }
+      ]
+    }
+  ]
+}

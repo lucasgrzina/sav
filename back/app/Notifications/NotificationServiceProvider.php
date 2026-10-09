@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Builders\HealthPlanMonthMessageBuilder;
 use App\Notifications\Builders\ProgramCancelledMessageBuilder;
 use App\Notifications\Builders\ProgramCreatedMessageBuilder;
 use App\Notifications\Builders\ProgramPdfShareMessageBuilder;
@@ -96,6 +97,7 @@ class NotificationServiceProvider extends ServiceProvider
             ProgramCancelledMessageBuilder::class,
             ProgramTaskDueMessageBuilder::class,
             ProgramPdfShareMessageBuilder::class,
+            HealthPlanMonthMessageBuilder::class,
         ], 'alert.builders');
 
         $this->app->singleton(MessageBuilderRegistry::class, function ($app) {

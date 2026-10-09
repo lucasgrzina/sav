@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { techniqueSchema } from '../validators/technique.validator'
 import type { TechniqueFormValues } from '../validators/technique.validator'
 import SubTechniqueRepeater from './SubTechniqueRepeater.vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
-import type { Technique } from '../types/technique.types'
+import type { Technique, TechniqueChild } from '../types/technique.types'
 
 const props = withDefaults(
   defineProps<{
@@ -39,7 +39,18 @@ const [name, nameAttrs] = defineField('name')
 const [type, typeAttrs] = defineField('type')
 const [targetDateName, targetDateNameAttrs] = defineField('target_date_name')
 const [protocolsName, protocolsNameAttrs] = defineField('protocols_name')
-const [children, childrenAttrs] = defineField('children')
+const [children] = defineField('children')
+
+// El schema tipa `children` como opcional (por el `.default([])` de zod), pero
+// SubTechniqueRepeater requiere un array siempre presente.
+const childrenModel = computed<TechniqueChild[]>({
+  get: () => (children.value ?? []).map((c) => ({
+    guid:           c.guid,
+    name:           c.name,
+    protocols_name: c.protocols_name ?? null,
+  })),
+  set: (val) => { children.value = val },
+})
 
 const onSubmit = handleSubmit((values) => emit('submit', values))
 
@@ -119,8 +130,8 @@ watch(
       />
     </a-form-item>
 
-    <a-form-item label="Sub-técnicas">
-      <SubTechniqueRepeater v-model="children" />
+    <a-form-item label="Programas">
+      <SubTechniqueRepeater v-model="childrenModel" />
     </a-form-item>
 
     <a-form-item style="margin-bottom: 0; text-align: right">

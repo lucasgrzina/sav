@@ -25,7 +25,7 @@ const SUSPENDED_OPTIONS = [
       <FiltersWrapper label="Buscar">
         <a-input
           :value="filters.search"
-          placeholder="Nombre de veterinaria"
+          placeholder="Nombre de empresa"
           allow-clear
           @update:value="(v: string) => emit('update:filters', { ...filters, search: v, page: 1 })"
         >

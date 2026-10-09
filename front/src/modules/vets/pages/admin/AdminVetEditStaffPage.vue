@@ -7,7 +7,7 @@ import { useAdminVetStaffMember }  from '@/modules/vets/composables/useAdminVetS
 import { useAdminUpdateVetStaff }  from '@/modules/vets/composables/useAdminUpdateVetStaff'
 import { useVetRoles }             from '@/modules/vets/composables/useVetRoles'
 import VetStaffEditForm            from '@/modules/vets/components/forms/VetStaffEditForm.vue'
-import type { UpdateVetStaffPayload } from '@/modules/vets/types/vet.types'
+import type { UpdateVetStaffPayload, UpdateMyVetProfilePayload } from '@/modules/vets/types/vet.types'
 
 const props = defineProps<{ guid: string; profileGuid: string }>()
 
@@ -19,9 +19,13 @@ const { data: member, isLoading, isError } = useAdminVetStaffMember(
 )
 
 const { vetRoles, isLoading: isLoadingRoles } = useVetRoles()
-const { mutate, isPending } = useAdminUpdateVetStaff(computed(() => props.guid))
+const { mutate, isPending, fieldErrors } = useAdminUpdateVetStaff(computed(() => props.guid))
 
-function handleSubmit(payload: unknown): void {
+function handleSubmit(payload: UpdateVetStaffPayload | UpdateMyVetProfilePayload): void {
+  // Esta página siempre usa VetStaffEditForm con origin="manage", así que el
+  // payload siempre es UpdateVetStaffPayload. Se descarta la otra rama por tipo.
+  if (!('role_guid' in payload)) return
+
   mutate(
     { profileGuid: props.profileGuid, payload },
     { onSuccess: () => router.push(`/admin/vets/${props.guid}`) },
@@ -34,7 +38,7 @@ function handleSubmit(payload: unknown): void {
     <div class="avesp-header">
       <BaseButton variant="tertiary" @click="router.push(`/admin/vets/${guid}`)">
         <template #icon><ArrowLeftOutlined /></template>
-        Volver a la veterinaria
+        Volver a la empresa
       </BaseButton>
     </div>
 
@@ -62,6 +66,7 @@ function handleSubmit(payload: unknown): void {
       :vet-roles="vetRoles"
       :is-loading-roles="isLoadingRoles"
       :is-pending="isPending"
+      :field-errors="fieldErrors"
       @submit="handleSubmit"
     />
   </div>

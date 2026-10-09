@@ -23,7 +23,7 @@ export const vetTenantGuard: NavigationGuard = async (to) => {
       })
       vetStore.setUserVets(vets)
     } catch {
-      notifyError('No se pudo verificar el acceso a la veterinaria.')
+      notifyError('No se pudo verificar el acceso a la empresa.')
       return { path: '/dashboard', replace: true }
     }
   }
@@ -31,7 +31,7 @@ export const vetTenantGuard: NavigationGuard = async (to) => {
   const matchingVet = vetStore.userVets.find(v => v.guid === guid)
 
   if (!matchingVet) {
-    notifyError('No tenés acceso a esta veterinaria o no existe.')
+    notifyError('No tenés acceso a esta empresa o no existe.')
     return { path: '/dashboard', replace: true }
   }
 

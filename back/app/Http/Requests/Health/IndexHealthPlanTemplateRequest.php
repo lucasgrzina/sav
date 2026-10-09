@@ -15,6 +15,7 @@ class IndexHealthPlanTemplateRequest extends FormRequest
             'health_plan_category_guid' => ['nullable', 'string', 'uuid'],
             'per_page'                  => ['nullable', 'integer', 'min:1', 'max:100'],
             'page'                      => ['nullable', 'integer', 'min:1'],
+            'scope'                     => ['nullable', 'in:own,global,all'],
         ];
     }
 }

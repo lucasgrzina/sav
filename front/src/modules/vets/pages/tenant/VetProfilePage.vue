@@ -12,15 +12,6 @@ const router   = useRouter()
 const vetStore = useVetStore()
 const vet      = computed(() => vetStore.currentVet)
 
-const initials = computed(() => {
-  if (!vet.value?.name) return '??'
-  return vet.value.name
-    .split(' ')
-    .slice(0, 2)
-    .map(w => w[0].toUpperCase())
-    .join('')
-})
-
 const editPath = computed(() => `/vets/${route.params.vetGuid}/perfil/editar`)
 </script>
 
@@ -32,7 +23,7 @@ const editPath = computed(() => `/vets/${route.params.vetGuid}/perfil/editar`)
           <VetStatusBadge :status="getVetStatus(vet)" />
           <BaseButton :size="buttonSize" @click="router.push(editPath)">
             <template #icon><EditOutlined /></template>
-            Editar perfil
+            Editar
           </BaseButton>
         </template>
       </AppHeader>

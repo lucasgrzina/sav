@@ -10,11 +10,16 @@ class Country extends Model
 {
     use HasGuid;
 
-    protected $fillable = ['guid', 'name', 'iso_code', 'phone_prefix'];
+    protected $fillable = ['guid', 'name', 'iso_code', 'phone_prefix', 'timezone'];
 
     public function documentTypes(): HasMany
     {
         return $this->hasMany(DocumentType::class);
+    }
+
+    public function provinces(): HasMany
+    {
+        return $this->hasMany(Province::class);
     }
 
     public function vets(): HasMany

@@ -30,7 +30,7 @@ class ChangeVetStaffRoleRequest extends FormRequest
     {
         return [
             'role_guid.required' => 'El rol es obligatorio.',
-            'role_guid.exists'   => 'El rol seleccionado no es válido para un miembro de veterinaria.',
+            'role_guid.exists'   => 'El rol seleccionado no es válido para un miembro de empresa.',
         ];
     }
 }

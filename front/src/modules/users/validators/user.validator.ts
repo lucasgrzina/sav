@@ -90,3 +90,4 @@ export const tenantUserCreateSchema = z
   })
 
 export type TenantUserCreateForm = z.infer<typeof tenantUserCreateSchema>
+export type TenantUserProfileForm = z.infer<typeof tenantUserProfileSchema>

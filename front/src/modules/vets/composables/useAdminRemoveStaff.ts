@@ -25,7 +25,7 @@ export function useAdminRemoveStaff(vetGuid: string) {
   async function removeStaff(member: VetStaffItem): Promise<void> {
     await confirm({
       title:        'Eliminar miembro',
-      message:      `¿Estás seguro de que querés eliminar a "${member.user.name}" del staff de esta veterinaria?`,
+      message:      `¿Estás seguro de que querés eliminar a "${member.user.name}" del staff de esta empresa?`,
       confirmLabel: 'Eliminar',
       danger:       true,
       onConfirm:    () => mutation.mutateAsync(member.guid),

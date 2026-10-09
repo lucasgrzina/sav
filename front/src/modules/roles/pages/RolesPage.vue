@@ -144,7 +144,7 @@ const columnsWithoutType = computed<TableColumnDef[]>(() =>
       :page="filters.page"
       :total="data?.total ?? 0"
       :per-page="filters.per_page"
-      @change="({ page, perPage }) => { filters.page = page; filters.per_page = perPage }"
+      @change="({ page, perPage }: { page: number; perPage: number }) => { filters.page = page; filters.per_page = perPage }"
     />
 
     <ColumnSelectorDrawer

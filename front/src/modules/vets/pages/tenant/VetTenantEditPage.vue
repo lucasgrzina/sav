@@ -6,7 +6,7 @@ import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import { useVetStore } from '@/core/stores/vet.store'
 import { useUpdateVetTenant } from '@/modules/vets/composables/useUpdateVetTenant'
 import VetForm from '@/modules/vets/components/forms/VetForm.vue'
-import type { VetUpdatePayload } from '@/modules/vets/types/vet.types'
+import type { VetFormSubmit } from '@/modules/vets/components/forms/VetForm.vue'
 
 const router  = useRouter()
 const route   = useRoute()
@@ -19,7 +19,7 @@ const perfilPath = computed(() => `/vets/${vetGuid.value}/perfil`)
 
 const { mutate, isPending, fieldErrors, generalError } = useUpdateVetTenant()
 
-function handleSubmit(payload: unknown) {
+function handleSubmit(payload: VetFormSubmit) {
   mutate(
     { guid: vetGuid.value, payload },
     { onSuccess: () => router.push(perfilPath.value) },
@@ -37,7 +37,7 @@ function handleSubmit(payload: unknown) {
     </div>
 
     <AppHeader
-      title="Editar perfil de la veterinaria"
+      title="Editar perfil de la empresa"
       :subtitle="vet?.name ?? ''"
       size="default"
     />

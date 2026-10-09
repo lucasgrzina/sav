@@ -5,6 +5,7 @@ namespace App\Http\Requests\Programs;
 use App\Contracts\Repositories\ClientRepositoryInterface;
 use App\Models\Establishment;
 use App\Models\Protocol;
+use App\Services\EstablishmentService;
 use App\Services\UserProfileService;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,6 +15,7 @@ class UpdateProgramRequest extends FormRequest
     public function __construct(
         private ClientRepositoryInterface $clientRepository,
         private UserProfileService $userProfileService,
+        private EstablishmentService $establishmentService,
     ) {
         parent::__construct();
     }
@@ -50,7 +52,7 @@ class UpdateProgramRequest extends FormRequest
 
             $client = $this->clientRepository->findByGuidForVet((string) $this->input('client_id'), $vet);
             if (!$client) {
-                $v->errors()->add('client_id', 'El cliente no pertenece a esta veterinaria.');
+                $v->errors()->add('client_id', 'El cliente no pertenece a esta empresa.');
                 return;
             }
 
@@ -61,17 +63,31 @@ class UpdateProgramRequest extends FormRequest
 
             $protocol = Protocol::where('guid', $this->input('protocol_id'))->first();
             if ($protocol && $protocol->vet_id !== null && $protocol->vet_id !== $vet->id) {
-                $v->errors()->add('protocol_id', 'El protocolo no pertenece a esta veterinaria.');
+                $v->errors()->add('protocol_id', 'El protocolo no pertenece a esta empresa.');
             }
 
             // DEC-12: un responsable puede ser staff de la vet o staff del cliente del programa.
             foreach ((array) $this->input('manager_profile_ids', []) as $index => $profileGuid) {
                 $profileGuid = (string) $profileGuid;
                 $belongsToVet    = $this->userProfileService->findByGuidForVet($profileGuid, $vet) !== null;
-                $belongsToClient = $this->userProfileService->findByGuidForClient($profileGuid, $client) !== null;
+                $clientProfile   = $this->userProfileService->findByGuidForClient($profileGuid, $client);
+                $belongsToClient = $clientProfile !== null;
 
-                if (!$belongsToVet && !$belongsToClient) {
-                    $v->errors()->add("manager_profile_ids.{$index}", 'El responsable seleccionado no pertenece a esta veterinaria ni al cliente.');
+                if ($belongsToVet) {
+                    continue;
+                }
+
+                if (!$belongsToClient) {
+                    $v->errors()->add("manager_profile_ids.{$index}", 'El responsable seleccionado no pertenece a esta empresa ni al cliente.');
+                    continue;
+                }
+
+                // Client staff must be linked to the chosen establishment (skipped when the
+                // establishment itself is invalid, to avoid a second confusing error).
+                if ($establishment && $establishment->client_id === $client->id) {
+                    if (!$this->establishmentService->isProfileLinked($establishment, $clientProfile)) {
+                        $v->errors()->add("manager_profile_ids.{$index}", 'El responsable seleccionado no está vinculado al establecimiento elegido.');
+                    }
                 }
             }
 

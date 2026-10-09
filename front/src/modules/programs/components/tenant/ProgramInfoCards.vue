@@ -48,12 +48,12 @@ const clientManagers = computed(() => props.program.managers.filter((m) => m.ori
 
       <template v-else>
         <div class="pic-managers-group">
-          <span class="pic-managers-label">Veterinaria</span>
+          <span class="pic-managers-label">Empresa</span>
           <div class="pic-tags">
             <a-tag v-for="m in vetManagers" :key="m.guid" color="blue">
               {{ m.name }} · {{ getRoleLabel(m.role) }}
             </a-tag>
-            <span v-if="!vetManagers.length" class="pic-empty">Sin responsables de veterinaria.</span>
+            <span v-if="!vetManagers.length" class="pic-empty">Sin responsables de empresa.</span>
           </div>
         </div>
 

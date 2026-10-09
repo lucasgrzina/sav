@@ -88,10 +88,10 @@ const childColumns = [
       </AppHeader>
 
       <a-tabs class="tdp-tabs">
-        <a-tab-pane key="children" tab="Sub-técnicas">
+        <a-tab-pane key="children" tab="Programas">
           <a-empty
             v-if="technique.children.length === 0"
-            description="Esta técnica no tiene sub-técnicas."
+            description="Esta técnica no tiene programas."
           />
           <BaseDataTable
             v-else

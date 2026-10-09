@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { shallowRef, computed } from 'vue'
 import { HolderOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
+import { useTheme } from '@/core/composables/useTheme'
+import { PALETTE_OPTIONS } from '@/core/themes/palettes'
 import type { HealthActivity, ActivityAssignment } from '../types/health.types'
 
 const props = defineProps<{
@@ -9,7 +12,15 @@ const props = defineProps<{
 
 const assignments = defineModel<ActivityAssignment[]>({ required: true })
 
-const MONTH_LABELS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+// BaseDrawer teletransporta a document.body, fuera de .dash-root, así que
+// var(--dt-accent) nunca resuelve acá adentro. Se lee la paleta del usuario
+// directo del composable (estado JS reactivo) en vez de depender del árbol CSS.
+const { palette } = useTheme()
+const accentColor = computed(
+  () => PALETTE_OPTIONS.find(p => p.key === palette.value)?.color ?? '#1AE5A0',
+)
 
 const draggingIndex = shallowRef<number | null>(null)
 const dragOverIndex = shallowRef<number | null>(null)
@@ -109,7 +120,7 @@ function onDragEnd() {
 </script>
 
 <template>
-  <div class="amm-root">
+  <div class="amm-root" :style="{ '--amm-accent': accentColor }">
     <div class="amm-scroll-wrapper">
       <table class="amm-table">
         <thead>
@@ -169,9 +180,15 @@ function onDragEnd() {
             </td>
 
             <td class="amm-td amm-td--delete">
-              <button type="button" class="amm-delete-btn" @click="removeRow(index)">
-                <DeleteOutlined />
-              </button>
+              <BaseButton
+                variant="row-action"
+                size="small"
+                danger
+                tooltip="Eliminar actividad"
+                @click="removeRow(index)"
+              >
+                <template #icon><DeleteOutlined /></template>
+              </BaseButton>
             </td>
           </tr>
 
@@ -212,27 +229,30 @@ function onDragEnd() {
 .amm-scroll-wrapper {
   overflow-x: auto;
   width: 100%;
-  border: 1px solid var(--dt-border, #303030);
-  border-radius: 6px;
+  border: 1px solid var(--dt-border, rgba(26, 229, 160, 0.12));
+  border-radius: 10px;
 }
 
 .amm-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
-  min-width: 900px;
 }
 
 /* ── HEADERS ─────────────────────────────────────── */
 
 .amm-th {
-  padding: 10px 8px;
+  padding: 10px 6px;
   text-align: center;
   font-weight: 600;
-  font-size: 12px;
-  border-bottom: 1px solid var(--dt-border, #303030);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dt-muted, #6B8CAE);
+  border-bottom: 1px solid var(--dt-border, rgba(26, 229, 160, 0.12));
   white-space: nowrap;
-  background-color: var(--dt-bg-secondary, #1a1a1a);
+  background: rgba(26, 229, 160, 0.04);
 }
 
 .amm-th--drag {
@@ -242,16 +262,15 @@ function onDragEnd() {
 .amm-th--activity {
   text-align: left;
   padding-left: 12px;
-  min-width: 200px;
 }
 
 .amm-th--month {
-  width: 70px;
-  font-size: 11px;
+  width: 34px;
+  padding: 10px 2px;
 }
 
 .amm-th--delete {
-  width: 40px;
+  width: 36px;
 }
 
 .amm-required {
@@ -266,19 +285,19 @@ function onDragEnd() {
 }
 
 .amm-row:not(:last-child) {
-  border-bottom: 1px solid var(--dt-border, #303030);
+  border-bottom: 1px solid var(--dt-border, rgba(26, 229, 160, 0.12));
 }
 
 .amm-row--drag-over {
-  background-color: var(--dt-bg-hover, rgba(26, 229, 160, 0.06));
-  outline: 2px solid var(--dt-accent, #1AE5A0);
+  background-color: var(--dt-hover, rgba(26, 229, 160, 0.06));
+  outline: 2px solid var(--amm-accent);
   outline-offset: -2px;
 }
 
 /* ── CELLS ────────────────────────────────────────── */
 
 .amm-td {
-  padding: 8px;
+  padding: 8px 6px;
   vertical-align: middle;
   text-align: center;
 }
@@ -294,12 +313,13 @@ function onDragEnd() {
 }
 
 .amm-td--month {
-  width: 70px;
+  width: 34px;
+  padding: 8px 2px;
 }
 
 .amm-td--delete {
-  width: 40px;
-  padding: 8px 8px 8px 4px;
+  width: 36px;
+  padding: 4px;
 }
 
 /* ── DRAG HANDLE ──────────────────────────────────── */
@@ -321,7 +341,7 @@ function onDragEnd() {
 
 .amm-checkbox {
   cursor: pointer;
-  accent-color: var(--dt-accent, #1AE5A0);
+  accent-color: var(--amm-accent);
   width: 15px;
   height: 15px;
 }
@@ -329,27 +349,6 @@ function onDragEnd() {
 .amm-checkbox:disabled {
   cursor: not-allowed;
   opacity: 0.35;
-}
-
-/* ── DELETE BUTTON ────────────────────────────────── */
-
-.amm-delete-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #ff4d4f;
-  font-size: 15px;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.15s;
-  margin: 0 auto;
-}
-
-.amm-delete-btn:hover {
-  background-color: rgba(255, 77, 79, 0.1);
 }
 
 /* ── EMPTY STATE ──────────────────────────────────── */

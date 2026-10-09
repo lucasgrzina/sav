@@ -5,7 +5,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { vetCreateSchema, vetUpdateSchema, vetTenantUpdateSchema } from '../../validators/vet.validator'
 import { useCountries } from '../../composables/useCountries'
 import { useDocumentTypes } from '../../composables/useDocumentTypes'
-import type { VetCreateForm, VetUpdateForm } from '../../validators/vet.validator'
+import type { VetCreateForm, VetUpdateForm, VetTenantUpdateForm } from '../../validators/vet.validator'
 import type { VetItem, ContactFormItem, VetUpdatePayload } from '../../types/vet.types'
 
 const props = withDefaults(
@@ -20,8 +20,10 @@ const props = withDefaults(
   { mode: 'edit', loading: false },
 )
 
+export type VetFormSubmit = VetCreateForm | VetUpdateForm | VetUpdatePayload
+
 const emit = defineEmits<{
-  submit: [values: VetCreateForm | VetUpdateForm | VetUpdatePayload]
+  submit: [values: VetFormSubmit]
 }>()
 
 const schema = computed(() => {
@@ -50,9 +52,12 @@ const countryOptions = computed(() =>
   (countriesData.value ?? []).map((c) => ({ value: c.guid, label: c.name })),
 )
 
-const { data: documentTypesData, isLoading: isLoadingDocTypes } = useDocumentTypes(
-  computed(() => (country_guid.value as string) ?? ''),
-)
+const documentTypesCountryGuid = computed(() => {
+  if (props.origin === 'admin') return (country_guid.value as string) ?? ''
+  return props.initialValues?.country?.guid ?? ''
+})
+
+const { data: documentTypesData, isLoading: isLoadingDocTypes } = useDocumentTypes(documentTypesCountryGuid)
 const documentTypeOptions = computed(() =>
   (documentTypesData.value ?? []).map((dt) => ({ value: dt.guid, label: dt.name })),
 )
@@ -80,9 +85,12 @@ watch(
       })
     } else {
       setValues({
-        name:        vals.name ?? '',
-        pdf_title:   vals.pdf_title ?? null,
-        pdf_subtitle: vals.pdf_subtitle ?? null,
+        name:                 vals.name ?? '',
+        document_type_guid:   vals.document_type?.guid ?? '',
+        tax_id:               vals.tax_id ?? '',
+        registration_number:  vals.registration_number ?? null,
+        pdf_title:            vals.pdf_title ?? null,
+        pdf_subtitle:         vals.pdf_subtitle ?? null,
       })
     }
     localContacts.value = (vals.contacts ?? []).map((c) => ({
@@ -110,8 +118,8 @@ const resolvedCancelTo = computed(() => {
 const onSubmit = handleSubmit((values) => {
   const contacts = localContacts.value.map((c) => ({ ...c, label: c.label || null }))
   if (props.origin === 'tenant') {
-    const { name, pdf_title, pdf_subtitle } = values as { name: string; pdf_title: string | null; pdf_subtitle: string | null }
-    emit('submit', { name, pdf_title, pdf_subtitle, contacts })
+    const { name, document_type_guid, tax_id, registration_number, pdf_title, pdf_subtitle } = values as VetTenantUpdateForm
+    emit('submit', { name, document_type_guid, tax_id, registration_number, pdf_title, pdf_subtitle, contacts })
     return
   }
   if (props.mode === 'create') {
@@ -127,7 +135,7 @@ defineExpose({ resetForm })
 
 <template>
   <a-form class="form" layout="vertical" @submit.prevent="onSubmit">
-    <FormSection title="Información de la veterinaria">
+    <FormSection title="Información de la empresa">
       <a-row :gutter="[16, 0]">
         <a-col :xs="24" :sm="12">
           <a-form-item
@@ -138,7 +146,7 @@ defineExpose({ resetForm })
             <a-input
               v-model:value="name"
               v-bind="nameAttrs"
-              placeholder="Ej: Veterinaria San Martín"
+              placeholder="Ej: Empresa San Martín"
             />
           </a-form-item>
         </a-col>
@@ -167,60 +175,58 @@ defineExpose({ resetForm })
         </template>
       </a-row>
 
-      <template v-if="origin === 'admin'">
-        <a-row :gutter="[16, 0]">
-          <a-col :xs="24" :md="12">
-            <a-form-item
-              label="Tipo de documento"
-              :validate-status="errors.document_type_guid ? 'error' : ''"
-              :help="errors.document_type_guid ?? ''"
-            >
-              <a-select
-                v-model:value="document_type_guid"
-                v-bind="documentTypeGuidAttrs"
-                :loading="isLoadingDocTypes"
-                :options="documentTypeOptions"
-                placeholder="Seleccioná el tipo de doc."
-                allow-clear
-                style="width: 100%"
-                :disabled="!country_guid"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :xs="24" :md="12">
-            <a-form-item
-              label="CUIT / Identificador fiscal"
-              :validate-status="errors.tax_id ? 'error' : ''"
-              :help="errors.tax_id ?? ''"
-            >
-              <a-input
-                v-model:value="tax_id"
-                v-bind="taxIdAttrs"
-                placeholder="Ej: 30-12345678-9"
-              />
-            </a-form-item>
-          </a-col>
-        </a-row>
+      <a-row :gutter="[16, 0]">
+        <a-col :xs="24" :md="12">
+          <a-form-item
+            label="Tipo de documento"
+            :validate-status="errors.document_type_guid ? 'error' : ''"
+            :help="errors.document_type_guid ?? ''"
+          >
+            <a-select
+              v-model:value="document_type_guid"
+              v-bind="documentTypeGuidAttrs"
+              :loading="isLoadingDocTypes"
+              :options="documentTypeOptions"
+              placeholder="Seleccioná el tipo de doc."
+              allow-clear
+              style="width: 100%"
+              :disabled="!documentTypesCountryGuid"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :md="12">
+          <a-form-item
+            label="CUIT / Identificador fiscal"
+            :validate-status="errors.tax_id ? 'error' : ''"
+            :help="errors.tax_id ?? ''"
+          >
+            <a-input
+              v-model:value="tax_id"
+              v-bind="taxIdAttrs"
+              placeholder="Ej: 30-12345678-9"
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
 
-        <a-form-item
-          label="Número de matrícula / registro"
-          :validate-status="errors.registration_number ? 'error' : ''"
-          :help="errors.registration_number ?? ''"
-        >
-          <a-input
-            v-model:value="registration_number"
-            v-bind="registrationNumberAttrs"
-            placeholder="Opcional"
-          />
-        </a-form-item>
-      </template>
+      <a-form-item
+        label="Número de matrícula / registro"
+        :validate-status="errors.registration_number ? 'error' : ''"
+        :help="errors.registration_number ?? ''"
+      >
+        <a-input
+          v-model:value="registration_number"
+          v-bind="registrationNumberAttrs"
+          placeholder="Opcional"
+        />
+      </a-form-item>
     </FormSection>
 
     <FormSection
-      title="Contactos de la veterinaria"
+      title="Contactos de la empresa"
       subtitle="Emails y teléfonos de contacto. El contacto principal es el que se muestra por defecto."
     >
-      <ContactsInput v-model="localContacts" />
+      <ContactsInput v-model="localContacts" :field-errors="fieldErrors" />
     </FormSection>
 
     <FormSection title="Personalización de documentos" subtitle="Datos opcionales para encabezados de PDF generados.">
@@ -258,7 +264,7 @@ defineExpose({ resetForm })
     <FormFooter
       :loading="loading"
       :cancel-to="resolvedCancelTo"
-      :save-label="mode === 'create' ? 'Crear veterinaria' : 'Guardar cambios'"
+      :save-label="mode === 'create' ? 'Crear empresa' : 'Guardar cambios'"
     />
   </a-form>
 </template>

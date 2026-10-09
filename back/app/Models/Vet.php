@@ -53,6 +53,12 @@ class Vet extends Model
         return $this->belongsToMany(Client::class, 'client_vet')->withTimestamps();
     }
 
+    /** IANA timezone of the vet's country; falls back to the app timezone when unknown. */
+    public function timezone(): string
+    {
+        return $this->country?->timezone ?: config('app.timezone');
+    }
+
     /** Scope: tenant activo (validado y no suspendido). */
     public function scopeActive(Builder $query): Builder
     {

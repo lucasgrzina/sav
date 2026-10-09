@@ -33,7 +33,7 @@ class AdminAssignStaffRequest extends FormRequest
             'user_guid.required' => 'El usuario es obligatorio.',
             'user_guid.exists'   => 'El usuario seleccionado no existe.',
             'role_guid.required' => 'El rol es obligatorio.',
-            'role_guid.exists'   => 'El rol seleccionado no es válido para staff de veterinaria.',
+            'role_guid.exists'   => 'El rol seleccionado no es válido para staff de empresa.',
         ];
     }
 }

@@ -112,7 +112,7 @@ function onClientChange(guid: string) {
 
       <a-col v-if="tenantType === 'vet'" :xs="24" :sm="16">
         <a-form-item
-          label="Veterinaria"
+          label="Empresa"
           :validate-status="fieldErrors?.[`profiles.${index}.vet_guid`] ? 'error' : ''"
           :help="fieldErrors?.[`profiles.${index}.vet_guid`] ?? ''"
           style="margin-bottom: 0"
@@ -123,7 +123,7 @@ function onClientChange(guid: string) {
             :options="vetOptions"
             :loading="isLoadingVets"
             :filter-option="false"
-            placeholder="Buscá una veterinaria..."
+            placeholder="Buscá una empresa..."
             style="width: 100%"
             @search="(val: string) => { vetSearch = val }"
             @change="onVetChange"

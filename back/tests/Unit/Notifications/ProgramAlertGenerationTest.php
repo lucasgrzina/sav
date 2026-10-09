@@ -18,6 +18,7 @@ use App\Notifications\Enums\AlertType;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
 use App\Services\ProgramService;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -36,6 +37,9 @@ class ProgramAlertGenerationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Fixture target dates (2026-08-15) must stay in the future: past alerts are discarded.
+        Carbon::setTestNow('2026-08-01 09:00:00');
 
         $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
 
@@ -173,6 +177,34 @@ class ProgramAlertGenerationTest extends TestCase
         $this->assertSame('Recordatorio de tarea', $alert->payload['message']);
         $this->assertTrue($alert->require_confirmation);
         $this->assertSame($program->id, $alert->subject_id);
+    }
+
+    public function test_task_due_alert_local_time_is_converted_to_utc_using_the_vet_country_timezone(): void
+    {
+        $this->vet->country->update(['timezone' => 'America/Argentina/Buenos_Aires']);
+
+        $task = ProtocolTask::create([
+            'guid' => Str::uuid()->toString(), 'protocol_id' => $this->protocol->id,
+            'description' => 'Tarea', 'days_offset' => 0, 'time_of_day' => 'after',
+            'time' => '08:00', 'important' => false, 'sort_order' => 1,
+        ]);
+
+        ProtocolTaskAlert::create([
+            'guid' => Str::uuid()->toString(), 'protocol_task_id' => $task->id,
+            'offset_days' => 0, 'time_of_day' => 'after', 'time' => '20:00',
+            'roles' => ['vet-manager'], 'message' => 'Hora local', 'require_confirmation' => false, 'sort_order' => 1,
+        ]);
+
+        $date = now()->addYear()->toDateString();
+
+        $this->service->create($this->basePayload([
+            'targets' => [['target_date' => $date, 'animals' => []]],
+        ]), $this->vet->id);
+
+        $alert = \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->firstOrFail();
+
+        // 20:00 in Buenos Aires (UTC-3) == 23:00 UTC
+        $this->assertSame($date . ' 23:00:00', $alert->scheduled_at->format('Y-m-d H:i:s'));
     }
 
     public function test_task_due_alert_only_goes_to_managers_with_a_matching_role(): void
