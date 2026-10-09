@@ -16,6 +16,10 @@ class EstablishmentResource extends JsonResource
             'address'    => $this->address,
             'city'       => $this->city,
             'state'      => $this->state,
+            'province'   => $this->whenLoaded('province', fn () => $this->province ? [
+                'guid' => $this->province->guid,
+                'name' => $this->province->name,
+            ] : null),
             'zip_code'   => $this->zip_code,
             'latitude'   => $this->latitude,
             'longitude'  => $this->longitude,

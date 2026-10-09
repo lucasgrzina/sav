@@ -10,6 +10,9 @@ import type {
   EstablishmentCreatePayload,
   EstablishmentUpdatePayload,
   EstablishmentStaffSyncPayload,
+  GeocodeAddressPayload,
+  GeocodeResult,
+  ProvinceItem,
   ContactItem,
   ContactCreatePayload,
   ContactUpdatePayload,
@@ -231,4 +234,30 @@ export async function deleteContactApi(
   contactGuid: string,
 ): Promise<void> {
   await http.delete(`/v1/vets/${vetGuid}/clients/${clientGuid}/contacts/${contactGuid}`)
+}
+
+// --- Geocoding de direcciones ---
+
+export async function geocodeAddressApi(
+  vetGuid: string,
+  payload: GeocodeAddressPayload,
+  signal?: AbortSignal,
+): Promise<GeocodeResult> {
+  const res = await http.post<GeocodeResult>(`/v1/vets/${vetGuid}/establishments/geocode`, payload, { signal })
+  return res.data
+}
+
+export async function adminGeocodeAddressApi(
+  payload: GeocodeAddressPayload,
+  signal?: AbortSignal,
+): Promise<GeocodeResult> {
+  const res = await http.post<GeocodeResult>('/v1/admin/establishments/geocode', payload, { signal })
+  return res.data
+}
+
+// --- Provinces ---
+
+export async function listProvincesApi(countryGuid: string): Promise<ProvinceItem[]> {
+  const res = await http.get<ProvinceItem[]>(`/v1/countries/${countryGuid}/provinces`)
+  return res.data
 }

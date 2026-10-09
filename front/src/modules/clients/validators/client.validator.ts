@@ -94,6 +94,7 @@ export const establishmentSchema = z.object({
     .max(100, 'Máximo 100 caracteres')
     .nullable()
     .optional(),
+  province_guid: z.string().nullable().optional(),
   state: z
     .string()
     .max(100, 'Máximo 100 caracteres')

@@ -73,7 +73,7 @@ async function handleUnlink(): Promise<void> {
       <!-- Tabs con secciones -->
       <a-tabs class="cdp-tabs">
         <a-tab-pane key="establishments" tab="Establecimientos">
-          <EstablishmentsSection :client-guid="guid" mode="tenant" />
+          <EstablishmentsSection :client-guid="guid" :country-guid="client.country?.guid" mode="tenant" />
         </a-tab-pane>
 
         <a-tab-pane key="contacts" tab="Contactos">

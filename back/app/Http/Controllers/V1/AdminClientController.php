@@ -67,7 +67,7 @@ class AdminClientController extends Controller
                 return $this->makeNotFound('Cliente no encontrado.');
             }
 
-            $client->load(['country', 'documentType', 'contacts', 'establishments', 'vets']);
+            $client->load(['country', 'documentType', 'contacts', 'establishments.province', 'vets']);
 
             return $this->makeSuccess(new ClientResource($client));
         } catch (\Exception $e) {

@@ -28,6 +28,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'nominatim' => [
+        'base_url'      => env('NOMINATIM_BASE_URL', 'https://nominatim.openstreetmap.org'),
+        'user_agent'    => env('NOMINATIM_USER_AGENT', 'SAV-VetAlert/1.0 (soporte@sav.app)'),
+        'timeout'       => (int) env('NOMINATIM_TIMEOUT', 5),
+        'country_codes' => env('NOMINATIM_COUNTRY_CODES'),
+        'cache_ttl'     => (int) env('NOMINATIM_CACHE_TTL', 86400),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

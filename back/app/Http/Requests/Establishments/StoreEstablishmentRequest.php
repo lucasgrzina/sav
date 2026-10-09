@@ -19,6 +19,7 @@ class StoreEstablishmentRequest extends FormRequest
             'address'   => ['nullable', 'string', 'max:255'],
             'city'      => ['nullable', 'string', 'max:100'],
             'state'     => ['nullable', 'string', 'max:100'],
+            'province_guid' => ['nullable', 'string', 'exists:provinces,guid'],
             'zip_code'  => ['nullable', 'string', 'max:20'],
             'latitude'  => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
@@ -30,6 +31,7 @@ class StoreEstablishmentRequest extends FormRequest
         return [
             'name.required'    => 'El nombre del establecimiento es obligatorio.',
             'name.max'         => 'El nombre no puede superar 150 caracteres.',
+            'province_guid.exists' => 'La provincia seleccionada no existe.',
             'latitude.between' => 'La latitud debe estar entre -90 y 90.',
             'longitude.between'=> 'La longitud debe estar entre -180 y 180.',
         ];

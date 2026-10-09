@@ -51,7 +51,7 @@ const { data: client, isLoading } = useAdminClient(computed(() => props.guid))
       <!-- Tabs con secciones -->
       <a-tabs class="acdp-tabs">
         <a-tab-pane key="establishments" tab="Establecimientos">
-          <EstablishmentsSection :client-guid="props.guid" mode="admin" />
+          <EstablishmentsSection :client-guid="props.guid" :country-guid="client.country?.guid" mode="admin" />
         </a-tab-pane>
 
         <a-tab-pane key="vets" tab="Empresas vinculadas">

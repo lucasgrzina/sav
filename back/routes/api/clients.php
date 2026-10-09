@@ -5,6 +5,7 @@ use App\Http\Controllers\V1\ClientController;
 use App\Http\Controllers\V1\ClientStaffController;
 use App\Http\Controllers\V1\ContactController;
 use App\Http\Controllers\V1\EstablishmentController;
+use App\Http\Controllers\V1\GeocodingController;
 use Illuminate\Support\Facades\Route;
 
 // --- Panel SuperAdmin ---
@@ -89,3 +90,10 @@ Route::prefix('v1/vets/{vet}')->middleware(['auth:sanctum', 'vet.tenant'])->grou
         });
     });
 });
+
+// Address geocoding (Nominatim proxy) used by the establishment forms.
+Route::post('v1/admin/establishments/geocode', [GeocodingController::class, 'geocode'])
+    ->middleware(['auth:sanctum', 'can:establishments.create', 'throttle:geocode']);
+
+Route::post('v1/vets/{vet}/establishments/geocode', [GeocodingController::class, 'geocode'])
+    ->middleware(['auth:sanctum', 'vet.tenant', 'can:establishments.create', 'throttle:geocode']);

@@ -17,6 +17,9 @@ vi.mock('../../composables/useCreateEstablishment', () => ({ useCreateEstablishm
 vi.mock('../../composables/useUpdateEstablishment', () => ({ useUpdateEstablishment: () => h_.update }))
 vi.mock('../../composables/useSyncEstablishmentStaff', () => ({ useSyncEstablishmentStaff: () => h_.sync }))
 vi.mock('../../composables/useClientStaff', () => ({ useClientStaff: () => h_.staff }))
+vi.mock('../../composables/useProvinces', () => ({
+  useProvinces: () => ({ data: ref([{ guid: 'p-cba', name: 'Córdoba' }]), isLoading: ref(false) }),
+}))
 vi.mock('vue-router', () => ({ useRoute: () => ({ params: { vetGuid: 'vet-1' } }) }))
 
 const BaseMultiSelectStub = defineComponent({
@@ -135,6 +138,16 @@ describe('EstablishmentFormModal', () => {
         estGuid: 'est-9',
         payload: { user_profile_guids: [] },
       })
+    })
+
+    it('links a legacy state text to its province and sends province_guid with the state name', async () => {
+      const wrapper = mountModal({ mode: 'edit', initial: { ...initial, state: 'cordoba', province: null } })
+
+      await clickButton(wrapper, 'Guardar cambios')
+
+      expect(h_.update.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: expect.objectContaining({ province_guid: 'p-cba', state: 'Córdoba' }) }),
+      )
     })
 
     it('does not call the sync endpoint when the selection did not change', async () => {

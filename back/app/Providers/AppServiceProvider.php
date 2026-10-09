@@ -84,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SystemSettingRepositoryInterface::class, SystemSettingRepositoryEloquent::class);
         $this->app->bind(CountryRepositoryInterface::class, CountryRepositoryEloquent::class);
         $this->app->bind(DocumentTypeRepositoryInterface::class, DocumentTypeRepositoryEloquent::class);
+        $this->app->bind(\App\Contracts\Repositories\ProvinceRepositoryInterface::class, \App\Repositories\ProvinceRepositoryEloquent::class);
         $this->app->bind(VetRepositoryInterface::class, VetRepositoryEloquent::class);
         $this->app->bind(UserProfileRepositoryInterface::class, UserProfileRepositoryEloquent::class);
         $this->app->bind(ContactRepositoryInterface::class, ContactRepositoryEloquent::class);
@@ -105,6 +106,16 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by($request->input('email', '').$request->ip());
+        });
+
+        // Nominatim policy: max 1 req/s. Per-user burst guard; responses are cached by GeocodingService.
+        RateLimiter::for('geocode', function (Request $request) {
+            $key = (string) ($request->user()?->getAuthIdentifier() ?? $request->ip());
+
+            return [
+                Limit::perSecond(1)->by($key),
+                Limit::perMinute(30)->by($key),
+            ];
         });
 
         Gate::policy(Export::class, ExportPolicy::class);

@@ -17,6 +17,11 @@ class Country extends Model
         return $this->hasMany(DocumentType::class);
     }
 
+    public function provinces(): HasMany
+    {
+        return $this->hasMany(Province::class);
+    }
+
     public function vets(): HasMany
     {
         return $this->hasMany(Vet::class);

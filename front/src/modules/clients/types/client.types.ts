@@ -106,6 +106,11 @@ export interface ContactItem {
 // Staff embedded in an establishment: personal data without contacts nor the inverse establishments list
 export type EstablishmentStaffItem = Omit<ClientStaffItem, 'contacts' | 'establishments'>
 
+export interface ProvinceItem {
+  guid: string
+  name: string
+}
+
 export interface EstablishmentItem {
   guid: string
   name: string
@@ -113,6 +118,8 @@ export interface EstablishmentItem {
   address: string | null
   city: string | null
   state: string | null
+  // Structured province (null for legacy rows that only have the `state` text)
+  province?: ProvinceItem | null
   zip_code: string | null
   latitude: number | null
   longitude: number | null
@@ -191,12 +198,27 @@ export interface EstablishmentCreatePayload {
   address?: string | null
   city?: string | null
   state?: string | null
+  province_guid?: string | null
   zip_code?: string | null
   latitude?: number | null
   longitude?: number | null
 }
 
 export type EstablishmentUpdatePayload = Partial<EstablishmentCreatePayload>
+
+// Address parts sent to the geocoding endpoint (at least address or city is required)
+export interface GeocodeAddressPayload {
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  zip_code?: string | null
+}
+
+// Coordinates are null when the address could not be resolved
+export interface GeocodeResult {
+  latitude: number | null
+  longitude: number | null
+}
 
 // Sincronización total: estado final deseado del personal vinculado ([] desvincula a todos)
 export interface EstablishmentStaffSyncPayload {

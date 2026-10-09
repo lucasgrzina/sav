@@ -25,7 +25,7 @@ class EstablishmentRepositoryEloquent extends BaseRepositoryEloquent implements 
 
     public function listForClient(Client $client, bool $withStaff = true): Collection
     {
-        $query = $client->establishments()->withCount('staff')->latest();
+        $query = $client->establishments()->with('province')->withCount('staff')->latest();
 
         if ($withStaff) {
             $query->with(['staff.user', 'staff.role']);

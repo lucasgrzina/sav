@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\CountryResource;
 use App\Http\Resources\V1\DocumentTypeResource;
+use App\Http\Resources\V1\ProvinceResource;
 use App\Services\CountryService;
 use Illuminate\Http\JsonResponse;
 
@@ -37,6 +38,21 @@ class CountryController extends Controller
             $types = $this->countryService->documentTypes($country);
 
             return $this->makeSuccess(DocumentTypeResource::collection($types));
+        } catch (\Exception $e) {
+            return $this->makeFromException($e);
+        }
+    }
+
+    public function provinces(string $guid): JsonResponse
+    {
+        try {
+            $country = $this->countryService->findByGuid($guid);
+
+            if (!$country) {
+                return $this->makeNotFound('País no encontrado.');
+            }
+
+            return $this->makeSuccess(ProvinceResource::collection($this->countryService->provinces($country)));
         } catch (\Exception $e) {
             return $this->makeFromException($e);
         }

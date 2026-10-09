@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             EstablishmentHealthPlanPermissionsSeeder::class,
             SystemSettingSeeder::class,
             CountrySeeder::class,
+            ProvinceSeeder::class,
             HealthPlanSeeder::class,
         ]);
 

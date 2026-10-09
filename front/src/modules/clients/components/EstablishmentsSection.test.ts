@@ -101,3 +101,18 @@ describe('EstablishmentsSection staff column', () => {
     expect(wrapper.text()).toContain('Todavía no cargaste establecimientos')
   })
 })
+
+describe('EstablishmentsSection coordinates column', () => {
+  it('shows latitude and longitude with 6 decimals', () => {
+    const wrapper = mountSection([makeEstablishment({ latitude: -35.1234567, longitude: -62.5 })])
+
+    expect(wrapper.get('[data-testid="establishment-coordinates"]').text()).toBe('-35.123457, -62.500000')
+  })
+
+  it('shows "Sin coordenadas" when they are null', () => {
+    const wrapper = mountSection([makeEstablishment({ latitude: null, longitude: null })])
+
+    expect(wrapper.text()).toContain('Sin coordenadas')
+    expect(wrapper.find('[data-testid="establishment-coordinates"]').exists()).toBe(false)
+  })
+})

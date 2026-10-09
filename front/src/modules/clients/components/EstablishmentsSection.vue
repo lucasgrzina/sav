@@ -13,6 +13,8 @@ import { getRoleLabel } from '@/core/utils/roles'
 
 const props = defineProps<{
   clientGuid: string
+  // Country of the client: scopes the province list of the establishment form
+  countryGuid?: string
   mode: 'tenant' | 'admin'
 }>()
 
@@ -44,6 +46,7 @@ const columns = [
   { title: 'Nombre',       key: 'name' },
   { title: 'RENSPA',       key: 'renspa' },
   { title: 'Ciudad/Prov.', key: 'location' },
+  { title: 'Coordenadas',  key: 'coordinates' },
   { title: 'Personal vinculado', key: 'staff' },
   { title: 'Alta',         key: 'created_at' },
   { title: 'Acciones',     key: 'actions', width: 100 },
@@ -75,7 +78,7 @@ const columns = [
       :loading="isLoading"
       row-key="guid"
       :pagination="false"
-      :scroll="{ x: 800 }"
+      :scroll="{ x: 1000 }"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'name'">
@@ -93,6 +96,17 @@ const columns = [
             {{ [record.city, record.state].filter(Boolean).join(', ') }}
           </span>
           <span v-else class="es-muted">—</span>
+        </template>
+
+        <template v-else-if="column.key === 'coordinates'">
+          <span
+            v-if="record.latitude !== null && record.longitude !== null"
+            class="es-mono"
+            data-testid="establishment-coordinates"
+          >
+            {{ record.latitude.toFixed(6) }}, {{ record.longitude.toFixed(6) }}
+          </span>
+          <span v-else class="es-muted">Sin coordenadas</span>
         </template>
 
         <template v-else-if="column.key === 'staff'">
@@ -145,6 +159,7 @@ const columns = [
       :is="mode === 'admin' ? AdminEstablishmentFormModal : EstablishmentFormModal"
       v-model="isModalOpen"
       :client-guid="clientGuid"
+      :country-guid="countryGuid"
       :mode="modalMode"
       :initial="editingEstablishment"
     />

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\Repositories\EstablishmentRepositoryInterface;
 use App\Contracts\Repositories\ProgramRepositoryInterface;
+use App\Contracts\Repositories\ProvinceRepositoryInterface;
 use App\Contracts\Repositories\UserProfileRepositoryInterface;
 use App\Events\EstablishmentStaffUnlinkedEvent;
 use App\Exceptions\EstablishmentStaffMismatchException;
@@ -20,6 +21,7 @@ class EstablishmentService
         private EstablishmentRepositoryInterface $establishmentRepository,
         private UserProfileRepositoryInterface $userProfiles,
         private ProgramRepositoryInterface $programs,
+        private ProvinceRepositoryInterface $provinces,
     ) {}
 
     public function listForClient(Client $client, bool $withStaff = true): Collection
@@ -30,7 +32,7 @@ class EstablishmentService
     public function create(Client $client, array $data): Establishment
     {
         $data['client_id'] = $client->id;
-        return $this->establishmentRepository->create($data);
+        return $this->establishmentRepository->create($this->resolveProvince($data))->load('province');
     }
 
     public function findByGuidForClient(string $guid, Client $client): ?Establishment
@@ -40,7 +42,34 @@ class EstablishmentService
 
     public function update(Establishment $establishment, array $data): Establishment
     {
-        return $this->establishmentRepository->update($establishment, $data);
+        return $this->establishmentRepository
+            ->update($establishment, $this->resolveProvince($data, $establishment))
+            ->load('province');
+    }
+
+    /**
+     * Translates province_guid into province_id and keeps the legacy text column `state` in sync.
+     * - province_guid present: province_id is set and state is overwritten with the province name.
+     * - province_guid null: province_id is cleared (state stays as sent).
+     * - province_guid absent but state sent with a different value: province_id is cleared so both never diverge.
+     */
+    private function resolveProvince(array $data, ?Establishment $current = null): array
+    {
+        if (array_key_exists('province_guid', $data)) {
+            $guid = $data['province_guid'];
+            unset($data['province_guid']);
+
+            $province = $guid ? $this->provinces->findByGuid($guid) : null;
+
+            $data['province_id'] = $province?->id;
+            if ($province) {
+                $data['state'] = $province->name;
+            }
+        } elseif ($current && array_key_exists('state', $data) && $data['state'] !== $current->state) {
+            $data['province_id'] = null;
+        }
+
+        return $data;
     }
 
     public function destroy(Establishment $establishment): void
