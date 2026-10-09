@@ -40,7 +40,10 @@ const authTheme = {
             <!-- Right: Form panel -->
             <div class="auth-form-panel">
                 <div class="auth-form-inner">
-                    <div class="auth-mobile-logo"><span>SAV</span></div>
+                    <div class="auth-form-logo">
+                        <img src="@/assets/logo.png" alt="SAV" />
+                        <p>Software de Alertas Veterinarias</p>
+                    </div>
                     <RouterView />
                 </div>
             </div>
