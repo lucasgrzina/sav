@@ -119,17 +119,18 @@ final class KapsoWhatsappGateway implements NotificationChannelGateway
     /** @return array<string, mixed> */
     private function templateFor(TemplateContent $content): array
     {
-        $name = $this->templates[$content->type->value]['name'] ?? null;
+        $key = $content->templateKey();
+        $name = $this->templates[$key]['name'] ?? null;
 
         if (! is_string($name) || $name === '') {
             throw new TemplateNotConfiguredException(
-                "Sin template de Kapso configurado para {$content->type->value}",
+                "Sin template de Kapso configurado para {$key}",
             );
         }
 
         $template = [
             'name' => $name,
-            'language' => ['code' => $this->templates[$content->type->value]['language'] ?? 'es'],
+            'language' => ['code' => $this->templates[$key]['language'] ?? 'es'],
         ];
 
         // Meta rejects a body component carrying an empty parameter list, so a template

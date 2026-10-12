@@ -7,7 +7,6 @@ use App\Notifications\Data\DeliveryResult;
 use App\Notifications\Data\OutboundMessage;
 use App\Notifications\Data\TemplateContent;
 use App\Notifications\Data\TextContent;
-use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Exceptions\TemplateNotConfiguredException;
 use App\Notifications\Services\FailureClassifier;
@@ -42,7 +41,7 @@ final class TwilioWhatsappGateway implements NotificationChannelGateway
         try {
             $sent = match (true) {
                 $message->content instanceof TemplateContent => $this->twilio->messages->create($to, $options + [
-                    'contentSid' => $this->resolveContentSid($message->content->type),
+                    'contentSid' => $this->resolveContentSid($message->content->templateKey()),
                     'contentVariables' => json_encode($message->content->variables),
                 ]),
                 $message->content instanceof TextContent => $this->twilio->messages->create($to, $options + [
@@ -74,11 +73,16 @@ final class TwilioWhatsappGateway implements NotificationChannelGateway
      *
      * @throws TemplateNotConfiguredException
      */
-    private function resolveContentSid(AlertType $type): string
+    private function resolveContentSid(string $templateKey): string
     {
-        return $this->templates[$type->value]
-            ?? throw new TemplateNotConfiguredException(
-                "Sin contentSid de Twilio configurado para el template {$type->value}",
+        $sid = $this->templates[$templateKey] ?? null;
+
+        if (! is_string($sid) || $sid === '') {
+            throw new TemplateNotConfiguredException(
+                "Sin contentSid de Twilio configurado para el template {$templateKey}",
             );
+        }
+
+        return $sid;
     }
 }

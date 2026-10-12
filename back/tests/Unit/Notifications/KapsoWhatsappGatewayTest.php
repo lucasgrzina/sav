@@ -268,6 +268,34 @@ class KapsoWhatsappGatewayTest extends TestCase
         }
     }
 
+    public function test_a_v2_template_resolves_its_own_versioned_name(): void
+    {
+        $this->fakeAccepted();
+
+        $this->gateway([
+            'program.task_due' => ['name' => 'sav_program_task_due', 'language' => 'es'],
+            'program.task_due@v2' => ['name' => 'sav_program_task_due_v2', 'language' => 'es'],
+        ])->send($this->message(
+            new TemplateContent(AlertType::ProgramTaskDue, ['1' => 'Juan'], version: 2),
+        ));
+
+        Http::assertSent(fn (Request $request) => $request->data()['template']['name'] === 'sav_program_task_due_v2');
+    }
+
+    public function test_a_v2_template_without_config_throws_even_if_v1_is_configured(): void
+    {
+        Http::fake();
+
+        $this->expectException(TemplateNotConfiguredException::class);
+
+        try {
+            $this->gateway(['program.task_due' => ['name' => 'sav_program_task_due', 'language' => 'es']])
+                ->send($this->message(new TemplateContent(AlertType::ProgramTaskDue, ['1' => 'Juan'], version: 2)));
+        } finally {
+            Http::assertNothingSent();
+        }
+    }
+
     public function test_a_blank_template_name_is_a_configuration_error(): void
     {
         Http::fake();

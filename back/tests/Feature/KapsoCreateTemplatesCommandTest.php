@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Notifications\Templates\WhatsappTemplateCatalog;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -26,6 +27,7 @@ class KapsoCreateTemplatesCommandTest extends TestCase
                 'program.created' => ['name' => 'sav_program_created', 'language' => 'es'],
                 'program.cancelled' => ['name' => 'sav_program_cancelled', 'language' => 'es'],
                 'program.task_due' => ['name' => 'sav_program_task_due', 'language' => 'es'],
+                'program.task_due@v2' => ['name' => 'sav_program_task_due_v2', 'language' => 'es'],
                 'program.pdf_shared' => ['name' => 'sav_program_pdf_shared', 'language' => 'es'],
                 'health_plan.month' => ['name' => 'sav_health_plan_month', 'language' => 'es'],
             ],
@@ -103,13 +105,89 @@ class KapsoCreateTemplatesCommandTest extends TestCase
         });
     }
 
+    public function test_sends_the_v2_payload_with_a_footer_component(): void
+    {
+        $this->fakeApi();
+
+        $this->artisan('kapso:create-templates')->assertSuccessful();
+
+        Http::assertSent(function (Request $request) {
+            if (($request->data()['name'] ?? null) !== 'sav_program_task_due_v2') {
+                return false;
+            }
+
+            $components = $request->data()['components'];
+
+            return count($components) === 2
+                && $components[0]['type'] === 'BODY'
+                && str_contains($components[0]['text'], 'Este es un aviso automático de SAV.')
+                && count($components[0]['example']['body_text'][0]) === 8
+                && $components[1] === ['type' => 'FOOTER', 'text' => 'Respondé BAJA para dejar de recibir avisos.'];
+        });
+    }
+
+    public function test_v1_payloads_have_no_footer_component(): void
+    {
+        $this->fakeApi();
+
+        $this->artisan('kapso:create-templates')->assertSuccessful();
+
+        Http::assertSent(fn (Request $request) => ($request->data()['name'] ?? null) !== 'sav_program_task_due'
+            || count($request->data()['components']) === 1);
+    }
+
+    public function test_only_creates_just_the_selected_template(): void
+    {
+        $this->fakeApi();
+
+        $this->artisan('kapso:create-templates', ['--only' => ['program.task_due@v2']])->assertSuccessful();
+
+        Http::assertSentCount(2); // 1 listado de números + solo v2
+        Http::assertSent(fn (Request $request) => $request->url() !== self::TEMPLATES
+            || $request->data()['name'] === 'sav_program_task_due_v2');
+    }
+
+    public function test_only_rejects_an_unknown_template(): void
+    {
+        Http::fake();
+
+        $this->artisan('kapso:create-templates', ['--only' => ['program.task_due@v9']])
+            ->expectsOutputToContain('--only desconocido: program.task_due@v9')
+            ->assertFailed();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_dry_run_with_only_prints_the_footer_and_calls_nothing(): void
+    {
+        Http::fake();
+
+        $this->artisan('kapso:create-templates', ['--dry-run' => true, '--only' => ['program.task_due@v2']])
+            ->expectsOutputToContain('"type": "FOOTER"')
+            ->assertSuccessful();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_every_catalog_version_has_a_name_in_the_shipped_config(): void
+    {
+        $config = require base_path('config/notifications.php');
+
+        foreach (WhatsappTemplateCatalog::versions() as $type => $byVersion) {
+            foreach (array_keys($byVersion) as $version) {
+                $key = $version === 1 ? $type : "{$type}@v{$version}";
+                $this->assertNotEmpty($config['kapso']['templates'][$key]['name'] ?? null, "Falta KAPSO config para {$key}");
+            }
+        }
+    }
+
     public function test_creates_one_template_per_catalog_entry(): void
     {
         $this->fakeApi();
 
         $this->artisan('kapso:create-templates')->assertSuccessful();
 
-        Http::assertSentCount(6); // 1 listado de números + 5 templates
+        Http::assertSentCount(7); // 1 listado de números + 6 templates (5 tipos + task_due v2)
     }
 
     public function test_an_explicit_business_account_id_skips_the_lookup(): void
@@ -200,7 +278,7 @@ class KapsoCreateTemplatesCommandTest extends TestCase
             ->assertFailed();
 
         // El fallo de uno no debe abortar a los demás.
-        Http::assertSentCount(6);
+        Http::assertSentCount(7);
     }
 
     public function test_fails_without_an_api_key(): void

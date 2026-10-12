@@ -153,6 +153,59 @@ class TwilioWhatsappGatewayTest extends TestCase
         ));
     }
 
+    public function test_a_v2_template_resolves_its_own_content_sid(): void
+    {
+        $messageList = Mockery::mock(MessageList::class);
+        $messageList->shouldReceive('create')
+            ->once()
+            ->with('whatsapp:+5491122334455', [
+                'from' => 'whatsapp:from',
+                'contentSid' => 'HXv2',
+                'contentVariables' => json_encode(['1' => 'Juan']),
+            ])
+            ->andReturn($this->messageInstanceWithSid('SMv2'));
+
+        $client = Mockery::mock(Client::class)->shouldAllowMockingProtectedMethods();
+        $client->shouldReceive('getMessages')->andReturn($messageList);
+
+        $gateway = new TwilioWhatsappGateway($client, 'whatsapp:from', [
+            'program.task_due' => 'HXv1',
+            'program.task_due@v2' => 'HXv2',
+        ]);
+
+        $result = $gateway->send(new OutboundMessage(
+            recipient: $this->recipient(),
+            content: new TemplateContent(type: AlertType::ProgramTaskDue, variables: ['1' => 'Juan'], version: 2),
+            channel: Channel::Whatsapp,
+            idempotencyKey: 'key-v2',
+        ));
+
+        $this->assertSame('SMv2', $result->providerMessageId);
+    }
+
+    public function test_a_v2_template_without_content_sid_throws_even_if_v1_is_configured(): void
+    {
+        $messageList = Mockery::mock(MessageList::class);
+        $messageList->shouldNotReceive('create');
+
+        $client = Mockery::mock(Client::class)->shouldAllowMockingProtectedMethods();
+        $client->shouldReceive('getMessages')->andReturn($messageList);
+
+        $gateway = new TwilioWhatsappGateway($client, 'whatsapp:from', [
+            'program.task_due' => 'HXv1',
+            'program.task_due@v2' => null,
+        ]);
+
+        $this->expectException(TemplateNotConfiguredException::class);
+
+        $gateway->send(new OutboundMessage(
+            recipient: $this->recipient(),
+            content: new TemplateContent(type: AlertType::ProgramTaskDue, variables: ['1' => 'Juan'], version: 2),
+            channel: Channel::Whatsapp,
+            idempotencyKey: 'key-v2b',
+        ));
+    }
+
     /** DEC-14: statusCallback travels on every send when configured, so delivery callbacks
      *  do not depend on someone configuring it by hand in the Twilio console. */
     public function test_includes_the_status_callback_url_when_configured(): void

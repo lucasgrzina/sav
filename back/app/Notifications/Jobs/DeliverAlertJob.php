@@ -249,7 +249,7 @@ final class DeliverAlertJob implements ShouldQueue
     private function renderTemplate(TemplateContent $content): ?string
     {
         try {
-            return WhatsappTemplateCatalog::render($content->type, $content->variables);
+            return WhatsappTemplateCatalog::render($content->type, $content->version, $content->variables);
         } catch (InvalidArgumentException) {
             return null;
         }

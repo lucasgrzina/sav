@@ -109,6 +109,12 @@ return [
         ],
     ],
 
+    // Feature flags for WhatsApp template versions. Keep OFF until the provider (Meta/Twilio)
+    // has APPROVED the template, which can take up to ~48h.
+    'templates' => [
+        'program_task_due_v2' => (bool) env('WHATSAPP_TASK_DUE_V2_ENABLED', false),
+    ],
+
     'twilio' => [
         'sid' => env('TWILIO_ACCOUNT_SID'),
         'token' => env('TWILIO_AUTH_TOKEN'),
@@ -125,6 +131,8 @@ return [
             'program.created' => env('TWILIO_TEMPLATE_PROGRAM_CREATED'),
             'program.cancelled' => env('TWILIO_TEMPLATE_PROGRAM_CANCELLED'),
             'program.task_due' => env('TWILIO_TEMPLATE_PROGRAM_TASK_DUE'),
+            // v2 (opt-out footer). No default: stays unresolved until Twilio approves it.
+            'program.task_due@v2' => env('TWILIO_TEMPLATE_PROGRAM_TASK_DUE_V2'),
             'health_plan.month' => env('TWILIO_TEMPLATE_HEALTH_PLAN_MONTH'),
         ],
     ],
@@ -158,6 +166,12 @@ return [
             ],
             'program.task_due' => [
                 'name' => env('KAPSO_TEMPLATE_PROGRAM_TASK_DUE', 'sav_program_task_due'),
+                'language' => env('KAPSO_TEMPLATE_LANGUAGE', 'es'),
+            ],
+            // v2 (DU-06): same copy plus opt-out footer. Not sent until
+            // notifications.templates.program_task_due_v2 is enabled.
+            'program.task_due@v2' => [
+                'name' => env('KAPSO_TEMPLATE_PROGRAM_TASK_DUE_V2', 'sav_program_task_due_v2'),
                 'language' => env('KAPSO_TEMPLATE_LANGUAGE', 'es'),
             ],
             // DEC-07: a diferencia de los otros, este template lleva un media/document header
