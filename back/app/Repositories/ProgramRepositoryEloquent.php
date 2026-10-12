@@ -6,6 +6,7 @@ use App\Contracts\Repositories\ProgramRepositoryInterface;
 use App\Models\Program;
 use App\Models\Technique;
 use App\Models\UserProfile;
+use App\Models\Vet;
 use App\Notifications\Enums\AlertType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -61,8 +62,10 @@ class ProgramRepositoryEloquent extends BaseRepositoryEloquent implements Progra
 
         $paginator = $query->orderByDesc('created_at')->paginate($perPage);
 
+        $today = now(Vet::with('country')->find($vetId)?->timezone())->toDateString();
+
         foreach ($paginator->items() as $program) {
-            $program->next_target_date = $this->resolveNextTargetDate($program);
+            $program->next_target_date = $this->resolveNextTargetDate($program, $today);
         }
 
         return $paginator;
@@ -192,17 +195,18 @@ class ProgramRepositoryEloquent extends BaseRepositoryEloquent implements Progra
     /**
      * Calcula el target_date más próximo no vencido (DEC-09). Si todos los targets ya
      * vencieron, retorna el máximo (más próximo en general, aunque vencido).
+     *
+     * "Hoy" es la fecha calendario (YYYY-MM-DD) en la zona horaria del vet: target_date es una
+     * fecha sin hora, por eso se compara por fecha y no por instante en UTC.
      */
-    private function resolveNextTargetDate(Program $program): ?string
+    private function resolveNextTargetDate(Program $program, string $today): ?string
     {
         $targets = $program->targets;
         if ($targets->isEmpty()) {
             return null;
         }
 
-        $today = now()->startOfDay();
-
-        $upcoming = $targets->first(fn ($target) => $target->target_date->greaterThanOrEqualTo($today));
+        $upcoming = $targets->first(fn ($target) => $target->target_date->toDateString() >= $today);
         if ($upcoming) {
             return $upcoming->target_date->toDateString();
         }

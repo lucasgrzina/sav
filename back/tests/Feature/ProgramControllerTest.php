@@ -354,4 +354,120 @@ class ProgramControllerTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors(['manager_profile_ids.0']);
     }
+
+    // -------------------------------------------------------------------------
+    // Edit + save must keep the recipients (no silent loss)
+    // -------------------------------------------------------------------------
+
+    public function test_update_with_unchanged_payload_keeps_vet_and_client_managers(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $vetManager = $this->createManagerProfileForVet($this->vet);
+        $clientManager = $this->createManagerProfileForClient($this->client);
+
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'manager_profile_ids' => [$vetManager->guid, $clientManager->guid],
+            ]));
+        $created->assertStatus(201);
+        $guid = $created->json('data.guid');
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'comments' => 'edited',
+                'targets' => [['guid' => $created->json('data.targets.0.guid'), 'target_date' => '2026-08-01', 'animals' => []]],
+                'manager_profile_ids' => [$vetManager->guid, $clientManager->guid],
+            ]));
+
+        $response->assertStatus(200);
+        $this->assertEqualsCanonicalizing(
+            [$vetManager->guid, $clientManager->guid],
+            collect($response->json('data.managers'))->pluck('guid')->all(),
+        );
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}")
+            ->assertStatus(200)
+            ->assertJsonCount(2, 'data.managers');
+    }
+
+    public function test_update_rejects_empty_manager_list_and_keeps_current_managers(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $vetManager = $this->createManagerProfileForVet($this->vet);
+
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'manager_profile_ids' => [$vetManager->guid],
+            ]));
+        $created->assertStatus(201);
+        $guid = $created->json('data.guid');
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'targets' => [['guid' => $created->json('data.targets.0.guid'), 'target_date' => '2026-08-01', 'animals' => []]],
+                'manager_profile_ids' => [],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['manager_profile_ids']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}")
+            ->assertJsonPath('data.managers.0.guid', $vetManager->guid);
+    }
+
+    public function test_update_rejecting_an_unlinked_manager_does_not_alter_the_saved_managers(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $linked = $this->createManagerProfileForClient($this->client);
+
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'manager_profile_ids' => [$linked->guid],
+            ]));
+        $created->assertStatus(201);
+        $guid = $created->json('data.guid');
+
+        // The staff gets unlinked from the establishment directly (legacy / drifted data).
+        $this->establishment->staff()->detach($linked->id);
+        $program = \App\Models\Program::where('guid', $guid)->first();
+        $program->managers()->sync([$linked->id]);
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'targets' => [['guid' => $created->json('data.targets.0.guid'), 'target_date' => '2026-08-01', 'animals' => []]],
+                'manager_profile_ids' => [$linked->guid],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['manager_profile_ids.0']);
+
+        $this->assertSame([$linked->id], $program->managers()->pluck('user_profiles.id')->all());
+    }
+
+    // -------------------------------------------------------------------------
+    // next_target_date uses the vet's calendar day, not UTC
+    // -------------------------------------------------------------------------
+
+    public function test_list_next_target_date_uses_the_vet_timezone(): void
+    {
+        $this->vet->country->update(['timezone' => 'America/Argentina/Buenos_Aires']);
+        $user = $this->createUserForVet($this->vet);
+
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'targets' => [
+                    ['target_date' => '2026-09-23', 'animals' => []],
+                    ['target_date' => '2026-09-30', 'animals' => []],
+                ],
+            ]));
+        $created->assertStatus(201);
+
+        // 01:00 UTC of the 24th is still the 23rd (22:00) in Buenos Aires.
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-09-24 01:00:00', 'UTC'));
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/v1/vets/{$this->vet->guid}/programs")
+            ->assertStatus(200)
+            ->assertJsonPath('data.data.0.next_target_date', '2026-09-23');
+    }
 }
