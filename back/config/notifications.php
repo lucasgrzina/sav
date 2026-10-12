@@ -109,6 +109,12 @@ return [
         ],
     ],
 
+    // Locale used for day names / relative dates in messages and the alerts UI, by country ISO code.
+    // Explicit on purpose: never rely on the server locale. Add pt_BR etc. once those messages exist.
+    'locale_by_country_iso' => [
+        'default' => 'es',
+    ],
+
     // Feature flags for WhatsApp template versions. Keep OFF until the provider (Meta/Twilio)
     // has APPROVED the template, which can take up to ~48h.
     'templates' => [

@@ -14,6 +14,7 @@ use App\Models\Technique;
 use App\Models\Vet;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
+use App\Services\ProgramAlerts\ProgramAlertProjector;
 use App\Services\ProgramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -37,7 +38,7 @@ class ProgramPdfExporterTest extends TestCase
 
         Storage::fake('local');
 
-        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
+        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector());
         $this->exporter = new ProgramPdfExporter(new ProgramRepositoryEloquent(), $this->programService);
 
         $this->vet = $this->createVet();

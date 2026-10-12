@@ -17,6 +17,7 @@ use App\Models\Vet;
 use App\Notifications\Enums\AlertType;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
+use App\Services\ProgramAlerts\ProgramAlertProjector;
 use App\Services\ProgramService;
 use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,7 +42,7 @@ class ProgramAlertGenerationTest extends TestCase
         // Fixture target dates (2026-08-15) must stay in the future: past alerts are discarded.
         Carbon::setTestNow('2026-08-01 09:00:00');
 
-        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
+        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector());
 
         $this->vet = $this->createVet();
         $this->client = $this->createClient();

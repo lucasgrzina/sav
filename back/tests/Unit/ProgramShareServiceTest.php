@@ -24,6 +24,7 @@ use App\Notifications\Services\AlertRecipientFactory;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
 use App\Services\Exports\ExportService;
+use App\Services\ProgramAlerts\ProgramAlertProjector;
 use App\Services\ProgramService;
 use App\Services\ProgramShareService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -47,7 +48,7 @@ class ProgramShareServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
+        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector());
         $this->service = new ProgramShareService(
             new ExportService(app(ExportRepositoryInterface::class), app(\App\Contracts\Exports\ExportResolverInterface::class)),
             new AlertRecipientFactory(),
