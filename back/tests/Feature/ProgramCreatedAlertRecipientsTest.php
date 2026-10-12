@@ -90,7 +90,7 @@ class ProgramCreatedAlertRecipientsTest extends TestCase
         $country = Country::create([
             'guid' => Str::uuid()->toString(),
             'name' => 'Argentina Vet',
-            'iso_code' => strtoupper(Str::random(2)),
+            'iso_code' => 'V' . Str::random(4),
             'phone_prefix' => '+54',
         ]);
 
@@ -117,7 +117,7 @@ class ProgramCreatedAlertRecipientsTest extends TestCase
         $country = Country::create([
             'guid' => Str::uuid()->toString(),
             'name' => 'Argentina Cliente',
-            'iso_code' => strtoupper(Str::random(2)),
+            'iso_code' => 'C' . Str::random(4),
             'phone_prefix' => '+54',
         ]);
 

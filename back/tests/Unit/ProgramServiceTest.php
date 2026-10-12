@@ -41,7 +41,7 @@ class ProgramServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector());
+        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector(), new \App\Services\ProgramAlerts\ProgramAlertReconciler(new ProgramAlertProjector(), new \App\Notifications\Services\AlertRecipientFactory()));
 
         $this->vet = $this->createVet();
         $this->client = $this->createClient('Cliente Test');

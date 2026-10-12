@@ -364,7 +364,11 @@ class EstablishmentStaffControllerTest extends TestCase
         $this->tenantPut([])->assertOk();
 
         $this->assertSame(0, $program->managers()->count());
-        $this->assertSame(0, Alert::where('type', AlertType::ProgramTaskDue)->where('subject_id', $program->id)->count());
+        $this->assertSame(0, Alert::where('type', AlertType::ProgramTaskDue)->where('subject_id', $program->id)->where('status', 'pending')->count());
+        $this->assertSame(
+            'recipient_removed',
+            Alert::where('type', AlertType::ProgramTaskDue)->where('subject_id', $program->id)->where('status', 'cancelled')->firstOrFail()->cancel_reason->value,
+        );
     }
 
     public function test_unlinking_keeps_vet_manager_and_other_client_managers(): void
@@ -604,7 +608,9 @@ class EstablishmentStaffControllerTest extends TestCase
 
     private function pendingRecipients(Program $program, UserProfile $profile): int
     {
+        // Removed responsibles are suppressed (soft), not deleted: only `pending` rows will be sent.
         return AlertRecipient::where('user_profile_id', $profile->id)
+            ->where('status', 'pending')
             ->whereHas('alert', fn ($q) => $q
                 ->where('type', AlertType::ProgramTaskDue)
                 ->where('subject_type', 'program')

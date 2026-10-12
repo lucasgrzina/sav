@@ -6,7 +6,6 @@ use App\Contracts\Repositories\AnimalRepositoryInterface;
 use App\Contracts\Repositories\ProgramRepositoryInterface;
 use App\Events\ProgramCancelledEvent;
 use App\Events\ProgramCreatedEvent;
-use App\Events\ProgramTargetsChangedEvent;
 use App\Exceptions\ProgramManagerNotLinkedException;
 use App\Exceptions\ProgramMustHaveOneTargetException;
 use App\Exceptions\ProgramNotEditableException;
@@ -18,6 +17,7 @@ use App\Services\ProgramAlerts\Data\ProjectedRecipient;
 use App\Services\ProgramAlerts\Data\ProjectedTask;
 use App\Services\ProgramAlerts\Data\ProjectionInput;
 use App\Services\ProgramAlerts\ProgramAlertProjector;
+use App\Services\ProgramAlerts\ProgramAlertReconciler;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +29,7 @@ class ProgramService
         private ProgramRepositoryInterface $programRepository,
         private AnimalRepositoryInterface $animalRepository,
         private ProgramAlertProjector $projector,
+        private ProgramAlertReconciler $reconciler,
     ) {}
 
     public function paginateForVet(int $vetId, array $filters, int $perPage): LengthAwarePaginator
@@ -75,7 +76,7 @@ class ProgramService
             $program = $program->fresh()->load('targets.animals', 'managers.user', 'client', 'establishment', 'technique', 'protocol');
 
             event(new ProgramCreatedEvent($program));
-            event(new ProgramTargetsChangedEvent($program));
+            $this->reconcileAlerts($program, 'program_created');
 
             return $program;
         });
@@ -118,10 +119,19 @@ class ProgramService
 
             $program = $program->fresh()->load('targets.animals', 'managers.user', 'client', 'establishment', 'technique', 'protocol');
 
-            event(new ProgramTargetsChangedEvent($program));
+            $this->reconcileAlerts($program, 'program_updated');
 
             return $program;
         });
+    }
+
+    /** Syncs the persisted alerts and leaves the report on the model for the response layer. */
+    private function reconcileAlerts(Program $program, string $trigger): void
+    {
+        $report = $this->reconciler->reconcile($program, $trigger, auth()->id());
+
+        $program->setRelation('alert_report', $report); // relation, not attribute: attributes would be persisted by later saves
+        $program->setRelation('alert_warnings', $report->warnings);
     }
 
     /**

@@ -109,6 +109,13 @@ return [
         ],
     ],
 
+    // Program alert reconciler. `enabled` is a kill switch for the AUTOMATIC triggers only
+    // (protocol_updated, nightly). User-driven triggers (program create/update/cancel, manual
+    // rebuild, manager unlink) always run: they are the only way alerts get generated.
+    'reconciler' => [
+        'enabled' => (bool) env('ALERTS_RECONCILER_ENABLED', true),
+    ],
+
     // Locale used for day names / relative dates in messages and the alerts UI, by country ISO code.
     // Explicit on purpose: never rely on the server locale. Add pt_BR etc. once those messages exist.
     'locale_by_country_iso' => [

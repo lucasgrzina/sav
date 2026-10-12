@@ -42,7 +42,7 @@ class ProgramAlertGenerationTest extends TestCase
         // Fixture target dates (2026-08-15) must stay in the future: past alerts are discarded.
         Carbon::setTestNow('2026-08-01 09:00:00');
 
-        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector());
+        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector(), new \App\Services\ProgramAlerts\ProgramAlertReconciler(new ProgramAlertProjector(), new \App\Notifications\Services\AlertRecipientFactory()));
 
         $this->vet = $this->createVet();
         $this->client = $this->createClient();
@@ -261,6 +261,30 @@ class ProgramAlertGenerationTest extends TestCase
         $this->assertSame(0, \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->count());
     }
 
+    public function test_creating_a_program_reconciles_directly_with_logical_key_and_v2_payload_without_the_event(): void
+    {
+        \Illuminate\Support\Facades\Event::fake([\App\Events\ProgramTargetsChangedEvent::class]);
+
+        $task = ProtocolTask::create([
+            'guid' => Str::uuid()->toString(), 'protocol_id' => $this->protocol->id,
+            'description' => 'Tarea', 'days_offset' => 0, 'time_of_day' => 'after',
+            'time' => '08:00', 'important' => false, 'sort_order' => 1,
+        ]);
+        ProtocolTaskAlert::create([
+            'guid' => Str::uuid()->toString(), 'protocol_task_id' => $task->id,
+            'offset_days' => 0, 'time_of_day' => 'after', 'time' => '08:00',
+            'roles' => ['vet-manager'], 'message' => 'Recordatorio', 'require_confirmation' => false, 'sort_order' => 1,
+        ]);
+
+        $program = $this->service->create($this->basePayload(), $this->vet->id);
+
+        \Illuminate\Support\Facades\Event::assertNotDispatched(\App\Events\ProgramTargetsChangedEvent::class);
+        $alert = \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->firstOrFail();
+        $this->assertNotNull($alert->logical_key);
+        $this->assertSame(2, $alert->payload['contextVersion']);
+        $this->assertSame(1, $program->alert_report->created);
+    }
+
     public function test_editing_a_program_regenerates_pending_task_due_alerts(): void
     {
         $task = ProtocolTask::create([
@@ -285,9 +309,10 @@ class ProgramAlertGenerationTest extends TestCase
             'targets' => [['target_date' => '2026-09-20', 'animals' => []]],
         ]));
 
-        $this->assertDatabaseMissing('alerts', ['id' => $originalAlertId]);
+        // Soft-cancel: the old alert stays as history, with the reason.
+        $this->assertDatabaseHas('alerts', ['id' => $originalAlertId, 'status' => 'cancelled', 'cancel_reason' => 'group_removed']);
 
-        $regenerated = \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->firstOrFail();
+        $regenerated = \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->where('status', 'pending')->firstOrFail();
         $this->assertSame('2026-09-20 08:00:00', $regenerated->scheduled_at->format('Y-m-d H:i:s'));
     }
 

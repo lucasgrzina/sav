@@ -38,7 +38,7 @@ class ProgramPdfExporterTest extends TestCase
 
         Storage::fake('local');
 
-        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector());
+        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector(), new \App\Services\ProgramAlerts\ProgramAlertReconciler(new ProgramAlertProjector(), new \App\Notifications\Services\AlertRecipientFactory()));
         $this->exporter = new ProgramPdfExporter(new ProgramRepositoryEloquent(), $this->programService);
 
         $this->vet = $this->createVet();

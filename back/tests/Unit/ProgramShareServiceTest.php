@@ -48,7 +48,7 @@ class ProgramShareServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector());
+        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector(), new \App\Services\ProgramAlerts\ProgramAlertReconciler(new ProgramAlertProjector(), new \App\Notifications\Services\AlertRecipientFactory()));
         $this->service = new ProgramShareService(
             new ExportService(app(ExportRepositoryInterface::class), app(\App\Contracts\Exports\ExportResolverInterface::class)),
             new AlertRecipientFactory(),

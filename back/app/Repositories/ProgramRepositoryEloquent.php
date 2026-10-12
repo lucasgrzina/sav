@@ -162,6 +162,7 @@ class ProgramRepositoryEloquent extends BaseRepositoryEloquent implements Progra
             ->where('a.subject_type', 'program')
             ->where('a.type', AlertType::ProgramTaskDue->value)
             ->where('a.status', 'pending')
+            ->where('ar.status', 'pending') // suppressed rows (removed responsibles) are already handled
             ->whereNull('p.cancelled_at')
             ->whereNotExists(fn ($q) => $q->select(DB::raw(1))
                 ->from('program_manager as pm')
