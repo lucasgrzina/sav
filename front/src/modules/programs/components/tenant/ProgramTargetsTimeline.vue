@@ -2,6 +2,10 @@
 import { CalendarOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import RoleChip from '@/components/atoms/display/RoleChip.vue'
 import { formatDate } from '@/core/utils/date'
+import {
+  REQUIRE_CONFIRMATION_HELP,
+  REQUIRE_CONFIRMATION_LABEL,
+} from '@/core/constants/require-confirmation-copy'
 import type { ProgramTarget, ProgramAlertRecipient } from '../../types/program.types'
 
 defineProps<{ targets: ProgramTarget[] }>()
@@ -77,7 +81,9 @@ function groupRecipientsByRole(recipients: ProgramAlertRecipient[]): RecipientGr
                 >
                   <div class="ptt-alert-header">
                     <span class="ptt-alert-meta">{{ formatDate(alert.occurs_on) }} · {{ alert.occurs_at }}</span>
-                    <a-tag v-if="alert.require_confirmation" color="red">Requiere confirmación</a-tag>
+                    <a-tooltip v-if="alert.require_confirmation" :title="REQUIRE_CONFIRMATION_HELP">
+                      <a-tag color="red">{{ REQUIRE_CONFIRMATION_LABEL }}</a-tag>
+                    </a-tooltip>
                   </div>
                   <p class="ptt-alert-message">{{ alert.message }}</p>
 

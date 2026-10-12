@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import RoleChip from '@/components/atoms/display/RoleChip.vue'
+import {
+  REQUIRE_CONFIRMATION_HELP,
+  REQUIRE_CONFIRMATION_LABEL,
+} from '@/core/constants/require-confirmation-copy'
 import type { ProtocolTask, ProtocolTaskAlert } from '../../types/protocol.types'
 
 defineProps<{ tasks: ProtocolTask[] }>()
@@ -50,7 +54,9 @@ function groupAlertRoles(alert: ProtocolTaskAlert): string[] {
                 <span class="ptt-alert-meta">
                   {{ formatOffset(alert.offset_days, alert.time_of_day, alert.time) }}
                 </span>
-                <a-tag v-if="alert.require_confirmation" color="red">Requiere confirmación</a-tag>
+                <a-tooltip v-if="alert.require_confirmation" :title="REQUIRE_CONFIRMATION_HELP">
+                  <a-tag color="red">{{ REQUIRE_CONFIRMATION_LABEL }}</a-tag>
+                </a-tooltip>
               </div>
               <p class="ptt-alert-message">{{ alert.message }}</p>
 

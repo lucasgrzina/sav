@@ -3,6 +3,11 @@ import { computed } from 'vue'
 import { ArrowUpOutlined, ArrowDownOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import { getRoleLabel } from '@/core/utils/roles'
+import { describeAlertOffset } from '@/core/utils/offset-preview'
+import {
+  REQUIRE_CONFIRMATION_HELP,
+  REQUIRE_CONFIRMATION_LABEL,
+} from '@/core/constants/require-confirmation-copy'
 import type { TenantRole } from '../types/protocol.types'
 import type { ProtocolTaskAlertFormValues } from '../validators/protocol.validator'
 
@@ -39,6 +44,10 @@ function update<K extends keyof ProtocolTaskAlertFormValues>(
 }
 
 const rolesEmpty = computed(() => props.alert.roles.length === 0)
+
+const offsetPreview = computed(() =>
+  describeAlertOffset(props.alert.offset_days, props.alert.time_of_day),
+)
 </script>
 
 <template>
@@ -71,6 +80,7 @@ const rolesEmpty = computed(() => props.alert.roles.length === 0)
         @update:value="(v: string) => update('time', v ?? '')"
       />
     </div>
+    <p class="pafi-preview">{{ offsetPreview }}</p>
 
     <a-select
       :value="alert.roles"
@@ -90,12 +100,14 @@ const rolesEmpty = computed(() => props.alert.roles.length === 0)
     />
 
     <div class="pafi-row pafi-row--footer">
-      <a-checkbox
-        :checked="alert.require_confirmation"
-        @update:checked="(v: boolean) => update('require_confirmation', v)"
-      >
-        Requiere confirmación
-      </a-checkbox>
+      <a-tooltip :title="REQUIRE_CONFIRMATION_HELP">
+        <a-checkbox
+          :checked="alert.require_confirmation"
+          @update:checked="(v: boolean) => update('require_confirmation', v)"
+        >
+          {{ REQUIRE_CONFIRMATION_LABEL }}
+        </a-checkbox>
+      </a-tooltip>
 
       <div class="pafi-actions">
         <BaseButton
@@ -143,6 +155,12 @@ const rolesEmpty = computed(() => props.alert.roles.length === 0)
 .pafi-row {
   display: flex;
   gap: 8px;
+}
+
+.pafi-preview {
+  font-size: 12px;
+  color: var(--dt-muted, #6b8cae);
+  margin: 0;
 }
 
 .pafi-row--footer {

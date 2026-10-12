@@ -128,6 +128,10 @@ const subTechniqueOptions = computed(() =>
     .map((c) => ({ value: c.guid as string, label: c.name })),
 )
 
+const targetDateLabel = computed(
+  () => currentRoot.value?.children.find((c) => c.guid === techniqueId.value)?.target_date_name ?? null,
+)
+
 function onRootTechniqueSelect(value: string | number | null) {
   rootTechniqueId.value = (value as string) ?? ''
   techniqueId.value = ''
@@ -217,7 +221,7 @@ const title = computed(() => {
       </a-form-item>
 
       <a-form-item label="Tareas">
-        <ProtocolTaskList v-model="tasks" />
+        <ProtocolTaskList v-model="tasks" :target-date-label="targetDateLabel" />
       </a-form-item>
     </a-form>
 

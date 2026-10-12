@@ -95,6 +95,10 @@ watch(
   },
 )
 
+const targetDateLabel = computed(
+  () => props.technique.children.find((c) => c.guid === techniqueId.value)?.target_date_name ?? null,
+)
+
 const hasNoChildren = computed(() => props.technique.children.length === 0)
 
 function onCountrySelect(value: string | number | null) {
@@ -186,7 +190,7 @@ function onCountrySelect(value: string | number | null) {
             relativas a la fecha de la tarea en vez de la fecha objetivo.
           </template>
         </a-alert>
-        <ProtocolTaskList v-model="tasks" />
+        <ProtocolTaskList v-model="tasks" :target-date-label="targetDateLabel" />
       </a-form-item>
     </a-form>
 
