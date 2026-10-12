@@ -53,7 +53,7 @@ class HealthPlanMonthMessageBuilderTest extends TestCase
         parent::setUp();
 
         $this->builder = new HealthPlanMonthMessageBuilder();
-        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent(), new \App\Services\EstablishmentService(new \App\Repositories\EstablishmentRepositoryEloquent(), new \App\Repositories\UserProfileRepositoryEloquent(), new \App\Repositories\ProgramRepositoryEloquent()));
+        $this->service = new EstablishmentHealthPlanService(new EstablishmentHealthPlanRepositoryEloquent(), new \App\Services\EstablishmentService(new \App\Repositories\EstablishmentRepositoryEloquent(), new \App\Repositories\UserProfileRepositoryEloquent(), new \App\Repositories\ProgramRepositoryEloquent(), new \App\Repositories\ProvinceRepositoryEloquent()));
 
         $this->vet = $this->createVet();
         $client = $this->createClient();
