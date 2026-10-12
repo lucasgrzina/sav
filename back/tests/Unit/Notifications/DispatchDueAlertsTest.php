@@ -9,6 +9,7 @@ use App\Notifications\Jobs\DeliverAlertJob;
 use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -107,6 +108,56 @@ class DispatchDueAlertsTest extends TestCase
         $this->artisan('alerts:dispatch-due')->assertSuccessful();
 
         Queue::assertNothingPushed();
+    }
+
+    public function test_ignores_cancelled_alerts(): void
+    {
+        Queue::fake();
+
+        $alert = $this->createAlert('-1 minute', 'cancelled');
+        $this->createRecipient($alert);
+
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+
+        Queue::assertNothingPushed();
+        $this->assertSame('cancelled', $alert->fresh()->status);
+    }
+
+    public function test_does_not_dispatch_when_the_alert_is_taken_by_someone_else_before_the_claim(): void
+    {
+        Queue::fake();
+
+        $alert = $this->createAlert('-1 minute');
+        $this->createRecipient($alert);
+
+        // Simulates a concurrent edit: right after the dispatcher reads the pending alert,
+        // another process cancels it. The compare-and-set claim must then lose.
+        $raced = false;
+        DB::listen(function ($query) use (&$raced, $alert) {
+            if (! $raced && str_starts_with(strtolower($query->sql), 'select') && str_contains($query->sql, '"alerts"')) {
+                $raced = true;
+                DB::table('alerts')->where('id', $alert->id)->update(['status' => 'cancelled']);
+            }
+        });
+
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+
+        $this->assertTrue($raced);
+        Queue::assertNothingPushed();
+        $this->assertSame('cancelled', $alert->fresh()->status);
+    }
+
+    public function test_an_alert_is_claimed_only_once_across_consecutive_runs(): void
+    {
+        Queue::fake();
+
+        $alert = $this->createAlert('-1 minute');
+        $this->createRecipient($alert);
+
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+
+        Queue::assertPushed(DeliverAlertJob::class, 1);
     }
 
     public function test_ignores_alerts_that_are_not_pending(): void

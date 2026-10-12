@@ -3,7 +3,9 @@
 namespace App\Notifications\Jobs;
 
 use App\Notifications\Data\OutboundMessage;
+use App\Notifications\Enums\AlertStatus;
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\NotificationConfigurationException;
 use App\Notifications\Exceptions\RecipientContactNotFoundException;
 use App\Notifications\Models\AlertRecipient;
@@ -36,10 +38,31 @@ final class DeliverAlertJob implements ShouldQueue
         DeliveryPipeline $pipeline,
         ChannelFallbackService $fallback,
     ): void {
-        $recipient = AlertRecipient::with('alert.subject')->findOrFail($this->recipientId);
+        $recipient = AlertRecipient::with('alert.subject')->find($this->recipientId);
+
+        if ($recipient === null) {
+            // El destinatario fue eliminado (ej. se borró el perfil o la alerta) entre el despacho y
+            // este intento: no hay nada que enviar y reintentar nunca lo arregla.
+            Log::info('DeliverAlertJob: destinatario inexistente, se descarta', [
+                'recipient_id' => $this->recipientId,
+            ]);
+
+            return;
+        }
 
         if ($recipient->status !== DeliveryStatus::Pending) {
             return; // idempotencia: ya procesado
+        }
+
+        if ($recipient->alert->status === AlertStatus::Cancelled->value) {
+            // La alerta se canceló después de despacharse: se suprime sin fallback.
+            $recipient->update([
+                'status' => DeliveryStatus::Suppressed,
+                'failure_reason' => 'no_longer_applicable',
+                'failure_code' => FailureCode::NoLongerApplicable,
+            ]);
+
+            return;
         }
 
         try {

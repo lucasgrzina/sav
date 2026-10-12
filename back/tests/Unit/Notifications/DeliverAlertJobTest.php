@@ -555,4 +555,59 @@ class DeliverAlertJobTest extends TestCase
         $this->assertSame('push-999', $recipient->provider_message_id);
         $this->assertCount(1, $fakeGateway->sentMessages());
     }
+
+    public function test_discards_silently_when_the_recipient_no_longer_exists(): void
+    {
+        Queue::fake();
+        Log::spy();
+
+        $job = new DeliverAlertJob(999999);
+        $job->handle($this->builders(), new GatewayRegistry(app(), []), new DeliveryPipeline([]), new ChannelFallbackService());
+
+        Log::shouldHaveReceived('info')->once()->with('DeliverAlertJob: destinatario inexistente, se descarta', ['recipient_id' => 999999]);
+        Queue::assertNothingPushed();
+    }
+
+    public function test_failed_hook_tolerates_a_recipient_that_no_longer_exists(): void
+    {
+        $job = new DeliverAlertJob(999999);
+        $job->failed(new \RuntimeException('timeout'));
+
+        $this->assertSame(0, AlertRecipient::count());
+    }
+
+    public function test_suppresses_without_sending_or_fallback_when_the_alert_was_cancelled(): void
+    {
+        Queue::fake();
+        $profile = $this->createManagerProfile();
+
+        $alert = Alert::create([
+            'type' => AlertType::ProgramCreated,
+            'payload' => [],
+            'scheduled_at' => now(),
+            'status' => 'cancelled',
+        ]);
+        $recipient = AlertRecipient::create([
+            'alert_id' => $alert->id,
+            'user_profile_id' => $profile->id,
+            'channel' => Channel::Whatsapp,
+            'status' => DeliveryStatus::Pending,
+            'idempotency_key' => Str::uuid()->toString(),
+        ]);
+
+        $fakeGateway = new FakeGateway();
+        app()->instance(FakeGateway::class, $fakeGateway);
+        $gateways = new GatewayRegistry(app(), ['whatsapp' => ['gateway' => FakeGateway::class]]);
+
+        $job = new DeliverAlertJob($recipient->id);
+        $job->handle($this->builders(), $gateways, new DeliveryPipeline([]), new ChannelFallbackService());
+
+        $recipient->refresh();
+        $this->assertSame(DeliveryStatus::Suppressed, $recipient->status);
+        $this->assertSame('no_longer_applicable', $recipient->failure_reason);
+        $this->assertSame(\App\Notifications\Enums\FailureCode::NoLongerApplicable, $recipient->failure_code);
+        $this->assertSame(0, $recipient->attempts);
+        $this->assertCount(0, $fakeGateway->sentMessages());
+        Queue::assertNothingPushed();
+    }
 }
