@@ -4,6 +4,7 @@ namespace Tests\Unit\Notifications;
 
 use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\UnsupportedWebhookEventException;
 use App\Notifications\Jobs\DeliverAlertJob;
 use App\Notifications\Models\AlertRecipient;
@@ -141,6 +142,7 @@ class RecordDeliveryStatusTest extends TestCase
         $this->assertSame(DeliveryStatus::Failed, $recipient->status);
         $this->assertStringContainsString('131047', $recipient->failure_reason);
         $this->assertStringContainsString('Re-engagement', $recipient->failure_reason);
+        $this->assertSame(FailureCode::ProviderRejected, $recipient->failure_code);
 
         $fallback = AlertRecipient::where('alert_id', $recipient->alert_id)
             ->where('channel', Channel::Email)
@@ -290,6 +292,8 @@ class RecordDeliveryStatusTest extends TestCase
         $recipient->refresh();
         $this->assertSame(DeliveryStatus::Failed, $recipient->status);
         $this->assertStringContainsString('30005', $recipient->failure_reason);
+        // 30005 is not in the failure map: it must surface as unknown, not as a guess.
+        $this->assertSame(FailureCode::Unknown, $recipient->failure_code);
 
         Queue::assertPushed(DeliverAlertJob::class);
     }
@@ -308,6 +312,30 @@ class RecordDeliveryStatusTest extends TestCase
         $this->assertSame(DeliveryStatus::Failed, $recipient->status);
         $this->assertStringContainsString('63016', $recipient->failure_reason);
         $this->assertStringContainsString('Channel policy violation', $recipient->failure_reason);
+        $this->assertSame(FailureCode::ProviderRejected, $recipient->failure_code);
+    }
+
+    /** Twilio's webhook delivers ErrorCode as a string form param. */
+    public function test_twilio_error_code_as_string_is_classified(): void
+    {
+        Queue::fake();
+        $recipient = $this->recipientWith(DeliveryStatus::Sent);
+
+        $this->recorder()->apply($this->event('twilio.message.failed', [
+            'message' => ['id' => self::WAMID, 'errors' => [['code' => '63024', 'title' => 'Invalid message recipient']]],
+        ]));
+
+        $this->assertSame(FailureCode::InvalidNumber, $recipient->refresh()->failure_code);
+    }
+
+    public function test_a_failure_without_an_error_code_is_unknown(): void
+    {
+        Queue::fake();
+        $recipient = $this->recipientWith(DeliveryStatus::Sent);
+
+        $this->recorder()->apply($this->event('whatsapp.message.failed'));
+
+        $this->assertSame(FailureCode::Unknown, $recipient->refresh()->failure_code);
     }
 
     /** An unknown/unmapped MessageStatus is closed with an error, not retried forever. */

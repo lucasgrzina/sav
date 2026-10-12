@@ -3,6 +3,7 @@
 namespace App\Notifications\Services;
 
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\UnsupportedWebhookEventException;
 use App\Notifications\Models\AlertRecipient;
 use App\Notifications\Models\WhatsappWebhookEvent;
@@ -43,7 +44,10 @@ final class RecordDeliveryStatus
         'twilio.message.undelivered' => DeliveryStatus::Failed,
     ];
 
-    public function __construct(private readonly ChannelFallbackService $fallback) {}
+    public function __construct(
+        private readonly ChannelFallbackService $fallback,
+        private readonly FailureClassifier $classifier = new FailureClassifier(),
+    ) {}
 
     /**
      * @return string Short human-readable outcome, stored on the event row for diagnosis.
@@ -100,6 +104,7 @@ final class RecordDeliveryStatus
         $recipient->update([
             'status' => DeliveryStatus::Failed,
             'failure_reason' => $this->failureReason($event),
+            'failure_code' => $this->failureCode($event),
         ]);
 
         // The asynchronous failure path: the provider accepted the message (so the recipient
@@ -134,6 +139,18 @@ final class RecordDeliveryStatus
         $recipient->update($changes);
 
         return "aplicado: {$status->value}";
+    }
+
+    /** Meta (Kapso) and Twilio payloads share the `message.errors.0.code` shape (see TwilioWebhookController). */
+    private function failureCode(WhatsappWebhookEvent $event): FailureCode
+    {
+        $provider = str_starts_with($event->event_type, 'twilio.')
+            ? FailureClassifier::PROVIDER_TWILIO
+            : FailureClassifier::PROVIDER_META;
+
+        $code = data_get($event->payload, 'message.errors.0.code');
+
+        return $this->classifier->fromProviderCode($provider, is_scalar($code) ? $code : null);
     }
 
     /** Meta reports rejection details inside the message; the exact path varies by error. */

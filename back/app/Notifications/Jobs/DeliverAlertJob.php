@@ -2,8 +2,14 @@
 
 namespace App\Notifications\Jobs;
 
+use App\Notifications\Data\EmailContent;
+use App\Notifications\Data\MessageContent;
 use App\Notifications\Data\OutboundMessage;
+use App\Notifications\Data\Recipient;
+use App\Notifications\Data\TemplateContent;
+use App\Notifications\Data\TextContent;
 use App\Notifications\Enums\AlertStatus;
+use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
 use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\NotificationConfigurationException;
@@ -13,12 +19,18 @@ use App\Notifications\Pipeline\DeliveryPipeline;
 use App\Notifications\Registries\GatewayRegistry;
 use App\Notifications\Registries\MessageBuilderRegistry;
 use App\Notifications\Services\ChannelFallbackService;
+use App\Notifications\Services\FailureClassifier;
+use App\Notifications\Services\ServiceMisconfiguredNotifier;
+use App\Notifications\Support\PhoneMasker;
+use App\Notifications\Support\PhoneValidator;
+use App\Notifications\Templates\WhatsappTemplateCatalog;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Throwable;
 
 final class DeliverAlertJob implements ShouldQueue
@@ -81,6 +93,22 @@ final class DeliverAlertJob implements ShouldQueue
             $recipient->update([
                 'status' => DeliveryStatus::Failed,
                 'failure_reason' => $e->getMessage(),
+                'failure_code' => app(FailureClassifier::class)->fromThrowable($e, $recipient->channel),
+            ]);
+            $fallback->attempt($recipient);
+
+            return;
+        }
+
+        $destinationHint = $this->destinationHint($recipientDto);
+
+        // Mismo validador que usa el preview: un número implausible no llega al proveedor.
+        if ($recipient->channel === Channel::Whatsapp && ! PhoneValidator::isPlausible((string) $recipientDto->phone)) {
+            $recipient->update([
+                'status' => DeliveryStatus::Failed,
+                'failure_reason' => 'Número de teléfono no válido',
+                'failure_code' => FailureCode::InvalidNumber,
+                'destination_hint' => $destinationHint,
             ]);
             $fallback->attempt($recipient);
 
@@ -93,7 +121,12 @@ final class DeliverAlertJob implements ShouldQueue
             // El builder recalculó el contenido en destino (ver HealthPlanMonthMessageBuilder) y
             // determinó que la alerta ya no aplica (ej. todas las actividades se confirmaron entre
             // la creación de la Alert y este envío). No es un fallo técnico: no hay fallback.
-            $recipient->update(['status' => DeliveryStatus::Suppressed, 'failure_reason' => 'no_longer_applicable']);
+            $recipient->update([
+                'status' => DeliveryStatus::Suppressed,
+                'failure_reason' => 'no_longer_applicable',
+                'failure_code' => FailureCode::NoLongerApplicable,
+                'destination_hint' => $destinationHint,
+            ]);
 
             return;
         }
@@ -102,10 +135,21 @@ final class DeliverAlertJob implements ShouldQueue
             $recipientDto, $content, $recipient->channel, $recipient->idempotency_key,
         );
 
+        // Trazabilidad: qué número y qué texto se intentaron, incluso si el envío falla o se suprime.
+        $recipient->update([
+            'destination_hint' => $destinationHint,
+            'rendered_body' => $this->renderedBody($content),
+            'template_version' => $content instanceof TemplateContent ? $content->version : null,
+        ]);
+
         if ($reason = $pipeline->run($message)) {
             // Suprimido (ej. opt-out) nunca cae a un canal alternativo: es una decisión
             // explícita del destinatario sobre ESTE canal, no una falla técnica.
-            $recipient->update(['status' => DeliveryStatus::Suppressed, 'failure_reason' => $reason->value]);
+            $recipient->update([
+                'status' => DeliveryStatus::Suppressed,
+                'failure_reason' => $reason->value,
+                'failure_code' => FailureCode::tryFrom($reason->value) ?? FailureCode::Unknown,
+            ]);
 
             return;
         }
@@ -129,8 +173,10 @@ final class DeliverAlertJob implements ShouldQueue
             $recipient->update([
                 'status' => DeliveryStatus::Failed,
                 'failure_reason' => $e->getMessage(),
+                'failure_code' => FailureCode::ServiceMisconfigured,
                 'attempts' => $recipient->attempts + 1,
             ]);
+            app(ServiceMisconfiguredNotifier::class)->report($recipient, $e);
             $fallback->attempt($recipient);
 
             return;
@@ -140,6 +186,9 @@ final class DeliverAlertJob implements ShouldQueue
             'status' => $result->status,
             'provider_message_id' => $result->providerMessageId,
             'failure_reason' => $result->failureReason,
+            'failure_code' => $result->status === DeliveryStatus::Failed
+                ? ($result->failureCode ?? FailureCode::Unknown)
+                : $result->failureCode,
             'sent_at' => now(),
             'attempts' => $recipient->attempts + 1,
         ]);
@@ -169,10 +218,40 @@ final class DeliverAlertJob implements ShouldQueue
         $recipient->update([
             'status' => DeliveryStatus::Failed,
             'failure_reason' => $exception->getMessage(),
+            'failure_code' => FailureCode::ProviderUnreachable,
             'attempts' => $recipient->attempts + 1,
         ]);
 
         // Los hooks de fallo del job no reciben inyección por firma.
         app(ChannelFallbackService::class)->attempt($recipient);
+    }
+
+    /** Masked destination (never the raw phone/email); null for push, which has no address. */
+    private function destinationHint(Recipient $recipient): ?string
+    {
+        return match ($recipient->channel) {
+            Channel::Email => $recipient->email !== null ? PhoneMasker::maskEmail($recipient->email) : null,
+            Channel::Push => null,
+            default => $recipient->phone !== null && $recipient->phone !== '' ? PhoneMasker::mask($recipient->phone) : null,
+        };
+    }
+
+    /** The text the recipient sees; null for push and for template types without catalog copy. */
+    private function renderedBody(MessageContent $content): ?string
+    {
+        return match (true) {
+            $content instanceof TemplateContent => $this->renderTemplate($content),
+            $content instanceof EmailContent, $content instanceof TextContent => $content->body,
+            default => null,
+        };
+    }
+
+    private function renderTemplate(TemplateContent $content): ?string
+    {
+        try {
+            return WhatsappTemplateCatalog::render($content->type, $content->variables);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
     }
 }

@@ -54,6 +54,61 @@ return [
     // no un fallback (ver DEC-08) — no participa de 'fallback' más arriba.
     'default_channels' => [Channel::Whatsapp, Channel::Push],
 
+    // Operator mailbox for service-misconfiguration alerts (max 1 e-mail per hour). Empty = log only.
+    'ops_email' => env('NOTIFICATIONS_OPS_EMAIL'),
+
+    // Provider error code => App\Notifications\Enums\FailureCode value. Codes not listed here
+    // resolve to `unknown` and are logged (FailureClassifier). Keep in sync with each
+    // provider's current error-code documentation; extend when new codes show up in logs.
+    // Must stay free of closures/enums so `config:cache` can serialize it.
+    'failure_map' => [
+        // Meta Cloud API (through Kapso): `error.code` / webhook `message.errors.0.code`.
+        'meta' => [
+            131026 => 'invalid_number',
+            133010 => 'invalid_number',
+            131047 => 'provider_rejected',
+            131049 => 'provider_rejected',
+            131050 => 'provider_rejected',
+            131051 => 'provider_rejected',
+            131053 => 'provider_rejected',
+            131056 => 'provider_rejected',
+            132000 => 'service_misconfigured',
+            132001 => 'service_misconfigured',
+            132005 => 'service_misconfigured',
+            132007 => 'service_misconfigured',
+            132012 => 'service_misconfigured',
+            132015 => 'service_misconfigured',
+            132016 => 'service_misconfigured',
+            131008 => 'service_misconfigured',
+            131009 => 'service_misconfigured',
+            131005 => 'service_misconfigured',
+            131031 => 'service_misconfigured',
+            190 => 'service_misconfigured',
+            100 => 'service_misconfigured',
+            368 => 'service_misconfigured',
+        ],
+        // Twilio: RestException::getCode() / status callback `ErrorCode`.
+        'twilio' => [
+            21211 => 'invalid_number',
+            21214 => 'invalid_number',
+            21217 => 'invalid_number',
+            21614 => 'invalid_number',
+            63003 => 'invalid_number',
+            63024 => 'invalid_number',
+            21610 => 'opted_out',
+            63016 => 'provider_rejected',
+            63049 => 'provider_rejected',
+            63038 => 'provider_rejected',
+            63018 => 'provider_rejected',
+            63032 => 'provider_rejected',
+            20003 => 'service_misconfigured',
+            20404 => 'service_misconfigured',
+            63007 => 'service_misconfigured',
+            21606 => 'service_misconfigured',
+            21608 => 'service_misconfigured',
+        ],
+    ],
+
     'twilio' => [
         'sid' => env('TWILIO_ACCOUNT_SID'),
         'token' => env('TWILIO_AUTH_TOKEN'),

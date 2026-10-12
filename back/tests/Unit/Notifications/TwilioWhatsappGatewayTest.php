@@ -129,6 +129,7 @@ class TwilioWhatsappGatewayTest extends TestCase
 
         $this->assertSame(DeliveryStatus::Failed, $result->status);
         $this->assertSame('Invalid phone number', $result->failureReason);
+        $this->assertSame(\App\Notifications\Enums\FailureCode::InvalidNumber, $result->failureCode);
     }
 
     public function test_an_unconfigured_template_throws_instead_of_reporting_a_delivery_failure(): void

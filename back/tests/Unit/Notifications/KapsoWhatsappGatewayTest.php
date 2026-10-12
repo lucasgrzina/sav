@@ -9,6 +9,7 @@ use App\Notifications\Data\TextContent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\NotificationConfigurationException;
 use App\Notifications\Exceptions\TemplateNotConfiguredException;
 use App\Notifications\Gateways\Kapso\KapsoWhatsappGateway;
@@ -187,6 +188,28 @@ class KapsoWhatsappGatewayTest extends TestCase
         $this->assertSame(DeliveryStatus::Failed, $result->status);
         $this->assertStringContainsString('131047', $result->failureReason);
         $this->assertStringContainsString('24 hours', $result->failureReason);
+    }
+
+    public function test_a_4xx_is_classified_from_the_meta_error_code(): void
+    {
+        Http::fake([
+            self::ENDPOINT => Http::response(['error' => ['message' => 'Recipient not on WhatsApp', 'code' => 131026]], 400),
+        ]);
+
+        $result = $this->gateway()->send($this->message(new TextContent('hola')));
+
+        $this->assertSame(FailureCode::InvalidNumber, $result->failureCode);
+    }
+
+    public function test_a_4xx_with_an_unmapped_code_is_unknown(): void
+    {
+        Http::fake([
+            self::ENDPOINT => Http::response(['error' => ['message' => 'weird', 'code' => 424242]], 400),
+        ]);
+
+        $result = $this->gateway()->send($this->message(new TextContent('hola')));
+
+        $this->assertSame(FailureCode::Unknown, $result->failureCode);
     }
 
     public function test_a_failure_reason_is_truncated_to_fit_the_column(): void

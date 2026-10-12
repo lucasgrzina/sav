@@ -21,5 +21,6 @@ final readonly class TemplateContent implements MessageContent
     public function __construct(
         public AlertType $type,
         public array $variables,
+        public int $version = 1,
     ) {}
 }

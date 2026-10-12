@@ -84,6 +84,22 @@ final class WhatsappTemplateCatalog
         return $variables;
     }
 
+    /**
+     * Renders the template copy with the variables a builder sent, i.e. the text the
+     * recipient sees (stored in alert_recipients.rendered_body for traceability).
+     *
+     * @param array<int, string> $variables
+     * @throws InvalidArgumentException when the type has no template copy
+     */
+    public static function render(AlertType $type, array $variables): string
+    {
+        return (string) preg_replace_callback(
+            '/\{\{(\d+)\}\}/',
+            fn (array $m): string => $variables[(int) $m[1]] ?? '',
+            self::for($type)['body'],
+        );
+    }
+
     /** Counts distinct {{n}} placeholders, so a repeated one is not double-counted. */
     public static function placeholderCount(string $body): int
     {

@@ -10,6 +10,7 @@ use App\Notifications\Data\TextContent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Exceptions\TemplateNotConfiguredException;
+use App\Notifications\Services\FailureClassifier;
 use Twilio\Exceptions\RestException;
 use Twilio\Rest\Client;
 
@@ -21,6 +22,7 @@ final class TwilioWhatsappGateway implements NotificationChannelGateway
         private readonly string $from,
         private readonly array $templates = [],
         private readonly ?string $statusCallbackUrl = null,
+        private readonly ?FailureClassifier $classifier = null,
     ) {}
 
     public function channel(): Channel
@@ -52,7 +54,13 @@ final class TwilioWhatsappGateway implements NotificationChannelGateway
             return DeliveryResult::sent($sent->sid);
         } catch (RestException $e) {
             if ($e->getStatusCode() >= 400 && $e->getStatusCode() < 500) {
-                return DeliveryResult::failed($e->getMessage());
+                return DeliveryResult::failed(
+                    $e->getMessage(),
+                    ($this->classifier ?? new FailureClassifier())->fromProviderCode(
+                        FailureClassifier::PROVIDER_TWILIO,
+                        $e->getCode(),
+                    ),
+                );
             }
 
             throw $e;
