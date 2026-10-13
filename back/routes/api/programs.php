@@ -15,6 +15,8 @@ Route::prefix('v1/vets/{vet}/programs')->middleware(['auth:sanctum', 'vet.tenant
     Route::post('/{guid}/preview', [ProgramPreviewController::class, 'previewForProgram'])->middleware('can:programs.update');
     // Delivery view of the program ("Avisos" tab). Read-only; clients roles do not hold the permission.
     Route::get('/{guid}/alerts', [ProgramAlertController::class, 'index'])->middleware('can:programs.alerts.read');
+    Route::post('/{guid}/alerts/rebuild', [ProgramAlertController::class, 'rebuild'])->middleware('can:programs.update');
+    Route::post('/{guid}/alerts/{recipientGuid}/retry', [ProgramAlertController::class, 'retry'])->middleware('can:programs.update');
     Route::get('/{guid}', [ProgramController::class, 'show'])->middleware('can:programs.read');
     Route::put('/{guid}', [ProgramController::class, 'update'])->middleware('can:programs.update');
     Route::post('/{guid}/cancel', [ProgramController::class, 'cancel'])->middleware('can:programs.update');

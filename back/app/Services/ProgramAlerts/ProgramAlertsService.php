@@ -3,10 +3,12 @@
 namespace App\Services\ProgramAlerts;
 
 use App\Contracts\Repositories\ProgramRepositoryInterface;
+use App\Exceptions\ProgramNotEditableException;
 use App\Models\Program;
 use App\Models\ProgramAlertReconciliation;
 use App\Services\ProgramAlerts\Data\ExistingAlertIndex;
 use App\Services\ProgramAlerts\Data\ProjectionInput;
+use App\Services\ProgramAlerts\Data\ReconcileReport;
 use App\Services\ProgramAlerts\Data\WarningMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -47,6 +49,33 @@ final class ProgramAlertsService
             'paginator' => $paginator,
             'meta' => ['counters' => $result['counters']] + $this->meta($program, $now),
         ];
+    }
+
+    /**
+     * "Recalcular avisos" (RF-17): the same reconciliation as every other trigger, run on demand.
+     * Idempotent: a second call finds nothing to change. Warnings are computed over what is persisted.
+     *
+     * @throws ProgramNotEditableException when the program is cancelled
+     */
+    public function rebuild(Program $program, ?int $userId): ReconcileReport
+    {
+        if ($program->cancelled_at !== null) {
+            throw new ProgramNotEditableException();
+        }
+
+        $now = CarbonImmutable::instance(now());
+        $report = $this->reconciler->reconcile($program, 'manual_rebuild', $userId, $now);
+
+        $program->unsetRelations();
+        $input = ProjectionInput::fromProgram($program, $now);
+        $report->warnings = $this->warningService->build(
+            $input,
+            $this->projector->project($input),
+            WarningMode::Save,
+            ExistingAlertIndex::forProgram($program),
+        );
+
+        return $report;
     }
 
     /** @return array<string, mixed> */

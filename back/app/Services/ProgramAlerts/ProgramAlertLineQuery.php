@@ -7,7 +7,6 @@ use App\Models\UserProfile;
 use App\Notifications\Enums\AlertCancelReason;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
-use App\Notifications\Enums\DeliveryStatus;
 use App\Notifications\Enums\FailureCode;
 use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
@@ -38,8 +37,6 @@ final class ProgramAlertLineQuery
 
     /** Past this many lines a program is logged: the in-memory approach should be revisited. */
     private const LINES_WARNING_THRESHOLD = 5000;
-
-    private const RETRY_COOLDOWN_MINUTES = 10;
 
     public function __construct(
         private readonly AlertLineStateResolver $resolver,
@@ -257,10 +254,7 @@ final class ProgramAlertLineQuery
 
         $code = $state->failureCode ?? $primary?->failure_code;
 
-        if ($primary === null
-            || ! in_array($primary->status, [DeliveryStatus::Failed, DeliveryStatus::Suppressed], true)
-            || ($code !== null && ! $code->isRetryable())
-            || ($code === null && $primary->status === DeliveryStatus::Suppressed)) {
+        if ($primary === null || ! ProgramAlertRetryService::isEligibleAttempt($primary)) {
             return $blocked('not_retryable');
         }
 
@@ -268,7 +262,7 @@ final class ProgramAlertLineQuery
             return $blocked('opted_out');
         }
 
-        if ($primary->last_retry_at !== null && $primary->last_retry_at->greaterThan($now->subMinutes(self::RETRY_COOLDOWN_MINUTES))) {
+        if ($primary->last_retry_at !== null && $primary->last_retry_at->greaterThan($now->subMinutes(ProgramAlertRetryService::COOLDOWN_MINUTES))) {
             return $blocked('recently_retried');
         }
 
