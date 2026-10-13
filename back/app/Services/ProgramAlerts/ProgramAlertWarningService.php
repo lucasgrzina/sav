@@ -25,6 +25,7 @@ final class ProgramAlertWarningService
 {
     public const AGGREGATE_ABOVE = 5;
     public const MAX_AGGREGATED_ITEMS = 50;
+    public const MAX_TASKS_WITHOUT_ALERTS_ITEMS = 10;
 
     public function __construct(private readonly RecipientDiagnostics $diagnostics) {}
 
@@ -210,16 +211,28 @@ final class ProgramAlertWarningService
         return $warnings;
     }
 
-    /** @return list<Warning> */
+    /**
+     * One aggregated info warning for the whole program. Context shape:
+     * `count` (true total) and `items` (list of {protocol_task_guid, description}, capped at
+     * MAX_TASKS_WITHOUT_ALERTS_ITEMS; `count` can exceed `count(items)`).
+     *
+     * @return list<Warning>
+     */
     private function tasksWithoutAlerts(ProgramProjection $projection): array
     {
-        return array_map(
-            fn (array $task) => new Warning(WarningCode::TaskWithoutAlerts, WarningSeverity::Info, [
+        $tasks = $projection->tasksWithoutAlerts;
+
+        if ($tasks === []) {
+            return [];
+        }
+
+        return [new Warning(WarningCode::TaskWithoutAlerts, WarningSeverity::Info, [
+            'count' => count($tasks),
+            'items' => array_map(fn (array $task) => [
                 'protocol_task_guid' => $task['protocolTaskGuid'],
                 'description' => $task['description'],
-            ]),
-            $projection->tasksWithoutAlerts,
-        );
+            ], array_slice($tasks, 0, self::MAX_TASKS_WITHOUT_ALERTS_ITEMS)),
+        ])];
     }
 
     /** @return array{target_guid?: string, target_ref?: string} */

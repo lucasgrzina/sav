@@ -229,7 +229,46 @@ class ProgramAlertWarningServiceTest extends TestCase
 
         $this->assertCount(1, $found);
         $this->assertSame('info', $found[0]->severity->value);
-        $this->assertSame($lonely->guid, $found[0]->context['protocol_task_guid']);
+        $this->assertSame(1, $found[0]->context['count']);
+        $this->assertSame(
+            [['protocol_task_guid' => $lonely->guid, 'description' => 'Tarea sin avisos']],
+            $found[0]->context['items'],
+        );
+    }
+
+    public function test_no_task_without_alerts_yields_no_warning(): void
+    {
+        $program = $this->makeProgram(['2030-06-10'], [$this->makeResponsible()]);
+
+        $this->assertCount(0, $this->ofCode($this->warnings($program), 'TASK_WITHOUT_ALERTS'));
+    }
+
+    public function test_many_tasks_without_alerts_collapse_into_one_warning(): void
+    {
+        foreach (range(1, 3) as $n) {
+            $this->makeTask("Tarea {$n}", $n + 1);
+        }
+        $program = $this->makeProgram(['2030-06-10'], [$this->makeResponsible()]);
+
+        $found = $this->ofCode($this->warnings($program), 'TASK_WITHOUT_ALERTS');
+
+        $this->assertCount(1, $found);
+        $this->assertSame(3, $found[0]->context['count']);
+        $this->assertSame(['Tarea 1', 'Tarea 2', 'Tarea 3'], array_column($found[0]->context['items'], 'description'));
+    }
+
+    public function test_tasks_without_alerts_items_are_capped_but_count_is_true(): void
+    {
+        foreach (range(1, 13) as $n) {
+            $this->makeTask("Tarea {$n}", $n + 1);
+        }
+        $program = $this->makeProgram(['2030-06-10'], [$this->makeResponsible()]);
+
+        $found = $this->ofCode($this->warnings($program), 'TASK_WITHOUT_ALERTS');
+
+        $this->assertCount(1, $found);
+        $this->assertSame(13, $found[0]->context['count']);
+        $this->assertCount(ProgramAlertWarningService::MAX_TASKS_WITHOUT_ALERTS_ITEMS, $found[0]->context['items']);
     }
 
     public function test_more_than_five_warnings_of_one_code_in_one_group_collapse_into_one(): void

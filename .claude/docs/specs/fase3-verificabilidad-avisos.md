@@ -159,7 +159,7 @@ RF-07 — Contrato de advertencias
   | `RECIPIENT_EMAIL_ONLY` | warning | Sin WhatsApp pero con correo habilitado: recibirá por correo |
   | `DUPLICATE_TARGET_DATE` | warning | Dos grupos con la misma fecha objetivo (avisos indistinguibles; H6) |
   | `HIGH_VOLUME_FOR_RECIPIENT` | warning | Una persona recibiría más de 3 avisos el mismo día (umbral configurable; ver minuta sección 5 sobre saturación) |
-  | `TASK_WITHOUT_ALERTS` | info | Tarea sin avisos: "Esta tarea no tiene avisos programados" |
+  | `TASK_WITHOUT_ALERTS` | info | Tareas sin avisos, una sola advertencia agregada con `context.count` (total real) e `items` (`{protocol_task_guid, description}`, máx. 10) |
   Criterios:
     - Given un protocolo con una alerta para `client-manager` y un programa sin encargado, When guardo, Then la respuesta incluye `ALERT_ROLE_WITHOUT_RECIPIENT` con `roles: ["client-manager"]` y el guardado se completa.
     - Given una alerta calculada para ayer, When guardo, Then `ALERT_IN_PAST` indica fecha-hora local y grupo, y ese aviso no se crea.

@@ -208,6 +208,13 @@ function roles(ctx: WarningCopyContext): string {
   return Array.isArray(ctx.roles) ? ctx.roles.filter((r): r is string => typeof r === 'string').join(', ') : ''
 }
 
+function taskNames(ctx: WarningCopyContext): string[] {
+  if (!Array.isArray(ctx.items)) return []
+  return ctx.items
+    .map((i) => (i && typeof i === 'object' ? (i as Record<string, unknown>).description : null))
+    .filter((d): d is string => typeof d === 'string' && d !== '')
+}
+
 export const WARNING_COPY: Record<WarningCode, WarningCopyEntry> = {
   ALERT_ROLE_WITHOUT_RECIPIENT: {
     title: 'Sin destinatarios para un rol',
@@ -246,8 +253,15 @@ export const WARNING_COPY: Record<WarningCode, WarningCopyEntry> = {
     detail: (c) => `${str(c.name, 'Una persona')} va a recibir ${num(c.count) || 'muchos'} avisos.`,
   },
   TASK_WITHOUT_ALERTS: {
-    title: 'Tarea sin alertas',
-    detail: () => 'Hay tareas del protocolo que no tienen alertas configuradas.',
+    title: 'Tareas sin alertas',
+    detail: (c) => {
+      const names = taskNames(c)
+      const count = Math.max(num(c.count), names.length)
+      const list = names.length ? `: ${names.join(', ')}${count > names.length ? ` y ${count - names.length} más` : ''}.` : '.'
+      return count === 1
+        ? `1 tarea del protocolo no tiene alertas configuradas${list}`
+        : `${count || 'Hay'} tareas del protocolo no tienen alertas configuradas${list}`
+    },
   },
 }
 
@@ -287,6 +301,11 @@ export const PREVIEW_COPY = {
     `${name}${role ? ` (${role})` : ''} recibirá por ${channel}${destination ? ` (${destination})` : ''} el ${when}`,
   channelLabel: { whatsapp: 'WhatsApp', email: 'correo' } as Record<string, string>,
   summary: (total: number, people: number, from: string | null, to: string | null, wont: number) => {
+    if (total > 0 && (people === 0 || wont >= total)) {
+      return total === 1
+        ? 'Se calculó 1 aviso, pero no se enviará.'
+        : `Se calcularon ${total} avisos, pero ninguno se enviará.`
+    }
     const base = `Se programarán ${total} ${total === 1 ? 'aviso' : 'avisos'} para ${people} ${people === 1 ? 'persona' : 'personas'}`
     const range = from && to ? ` entre el ${from} y el ${to}` : ''
     const skipped = wont > 0 ? ` ${wont === 1 ? 'El 1 no se enviará' : `Los ${wont} no se enviarán`}.` : ''

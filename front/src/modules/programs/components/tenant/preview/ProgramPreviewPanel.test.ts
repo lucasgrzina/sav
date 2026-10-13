@@ -77,6 +77,39 @@ describe('ProgramPreviewPanel', () => {
     expect(text).toContain('Se programarán 2 avisos para 1 persona entre el 21/09/2026 y el 30/10/2026. El 1 no se enviará.')
   })
 
+  it('does not say "para 0 personas" when nothing will be delivered', () => {
+    const summary = { alerts_total: 7, alerts_will_send: 0, alerts_wont_send: 7, recipients_total: 0, groups_count: 1, window: { from: '2026-09-21', to: '2026-10-30' } }
+    mountPanel({ preview: makePreview({ summary }) })
+    const text = body().textContent ?? ''
+
+    expect(text).toContain('Se calcularon 7 avisos, pero ninguno se enviará.')
+    expect(text).not.toContain('0 personas')
+  })
+
+  it('renders one aggregated "Tareas sin alertas" row with the task names', () => {
+    const warnings = [{
+      code: 'TASK_WITHOUT_ALERTS' as const,
+      severity: 'info' as const,
+      context: { count: 12, items: [{ protocol_task_guid: 'a', description: 'Colecta' }, { protocol_task_guid: 'b', description: 'Transferencia' }] },
+    }]
+    mountPanel({ preview: makePreview({ warnings }) })
+    const text = body().textContent ?? ''
+
+    expect(text).toContain('Tareas sin alertas')
+    expect(text).toContain('12 tareas del protocolo no tienen alertas configuradas: Colecta, Transferencia y 10 más.')
+  })
+
+  it('uses the singular copy for a single task without alerts', () => {
+    const warnings = [{
+      code: 'TASK_WITHOUT_ALERTS' as const,
+      severity: 'info' as const,
+      context: { count: 1, items: [{ protocol_task_guid: 'a', description: 'Colecta' }] },
+    }]
+    mountPanel({ preview: makePreview({ warnings }) })
+
+    expect(body().textContent).toContain('1 tarea del protocolo no tiene alertas configuradas: Colecta.')
+  })
+
   it('shows the acknowledgement checkbox only with critical warnings and disables confirm until allowed', () => {
     const critical = [{ code: 'ALERT_IN_PAST' as const, severity: 'critical' as const, context: {} }]
     mountPanel({ preview: makePreview({ warnings: critical }), requiresAcknowledgement: true, canConfirm: false })
