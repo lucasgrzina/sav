@@ -8,7 +8,9 @@ use App\Notifications\Jobs\DeliverAlertJob;
 use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
 use Illuminate\Console\Command;
+use App\Notifications\Support\AlertsSchemaGuard;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class DispatchDueAlerts extends Command
@@ -17,8 +19,17 @@ class DispatchDueAlerts extends Command
 
     protected $description = 'Fan-out de las alertas pendientes cuya scheduled_at ya llegó, un DeliverAlertJob por destinatario.';
 
-    public function handle(): int
+    public function handle(AlertsSchemaGuard $schema): int
     {
+        // Code deployed before SQL-01/SQL-02: claiming alerts now would create jobs that cannot
+        // record their outcome. Leave everything `pending` so the next run picks it up once fixed.
+        if (! $schema->isReady()) {
+            Log::critical('alerts:dispatch-due: alerts schema is out of date, nothing dispatched', ['missing' => $schema->missing()]);
+            $this->error('Alerts schema out of date (apply the Fase 3 SQL scripts). Missing: '.implode(', ', $schema->missing()));
+
+            return Command::FAILURE;
+        }
+
         $dispatched = 0;
         $failed = 0;
 

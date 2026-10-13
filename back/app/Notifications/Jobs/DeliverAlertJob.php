@@ -22,6 +22,7 @@ use App\Notifications\Registries\MessageBuilderRegistry;
 use App\Notifications\Services\ChannelFallbackService;
 use App\Notifications\Services\FailureClassifier;
 use App\Notifications\Services\ServiceMisconfiguredNotifier;
+use App\Notifications\Support\AlertsSchemaGuard;
 use App\Notifications\Support\PhoneMasker;
 use App\Notifications\Support\PhoneValidator;
 use App\Notifications\Templates\WhatsappTemplateCatalog;
@@ -51,7 +52,21 @@ final class DeliverAlertJob implements ShouldQueue
         DeliveryPipeline $pipeline,
         ChannelFallbackService $fallback,
         ?AlertRevalidatorRegistry $revalidators = null,
+        ?AlertsSchemaGuard $schema = null,
     ): void {
+        // Code deployed before the Fase 3 SQL: every write below would hit an unknown column. Keep the
+        // recipient untouched (still pending, re-queueable) and retry later instead of burning the attempt.
+        $schema ??= app(AlertsSchemaGuard::class);
+        if (! $schema->isReady()) {
+            Log::critical('DeliverAlertJob: alerts schema is out of date, delivery postponed', [
+                'recipient_id' => $this->recipientId,
+                'missing' => $schema->missing(),
+            ]);
+            $this->release(300);
+
+            return;
+        }
+
         $recipient = AlertRecipient::with('alert.subject')->find($this->recipientId);
 
         if ($recipient === null) {
@@ -219,29 +234,47 @@ final class DeliverAlertJob implements ShouldQueue
     /** Se ejecuta una sola vez, cuando la cola agota los $tries reintentos de un fallo transitorio (5xx/timeout). */
     public function failed(Throwable $exception): void
     {
-        $recipient = AlertRecipient::find($this->recipientId);
+        // Must never throw (it runs after the queue gave up): with an outdated schema the recipient is
+        // left pending on purpose so it can be re-queued once the SQL is applied (see the SQL-01 runbook).
+        try {
+            if (! app(AlertsSchemaGuard::class)->isReady()) {
+                Log::critical('DeliverAlertJob: retries exhausted with an outdated alerts schema, recipient left pending', [
+                    'recipient_id' => $this->recipientId,
+                    'error' => $exception->getMessage(),
+                ]);
 
-        if ($recipient === null || $recipient->status !== DeliveryStatus::Pending) {
-            return;
+                return;
+            }
+
+            $recipient = AlertRecipient::find($this->recipientId);
+
+            if ($recipient === null || $recipient->status !== DeliveryStatus::Pending) {
+                return;
+            }
+
+            Log::error('DeliverAlertJob: reintentos agotados, fallo definitivo', [
+                'alert_id' => $recipient->alert_id,
+                'recipient_id' => $recipient->id,
+                'channel' => $recipient->channel->value,
+                'alert_type' => $recipient->alert?->type?->value,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $recipient->update([
+                'status' => DeliveryStatus::Failed,
+                'failure_reason' => $exception->getMessage(),
+                'failure_code' => FailureCode::ProviderUnreachable,
+                'attempts' => $recipient->attempts + 1,
+            ]);
+
+            // Los hooks de fallo del job no reciben inyección por firma.
+            app(ChannelFallbackService::class)->attempt($recipient);
+        } catch (Throwable $e) {
+            Log::critical('DeliverAlertJob: failed() hook could not record the failure', [
+                'recipient_id' => $this->recipientId,
+                'error' => $e->getMessage(),
+            ]);
         }
-
-        Log::error('DeliverAlertJob: reintentos agotados, fallo definitivo', [
-            'alert_id' => $recipient->alert_id,
-            'recipient_id' => $recipient->id,
-            'channel' => $recipient->channel->value,
-            'alert_type' => $recipient->alert?->type?->value,
-            'error' => $exception->getMessage(),
-        ]);
-
-        $recipient->update([
-            'status' => DeliveryStatus::Failed,
-            'failure_reason' => $exception->getMessage(),
-            'failure_code' => FailureCode::ProviderUnreachable,
-            'attempts' => $recipient->attempts + 1,
-        ]);
-
-        // Los hooks de fallo del job no reciben inyección por firma.
-        app(ChannelFallbackService::class)->attempt($recipient);
     }
 
     /** Masked destination (never the raw phone/email); null for push, which has no address. */

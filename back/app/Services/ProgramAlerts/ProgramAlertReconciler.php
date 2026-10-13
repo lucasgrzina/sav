@@ -13,6 +13,7 @@ use App\Notifications\Enums\FailureCode;
 use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
 use App\Notifications\Services\AlertRecipientFactory;
+use App\Notifications\Support\AlertsSchemaGuard;
 use App\Services\ProgramAlerts\Data\ProjectedAlert;
 use App\Services\ProgramAlerts\Data\ProjectedRecipient;
 use App\Services\ProgramAlerts\Data\ProjectionInput;
@@ -264,6 +265,17 @@ final class ProgramAlertReconciler
             Log::info('program.alerts.reconcile_skipped', ['program_id' => $program->id, 'trigger' => $trigger, 'reason' => 'disabled']);
 
             return ReconcileReport::aborted('disabled');
+        }
+
+        // Code live before SQL-01/SQL-02: querying logical_key or auditing would throw mid-save. Skip
+        // (the program save itself must go on) and let the nightly run / a manual rebuild catch up.
+        $schema = app(AlertsSchemaGuard::class);
+        if (! $schema->isReady()) {
+            Log::critical('program.alerts.reconcile_skipped', [
+                'program_id' => $program->id, 'trigger' => $trigger, 'reason' => 'schema_outdated', 'missing' => $schema->missing(),
+            ]);
+
+            return ReconcileReport::aborted('schema_outdated');
         }
 
         return DB::transaction(function () use ($program, $trigger, $userId, $now) {

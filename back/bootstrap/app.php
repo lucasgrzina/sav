@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         \App\Notifications\Scheduling\DispatchDueAlerts::class,
+        \App\Notifications\Scheduling\CheckAlertsSchema::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         // Without this, Laravel ignores X-Forwarded-Proto and resolves request URLs as http

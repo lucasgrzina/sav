@@ -17,6 +17,7 @@ use App\Notifications\Registries\AlertRevalidatorRegistry;
 use App\Notifications\Registries\GatewayRegistry;
 use App\Notifications\Revalidators\ProgramTaskDueRevalidator;
 use App\Notifications\Registries\MessageBuilderRegistry;
+use App\Notifications\Support\AlertsSchemaGuard;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\ServiceProvider;
 use Twilio\Rest\Client;
@@ -26,6 +27,8 @@ class NotificationServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/notifications.php', 'notifications');
+
+        $this->app->singleton(AlertsSchemaGuard::class);
 
         $this->app->singleton(TwilioWhatsappGateway::class, function ($app) {
             $config = $app['config']->get('notifications.twilio');

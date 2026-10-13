@@ -30,7 +30,26 @@
 --
 -- BEFORE RUNNING
 --   >>> EXPORT / BACKUP THE DATABASE FIRST (phpMyAdmin > Export > Quick, SQL). <<<
---   Order in production: (1) run this script, (2) deploy the code.
+--   Order in production: (1) run this script, (2) run fase3-02 (reconciliations table),
+--   (3) deploy the code. Verify with `php artisan alerts:schema-check` (exit code 1 = pending SQL).
+--
+-- RUNBOOK - code deployed BEFORE this script (wrong order)
+--   The code protects itself: `alerts:dispatch-due` refuses to run (alerts stay `pending`),
+--   DeliverAlertJob releases without touching the recipient, and the reconciler skips. Jobs that
+--   exhausted their retries in that window leave the recipient `pending` on an alert that is
+--   already `dispatched`. After applying the SQL, re-queue them (run once the queue is drained,
+--   otherwise a job still waiting for its retry could be delivered twice):
+--
+--     -- 1) what is stuck
+--     SELECT ar.id, ar.alert_id, ar.channel, a.scheduled_at
+--       FROM alert_recipients ar JOIN alerts a ON a.id = ar.alert_id
+--      WHERE ar.status = 'pending' AND a.status = 'dispatched';
+--
+--     -- 2) give those alerts back to the dispatcher; it only fans out the recipients that are
+--     --    still `pending`, so already-processed recipients are never sent twice
+--     UPDATE alerts a SET a.status = 'pending'
+--      WHERE a.status = 'dispatched'
+--        AND EXISTS (SELECT 1 FROM alert_recipients ar WHERE ar.alert_id = a.id AND ar.status = 'pending');
 -- =====================================================================
 
 
@@ -242,6 +261,16 @@ SELECT status, failure_code, COUNT(*) AS total
 -- =====================================================================
 -- ROLLBACK (manual, only if the code was NOT deployed yet or was rolled back)
 -- Uncomment and run each statement separately. Drops the new data (traceability only).
+--
+-- >>> BACK UP `alert_recipients` (and `alerts`) FIRST: dropping the columns destroys
+-- >>> failure_code / destination_hint / rendered_body / template_version / retry audit data.
+-- >>> e.g. CREATE TABLE alert_recipients_bak_20261013 AS SELECT * FROM alert_recipients;
+--
+-- CODE ROLLBACK (preferred, no SQL needed): the columns are additive and nullable, so the old
+-- code works with them. To roll the code back: (1) stop the nightly job (comment out / disable
+-- `programs:reconcile-alerts` in routes/console.php or the cron), (2) set
+-- ALERTS_RECONCILER_ENABLED=false in .env and clear the config cache, (3) deploy the previous
+-- code and KEEP the columns. Only run the DROP statements below if the schema itself must go.
 -- =====================================================================
 -- ALTER TABLE `alerts` DROP INDEX `alerts_logical_key_unique`;
 -- ALTER TABLE `alerts` DROP COLUMN `cancelled_at`, DROP COLUMN `cancel_reason`, DROP COLUMN `logical_key`;
