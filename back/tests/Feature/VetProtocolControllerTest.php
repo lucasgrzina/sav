@@ -291,7 +291,9 @@ class VetProtocolControllerTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->putJson("/api/v1/vets/{$this->vet->guid}/protocols/{$own['guid']}", $this->basePayload(['name' => 'Protocolo editado']));
 
-        $response->assertStatus(200)->assertJsonPath('data.name', 'Protocolo editado');
+        $response->assertStatus(200)
+            ->assertJsonPath('data.name', 'Protocolo editado')
+            ->assertJsonPath('data.active_programs_count', 0);
     }
 
     public function test_destroy_deletes_own_protocol(): void

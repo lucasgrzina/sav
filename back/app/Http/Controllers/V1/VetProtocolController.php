@@ -61,6 +61,8 @@ class VetProtocolController extends Controller
                 return $this->makeNotFound('Protocolo no encontrado.');
             }
 
+            $protocol->setAttribute('active_programs_count', $this->protocolService->countActiveProgramsForProtocol($protocol));
+
             return $this->makeSuccess(new VetProtocolResource($protocol));
         } catch (\Exception $e) {
             return $this->makeFromException($e);
@@ -79,6 +81,7 @@ class VetProtocolController extends Controller
 
             $data = $this->resolveGuidsToIds($request->validated());
             $protocol = $this->protocolService->update($protocol, $data);
+            $protocol->setAttribute('active_programs_count', $this->protocolService->countActiveProgramsForProtocol($protocol));
 
             return $this->makeSuccess(new VetProtocolResource($protocol), 'Protocolo actualizado correctamente.');
         } catch (ProtocolTechniqueLockedException $e) {

@@ -6,6 +6,8 @@ use App\Contracts\Repositories\ProtocolRepositoryInterface;
 use App\Contracts\Repositories\TechniqueRepositoryInterface;
 use App\Exceptions\ProtocolHasProgramsException;
 use App\Exceptions\ProtocolTechniqueLockedException;
+use App\Jobs\ReconcileProgramAlertsJob;
+use App\Models\Program;
 use App\Models\Protocol;
 use App\Models\ProtocolTask;
 use App\Models\ProtocolTaskAlert;
@@ -85,8 +87,19 @@ class ProtocolService
             $this->protocolRepository->update($protocol, $data);
             $this->syncTasks($protocol, $tasks);
 
+            // H4: propagate the edit to every active program using this protocol (one job each, isolated).
+            Program::where('protocol_id', $protocol->id)
+                ->whereNull('cancelled_at')
+                ->pluck('id')
+                ->each(fn ($id) => ReconcileProgramAlertsJob::dispatch((int) $id, 'protocol_updated')->afterCommit());
+
             return $protocol->fresh()->load('tasks.alerts', 'technique', 'country');
         });
+    }
+
+    public function countActiveProgramsForProtocol(Protocol $protocol): int
+    {
+        return Program::where('protocol_id', $protocol->id)->whereNull('cancelled_at')->count();
     }
 
     /** @throws ProtocolHasProgramsException */

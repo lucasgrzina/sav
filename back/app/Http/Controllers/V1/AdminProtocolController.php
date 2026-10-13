@@ -68,6 +68,8 @@ class AdminProtocolController extends Controller
                 return $this->makeNotFound('Protocolo no encontrado.');
             }
 
+            $protocol->setAttribute('active_programs_count', $this->protocolService->countActiveProgramsForProtocol($protocol));
+
             return $this->makeSuccess(new ProtocolResource($protocol));
         } catch (\Exception $e) {
             return $this->makeFromException($e);
@@ -84,6 +86,7 @@ class AdminProtocolController extends Controller
 
             $data = $this->resolveGuidsToIds($request->validated());
             $protocol = $this->protocolService->update($protocol, $data);
+            $protocol->setAttribute('active_programs_count', $this->protocolService->countActiveProgramsForProtocol($protocol));
 
             return $this->makeSuccess(new ProtocolResource($protocol), 'Protocolo actualizado correctamente.');
         } catch (ProtocolTechniqueLockedException $e) {
