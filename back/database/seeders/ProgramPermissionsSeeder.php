@@ -16,6 +16,7 @@ class ProgramPermissionsSeeder extends Seeder
             'programs.create',
             'programs.update',
             'programs.managers.read',
+            'programs.alerts.read',
         ];
 
         foreach ($permissions as $name) {

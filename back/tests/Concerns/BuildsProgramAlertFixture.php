@@ -40,7 +40,7 @@ trait BuildsProgramAlertFixture
 
     protected function buildProgramFixture(): void
     {
-        foreach (['programs.read', 'programs.create', 'programs.update'] as $name) {
+        foreach (['programs.read', 'programs.create', 'programs.update', 'programs.alerts.read'] as $name) {
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web'], ['guid' => Str::uuid()->toString()]);
         }
 
@@ -48,7 +48,7 @@ trait BuildsProgramAlertFixture
         $this->role('vet-assistant'); // no permissions: used for the 403 cases
         $this->ownerRole = $this->role('client-owner');
         $this->managerRole = $this->role('client-manager');
-        $vetRole->givePermissionTo(Permission::whereIn('name', ['programs.read', 'programs.create', 'programs.update'])->get());
+        $vetRole->givePermissionTo(Permission::whereIn('name', ['programs.read', 'programs.create', 'programs.update', 'programs.alerts.read'])->get());
 
         $this->vet = $this->makeVet('Vet Test');
         $this->client = $this->makeClient('Cliente Test');
@@ -76,7 +76,7 @@ trait BuildsProgramAlertFixture
     protected function makeVet(string $name): Vet
     {
         $country = Country::create([
-            'guid' => Str::uuid()->toString(), 'name' => 'Argentina ' . $name, 'iso_code' => strtoupper(Str::random(2)),
+            'guid' => Str::uuid()->toString(), 'name' => 'Argentina ' . $name, 'iso_code' => $this->uniqueIsoCode(),
             'phone_prefix' => '+54', 'timezone' => 'America/Argentina/Buenos_Aires',
         ]);
         $docType = DocumentType::create(['guid' => Str::uuid()->toString(), 'country_id' => $country->id, 'name' => 'CUIT', 'validation_regex' => '.*']);
@@ -87,10 +87,20 @@ trait BuildsProgramAlertFixture
         ]);
     }
 
+    /** Two random letters collide often enough (unique column) to make suites flaky: retry until free. */
+    private function uniqueIsoCode(): string
+    {
+        do {
+            $iso = strtoupper(Str::random(2));
+        } while (Country::where('iso_code', $iso)->exists());
+
+        return $iso;
+    }
+
     protected function makeClient(string $name): Client
     {
         $country = Country::create([
-            'guid' => Str::uuid()->toString(), 'name' => 'Argentina ' . $name, 'iso_code' => strtoupper(Str::random(2)), 'phone_prefix' => '+54',
+            'guid' => Str::uuid()->toString(), 'name' => 'Argentina ' . $name, 'iso_code' => $this->uniqueIsoCode(), 'phone_prefix' => '+54',
         ]);
         $docType = DocumentType::create(['guid' => Str::uuid()->toString(), 'country_id' => $country->id, 'name' => 'CUIT', 'validation_regex' => '.*']);
 

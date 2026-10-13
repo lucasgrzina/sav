@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\V1\ProgramAlertController;
 use App\Http\Controllers\V1\ProgramController;
 use App\Http\Controllers\V1\ProgramPdfController;
 use App\Http\Controllers\V1\ProgramPreviewController;
@@ -12,6 +13,8 @@ Route::prefix('v1/vets/{vet}/programs')->middleware(['auth:sanctum', 'vet.tenant
     // Preview (no persiste): `/preview` se declara antes de las rutas con {guid}.
     Route::post('/preview', [ProgramPreviewController::class, 'preview'])->middleware('can:programs.create');
     Route::post('/{guid}/preview', [ProgramPreviewController::class, 'previewForProgram'])->middleware('can:programs.update');
+    // Delivery view of the program ("Avisos" tab). Read-only; clients roles do not hold the permission.
+    Route::get('/{guid}/alerts', [ProgramAlertController::class, 'index'])->middleware('can:programs.alerts.read');
     Route::get('/{guid}', [ProgramController::class, 'show'])->middleware('can:programs.read');
     Route::put('/{guid}', [ProgramController::class, 'update'])->middleware('can:programs.update');
     Route::post('/{guid}/cancel', [ProgramController::class, 'cancel'])->middleware('can:programs.update');
