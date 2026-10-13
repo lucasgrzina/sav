@@ -330,11 +330,13 @@ final class ProgramAlertReconciler
             return false;
         }
 
-        $protocolAlert = $program->protocol->tasks
+        // A deleted protocol or a profile without role can no longer receive this alert: not applicable, not an error.
+        $roleName = $manager->role?->name;
+        $protocolAlert = $program->protocol?->tasks
             ->flatMap(fn ($task) => $task->alerts)
             ->firstWhere('guid', $taskAlertGuid);
 
-        if ($protocolAlert === null || ! in_array($manager->role->name, $protocolAlert->roles ?? [], true)) {
+        if ($protocolAlert === null || $roleName === null || ! in_array($roleName, $protocolAlert->roles ?? [], true)) {
             return false;
         }
 

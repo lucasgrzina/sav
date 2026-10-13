@@ -40,6 +40,7 @@ use App\Notifications\Services\ChannelFallbackService;
 use App\Services\ProgramAlerts\ProgramAlertReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -165,6 +166,24 @@ class ProgramTaskDueRevalidatorTest extends TestCase
     {
         [$alert, $recipient] = $this->dispatchedAlert();
         ProgramTarget::where('program_id', $this->program->id)->delete();
+
+        $this->assertSame(FailureCode::NoLongerApplicable, $this->revalidator()->check($alert->fresh(), $recipient));
+    }
+
+    public function test_a_deleted_protocol_is_not_valid_instead_of_throwing(): void
+    {
+        [$alert, $recipient] = $this->dispatchedAlert();
+        DB::statement('PRAGMA defer_foreign_keys = ON'); // checked at commit, which never happens inside the test transaction
+        DB::table('protocols')->where('id', $this->protocol->id)->delete();
+
+        $this->assertSame(FailureCode::NoLongerApplicable, $this->revalidator()->check($alert->fresh(), $recipient));
+    }
+
+    public function test_a_manager_without_role_is_not_valid_instead_of_throwing(): void
+    {
+        [$alert, $recipient] = $this->dispatchedAlert();
+        DB::statement('PRAGMA defer_foreign_keys = ON');
+        DB::table('roles')->where('id', $this->owner->role_id)->delete();
 
         $this->assertSame(FailureCode::NoLongerApplicable, $this->revalidator()->check($alert->fresh(), $recipient));
     }
