@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class AlertTraceabilityMigrationTest extends TestCase
 {
@@ -38,7 +39,7 @@ class AlertTraceabilityMigrationTest extends TestCase
     {
         $country = Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A'.Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,

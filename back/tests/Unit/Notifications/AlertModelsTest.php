@@ -20,6 +20,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class AlertModelsTest extends TestCase
 {
@@ -30,7 +31,7 @@ class AlertModelsTest extends TestCase
         $country = Country::create([
             'guid' => Str::uuid()->toString(),
             'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4),
+            'iso_code' => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 

@@ -16,6 +16,7 @@ use App\Notifications\Services\AlertRecipientFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class AlertRecipientFactoryTest extends TestCase
 {
@@ -26,7 +27,7 @@ class AlertRecipientFactoryTest extends TestCase
         $country = Country::create([
             'guid' => Str::uuid()->toString(),
             'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4),
+            'iso_code' => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 

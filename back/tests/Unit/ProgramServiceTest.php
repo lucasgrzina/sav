@@ -25,6 +25,7 @@ use App\Services\ProgramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class ProgramServiceTest extends TestCase
 {
@@ -74,7 +75,7 @@ class ProgramServiceTest extends TestCase
         $country = Country::create([
             'guid'         => Str::uuid()->toString(),
             'name'         => 'Argentina',
-            'iso_code'     => 'A' . Str::random(2),
+            'iso_code'     => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 
@@ -101,7 +102,7 @@ class ProgramServiceTest extends TestCase
         $country = Country::create([
             'guid'         => Str::uuid()->toString(),
             'name'         => 'Argentina',
-            'iso_code'     => 'A' . Str::random(2),
+            'iso_code'     => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 

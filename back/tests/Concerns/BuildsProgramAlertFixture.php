@@ -87,14 +87,9 @@ trait BuildsProgramAlertFixture
         ]);
     }
 
-    /** Two random letters collide often enough (unique column) to make suites flaky: retry until free. */
     private function uniqueIsoCode(): string
     {
-        do {
-            $iso = strtoupper(Str::random(2));
-        } while (Country::where('iso_code', $iso)->exists());
-
-        return $iso;
+        return UniqueIsoCode::next();
     }
 
     protected function makeClient(string $name): Client

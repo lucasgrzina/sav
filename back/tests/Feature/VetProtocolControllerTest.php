@@ -14,6 +14,7 @@ use App\Models\Vet;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class VetProtocolControllerTest extends TestCase
 {
@@ -68,7 +69,7 @@ class VetProtocolControllerTest extends TestCase
         $country = Country::create([
             'guid'         => Str::uuid()->toString(),
             'name'         => 'Argentina ' . $name,
-            'iso_code'     => strtoupper(Str::random(2)),
+            'iso_code'     => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 

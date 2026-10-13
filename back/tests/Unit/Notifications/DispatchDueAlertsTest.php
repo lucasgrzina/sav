@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class DispatchDueAlertsTest extends TestCase
 {
@@ -43,7 +44,7 @@ class DispatchDueAlertsTest extends TestCase
     {
         $country = \App\Models\Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = \App\Models\DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,

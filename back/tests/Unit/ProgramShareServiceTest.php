@@ -31,6 +31,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class ProgramShareServiceTest extends TestCase
 {
@@ -83,7 +84,7 @@ class ProgramShareServiceTest extends TestCase
     {
         $country = Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,
@@ -101,7 +102,7 @@ class ProgramShareServiceTest extends TestCase
     {
         $country = Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,

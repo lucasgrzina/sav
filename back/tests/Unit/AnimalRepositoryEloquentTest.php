@@ -10,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class AnimalRepositoryEloquentTest extends TestCase
 {
@@ -33,7 +34,7 @@ class AnimalRepositoryEloquentTest extends TestCase
         $country = Country::create([
             'guid'         => Str::uuid()->toString(),
             'name'         => 'Argentina',
-            'iso_code'     => 'A' . Str::random(2),
+            'iso_code'     => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 
