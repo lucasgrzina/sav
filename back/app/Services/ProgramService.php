@@ -15,9 +15,12 @@ use App\Models\Protocol;
 use App\Services\ProgramAlerts\Data\ProjectedAlert;
 use App\Services\ProgramAlerts\Data\ProjectedRecipient;
 use App\Services\ProgramAlerts\Data\ProjectedTask;
+use App\Services\ProgramAlerts\Data\ExistingAlertIndex;
 use App\Services\ProgramAlerts\Data\ProjectionInput;
+use App\Services\ProgramAlerts\Data\WarningMode;
 use App\Services\ProgramAlerts\ProgramAlertProjector;
 use App\Services\ProgramAlerts\ProgramAlertReconciler;
+use App\Services\ProgramAlerts\ProgramAlertWarningService;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +33,7 @@ class ProgramService
         private AnimalRepositoryInterface $animalRepository,
         private ProgramAlertProjector $projector,
         private ProgramAlertReconciler $reconciler,
+        private ?ProgramAlertWarningService $warningService = null,
     ) {}
 
     public function paginateForVet(int $vetId, array $filters, int $perPage): LengthAwarePaginator
@@ -125,10 +129,23 @@ class ProgramService
         });
     }
 
-    /** Syncs the persisted alerts and leaves the report on the model for the response layer. */
+    /**
+     * Syncs the persisted alerts and leaves the report and the warnings on the model for the
+     * response layer. The warnings are computed AFTER reconciling, over what is really persisted,
+     * so they are authoritative (an alert that turned into the past since the preview shows up here).
+     * They never block the save (DU-01).
+     */
     private function reconcileAlerts(Program $program, string $trigger): void
     {
         $report = $this->reconciler->reconcile($program, $trigger, auth()->id());
+
+        $input = ProjectionInput::fromProgram($program, CarbonImmutable::instance(now()));
+        $report->warnings = ($this->warningService ??= app(ProgramAlertWarningService::class))->build(
+            $input,
+            $this->projector->project($input),
+            WarningMode::Save,
+            ExistingAlertIndex::forProgram($program),
+        );
 
         $program->setRelation('alert_report', $report); // relation, not attribute: attributes would be persisted by later saves
         $program->setRelation('alert_warnings', $report->warnings);

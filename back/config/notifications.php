@@ -116,6 +116,14 @@ return [
         'enabled' => (bool) env('ALERTS_RECONCILER_ENABLED', true),
     ],
 
+    // Program alert warnings (HIGH_VOLUME_FOR_RECIPIENT): more than this many alerts to the same
+    // person on the same local day raises a warning. Advisory only, never blocks.
+    'high_volume_per_day' => (int) env('ALERTS_HIGH_VOLUME_PER_DAY', 3),
+
+    // Program preview: above this many items the response is cut (`truncated: true`) while
+    // `summary` and `warnings` stay computed over the full projection.
+    'preview_max_items' => (int) env('ALERTS_PREVIEW_MAX_ITEMS', 1000),
+
     // Locale used for day names / relative dates in messages and the alerts UI, by country ISO code.
     // Explicit on purpose: never rely on the server locale. Add pt_BR etc. once those messages exist.
     'locale_by_country_iso' => [

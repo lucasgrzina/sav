@@ -13,9 +13,19 @@ use App\Notifications\Data\TemplateContent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Models\Alert;
+use App\Notifications\Templates\TaskDueComposer;
+use App\Notifications\Templates\TaskDueContext;
+use App\Services\ProgramAlerts\Data\ProjectionInput;
 
 final class ProgramTaskDueMessageBuilder implements AlertMessageBuilder
 {
+    private TaskDueComposer $composer;
+
+    public function __construct(?TaskDueComposer $composer = null)
+    {
+        $this->composer = $composer ?? new TaskDueComposer();
+    }
+
     public function type(): AlertType
     {
         return AlertType::ProgramTaskDue;
@@ -48,13 +58,35 @@ final class ProgramTaskDueMessageBuilder implements AlertMessageBuilder
             );
         }
 
+        $version = $this->composer->effectiveVersion($payload);
+        $message = $this->composer->compose($this->context($alert, $program, $payload), $recipient->name, $version);
+
         return new TemplateContent(
             type: AlertType::ProgramTaskDue,
-            variables: [
-                '1' => $recipient->name,
-                '2' => $program->protocol->name,
-                '3' => $payload->message,
-            ],
+            variables: $message->variables,
+            version: $message->version,
+        );
+    }
+
+    /** Live program data plus the payload snapshot: the same inputs the preview feeds the composer. */
+    private function context(Alert $alert, Program $program, ProgramTaskPayload $payload): TaskDueContext
+    {
+        $timezone = $program->vet?->timezone() ?? config('app.timezone');
+
+        return new TaskDueContext(
+            vetName: (string) $program->vet?->name,
+            clientName: (string) $program->client?->name,
+            establishmentName: (string) $program->establishment?->name,
+            protocolName: $program->protocol->name,
+            multiGroup: (bool) $payload->multiGroup,
+            targetDate: $payload->targetDate,
+            taskDescription: $payload->taskDescription,
+            taskDate: $payload->taskDate,
+            taskTime: $payload->taskTime,
+            scheduledAtLocal: $alert->scheduled_at?->copy()->setTimezone($timezone),
+            freeText: $payload->message,
+            timezone: $timezone,
+            locale: $program->vet !== null ? ProjectionInput::localeFor($program->vet) : 'es',
         );
     }
 }

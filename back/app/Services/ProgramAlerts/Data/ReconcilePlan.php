@@ -33,6 +33,9 @@ final class ReconcilePlan
     /** @var list<Alert> already dispatched: never touched */
     public array $untouchedDispatched = [];
 
+    /** @var list<Alert> dispatched alerts that match nothing desired any more (e.g. sent with the previous group date): informational */
+    public array $staleDispatched = [];
+
     /** @var list<ProjectedAlert> past items with no existing alert: not created */
     public array $skippedPast = [];
 

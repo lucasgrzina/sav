@@ -7,7 +7,7 @@ final class ReconcileReport
 {
     /**
      * @param array<string, int> $cancelledByReason
-     * @param array<int, mixed> $warnings
+     * @param list<Warning> $warnings
      */
     public function __construct(
         public int $kept = 0,
@@ -23,6 +23,8 @@ final class ReconcileReport
         public array $warnings = [],
         public bool $aborted = false,
         public ?string $abortReason = null,
+        public int $alreadySentNotModified = 0,
+        public int $reschedulePairs = 0,
     ) {}
 
     public static function aborted(string $reason): self
@@ -44,6 +46,23 @@ final class ReconcileReport
             || $this->recipientsAdded > 0
             || $this->recipientsReactivated > 0
             || $this->recipientsSuppressed > 0;
+    }
+
+    /**
+     * RF-11 summary shown after saving. A rescheduled alert is a cancel plus its recreation for the
+     * same group and protocol alert (`reschedulePairs`): reported once, not as cancelled + created.
+     *
+     * @return array{kept: int, rescheduled: int, created: int, cancelled: int, already_sent_not_modified: int}
+     */
+    public function summary(): array
+    {
+        return [
+            'kept' => $this->kept + $this->adopted,
+            'rescheduled' => $this->reschedulePairs,
+            'created' => max(0, $this->created - $this->reschedulePairs),
+            'cancelled' => max(0, $this->cancelledTotal() - $this->reschedulePairs),
+            'already_sent_not_modified' => $this->alreadySentNotModified,
+        ];
     }
 
     /** @return array<string, mixed> */

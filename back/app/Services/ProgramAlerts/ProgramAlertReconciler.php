@@ -47,9 +47,21 @@ final class ProgramAlertReconciler
     public function plan(Program $program, ?CarbonImmutable $now = null): ReconcilePlan
     {
         $now ??= CarbonImmutable::instance(now());
+
+        return $this->planFor($program, ProjectionInput::fromProgram($program, $now));
+    }
+
+    /**
+     * Side-effect free: what reconciling the persisted alerts of `$program` against `$in` would do.
+     * `$in` is the program's own state for a real reconciliation, or a proposed draft (new groups,
+     * dates, protocol, responsibles) for the edit preview. Groups still unsaved must carry a
+     * placeholder guid so their logical keys can be computed.
+     */
+    public function planFor(Program $program, ProjectionInput $in): ReconcilePlan
+    {
         $plan = new ReconcilePlan();
 
-        $projection = $this->projector->project(ProjectionInput::fromProgram($program, $now));
+        $projection = $this->projector->project($in);
         $cancelled = $program->cancelled_at !== null;
 
         /** @var array<string, ProjectedAlert> $desired */
@@ -113,13 +125,20 @@ final class ProgramAlertReconciler
         }
 
         foreach ($existing as $alert) {
-            if ($alert->status !== AlertStatus::Pending->value || isset($matchedIds[$alert->id])) {
+            if (isset($matchedIds[$alert->id])) {
+                continue;
+            }
+
+            if ($alert->status !== AlertStatus::Pending->value) {
+                // Already sent with data that no longer applies (e.g. the previous group date): informational.
+                $plan->staleDispatched[] = $alert;
+
                 continue;
             }
 
             $plan->cancel[] = [
                 'alert' => $alert,
-                'reason' => $this->cancelReason($alert, $program, $cancelled, $projection->items),
+                'reason' => $this->cancelReason($alert, $in, $cancelled, $projection->items),
             ];
         }
 
@@ -132,6 +151,8 @@ final class ProgramAlertReconciler
             kept: count($plan->keep),
             untouchedDispatched: count($plan->untouchedDispatched),
             skippedPast: count($plan->skippedPast),
+            alreadySentNotModified: count($plan->staleDispatched),
+            reschedulePairs: $this->countReschedulePairs($plan),
         );
         $now = Carbon::now();
         $claimed = [];
@@ -334,6 +355,35 @@ final class ProgramAlertReconciler
         return false;
     }
 
+    /**
+     * A reschedule is a cancel (`rescheduled`) plus the creation for the same group and protocol
+     * alert on the new date; the RF-11 summary reports the pair once.
+     */
+    private function countReschedulePairs(ReconcilePlan $plan): int
+    {
+        $creates = array_map(
+            fn (ProjectedAlert $item) => $item->targetGuid . '|' . $item->protocolTaskAlertGuid,
+            $plan->create,
+        );
+        $pairs = 0;
+
+        foreach ($plan->cancel as ['alert' => $alert, 'reason' => $reason]) {
+            if ($reason !== AlertCancelReason::Rescheduled) {
+                continue;
+            }
+
+            $key = ($alert->payload['programTargetGuid'] ?? null) . '|' . ($alert->payload['protocolTaskAlertGuid'] ?? null);
+            $index = array_search($key, $creates, true);
+
+            if ($index !== false) {
+                unset($creates[$index]);
+                $pairs++;
+            }
+        }
+
+        return $pairs;
+    }
+
     /** More than half of the pending alerts would be cancelled by an unattended trigger: refuse. */
     private function violatesValve(ReconcilePlan $plan, string $trigger): bool
     {
@@ -444,7 +494,7 @@ final class ProgramAlertReconciler
     }
 
     /** @param list<ProjectedAlert> $items every projected item, including the ones without recipients */
-    private function cancelReason(Alert $alert, Program $program, bool $programCancelled, array $items): AlertCancelReason
+    private function cancelReason(Alert $alert, ProjectionInput $in, bool $programCancelled, array $items): AlertCancelReason
     {
         if ($programCancelled) {
             return AlertCancelReason::ProgramCancelled;
@@ -454,14 +504,14 @@ final class ProgramAlertReconciler
         $targetGuid = $payload['programTargetGuid'] ?? null;
         $taskAlertGuid = $payload['protocolTaskAlertGuid'] ?? null;
 
-        if ($targetGuid !== null && ! $program->targets->contains('guid', $targetGuid)) {
+        if ($targetGuid !== null && ! collect($in->targets)->contains(fn ($target) => $target->guid === $targetGuid)) {
             return AlertCancelReason::GroupRemoved;
         }
 
-        $currentAlertGuids = $program->protocol->tasks->flatMap(fn ($task) => $task->alerts->pluck('guid'));
+        $currentAlertGuids = $in->protocol->tasks->flatMap(fn ($task) => $task->alerts->pluck('guid'));
         $payloadProtocol = $payload['protocolGuid'] ?? null;
 
-        if (($payloadProtocol !== null && $payloadProtocol !== $program->protocol->guid)
+        if (($payloadProtocol !== null && $payloadProtocol !== $in->protocol->guid)
             || ($taskAlertGuid !== null && ! $currentAlertGuids->contains($taskAlertGuid))) {
             return AlertCancelReason::ProtocolChanged;
         }
