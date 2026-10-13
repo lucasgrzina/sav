@@ -97,6 +97,7 @@ export function useUpdateProgram() {
     onSuccess: (_, { guid }) => {
       queryClient.invalidateQueries({ queryKey: ['programs', vetGuid.value] })
       queryClient.invalidateQueries({ queryKey: ['program', vetGuid.value, guid] })
+      queryClient.invalidateQueries({ queryKey: ['program-alerts', vetGuid.value, guid] })
       success('Programa actualizado correctamente')
     },
     onError: (err: unknown) => {
@@ -141,6 +142,7 @@ export function useCancelProgram() {
     onSuccess: (_, guid) => {
       queryClient.invalidateQueries({ queryKey: ['programs', vetGuid.value] })
       queryClient.invalidateQueries({ queryKey: ['program', vetGuid.value, guid] })
+      queryClient.invalidateQueries({ queryKey: ['program-alerts', vetGuid.value, guid] })
       success('Programa cancelado correctamente')
     },
     onError: (err: unknown) => {
