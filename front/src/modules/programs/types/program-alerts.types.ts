@@ -159,3 +159,24 @@ export interface ReconciliationSummary {
   cancelled: number
   already_sent_not_modified: number
 }
+
+export type RetryBlockedReason =
+  | 'program_cancelled'
+  | 'alert_cancelled'
+  | 'not_retryable'
+  | 'opted_out'
+  | 'already_delivered'
+  | 'recently_retried'
+  | 'contact_still_missing'
+
+export interface RetryProgramAlertResult {
+  recipient_guid: string
+  state: string
+  retry_count: number
+  last_retry_at: string | null
+}
+
+export interface RebuildProgramAlertsResult {
+  reconciliation: ReconciliationSummary
+  warnings: ProgramWarning[]
+}

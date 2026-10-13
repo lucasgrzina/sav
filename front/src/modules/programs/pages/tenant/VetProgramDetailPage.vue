@@ -117,6 +117,7 @@ const {
             <ProgramAlertsTab
               :vet-guid="vetGuid"
               :guid="guid"
+              :client-guid="program.client.guid"
               :targets="program.targets"
               :managers="program.managers"
               :editable="program.editable"

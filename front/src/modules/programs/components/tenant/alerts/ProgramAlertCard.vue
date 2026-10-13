@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import ProgramAlertAttemptsDetail from './ProgramAlertAttemptsDetail.vue'
+import ProgramAlertRowActions from './ProgramAlertRowActions.vue'
 import ProgramAlertStatusTag from './ProgramAlertStatusTag.vue'
 import { useAlertLinePresentation } from '../../../composables/useAlertLinePresentation'
 import type { ProgramAlertLine } from '../../../types/program-alerts.types'
 
-const props = defineProps<{ line: ProgramAlertLine; expanded: boolean }>()
-const emit = defineEmits<{ toggle: [key: string] }>()
+const props = defineProps<{
+  line: ProgramAlertLine
+  expanded: boolean
+  canGoToContacts: boolean
+  retrying?: boolean
+}>()
+const emit = defineEmits<{
+  toggle: [key: string]
+  retry: [line: ProgramAlertLine]
+  contacts: [line: ProgramAlertLine]
+}>()
 
 const { statusNote, typeLabel, taskLabel, formatDeliveredAt } = useAlertLinePresentation()
 const note = computed(() => statusNote(props.line))
@@ -27,6 +37,13 @@ const deliveredAt = computed(() => formatDeliveredAt(props.line.delivered_at))
       Entregado {{ deliveredAt }}
     </p>
     <p v-if="note" class="pac-note" :class="{ 'pac-note--problem': line.bucket === 'problem' }">{{ note }}</p>
+    <ProgramAlertRowActions
+      :line="line"
+      :can-go-to-contacts="canGoToContacts"
+      :retrying="retrying"
+      @retry="emit('retry', $event)"
+      @contacts="emit('contacts', $event)"
+    />
     <button
       v-if="line.attempts.length"
       type="button"

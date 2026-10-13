@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import BaseEmptyState from '@/components/atoms/feedback/BaseEmptyState.vue'
 import BaseErrorState from '@/components/atoms/feedback/BaseErrorState.vue'
+import BaseConfirmDialog from '@/components/atoms/overlays/BaseConfirmDialog.vue'
 import BasePagination from '@/components/atoms/navigation/BasePagination.vue'
 import PermissionGuard from '@/components/shared/PermissionGuard.vue'
 import { useResponsive } from '@/core/composables/useResponsive'
@@ -12,16 +14,21 @@ import type { SelectOption } from '@/core/types/ui.types'
 import ProgramAlertCard from './ProgramAlertCard.vue'
 import ProgramAlertsFilters from './ProgramAlertsFilters.vue'
 import ProgramAlertsSummaryBar from './ProgramAlertsSummaryBar.vue'
+import ProgramAlertsOutOfSyncBanner from './ProgramAlertsOutOfSyncBanner.vue'
 import ProgramAlertsTable from './ProgramAlertsTable.vue'
-import { ALERTS_COPY, ALERT_TYPE_LABEL } from '../../../constants/alert-copy'
+import ProgramWarningsBanner from './ProgramWarningsBanner.vue'
+import { ACTIONS_COPY, ALERTS_COPY, ALERT_TYPE_LABEL } from '../../../constants/alert-copy'
 import { PROGRAM_ALERTS_PER_PAGE, useProgramAlerts } from '../../../composables/useProgramAlerts'
+import { useRebuildProgramAlerts } from '../../../composables/useRebuildProgramAlerts'
+import { useRetryProgramAlert } from '../../../composables/useRetryProgramAlert'
 import { useProgramAlertsUiStore } from '../../../stores/program-alerts-ui.store'
 import type { ProgramManagerRef, ProgramTarget } from '../../../types/program.types'
-import type { AlertType, ProgramAlertsFilters as Filters } from '../../../types/program-alerts.types'
+import type { AlertType, ProgramAlertLine, ProgramAlertsFilters as Filters } from '../../../types/program-alerts.types'
 
 const props = defineProps<{
   vetGuid: string
   guid: string
+  clientGuid: string
   targets: ProgramTarget[]
   managers: ProgramManagerRef[]
   editable: boolean
@@ -29,6 +36,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ edit: [] }>()
 
+const router = useRouter()
 const { isMobile } = useResponsive()
 const ui = useProgramAlertsUiStore()
 ui.bindProgram(props.guid)
@@ -78,6 +86,46 @@ const emptyFilterMessage = computed(() =>
   status.value === 'problem' ? ALERTS_COPY.emptyProblem : ALERTS_COPY.emptyFilter,
 )
 
+const meta = computed(() => data.value?.meta ?? null)
+
+const { mutate: retry, isPending: isRetrying } = useRetryProgramAlert(() => props.vetGuid, () => props.guid)
+const { mutate: rebuild, isPending: isRebuilding } = useRebuildProgramAlerts(() => props.vetGuid, () => props.guid)
+
+const pendingRetry = ref<ProgramAlertLine | null>(null)
+const showRetryConfirm = computed({
+  get: () => pendingRetry.value !== null,
+  set: (open) => {
+    if (!open) pendingRetry.value = null
+  },
+})
+const retryingGuid = computed(() => (isRetrying.value ? pendingRetry.value?.retry?.recipient_guid ?? null : null))
+
+function askRetry(line: ProgramAlertLine) {
+  pendingRetry.value = line
+}
+
+function confirmRetry() {
+  const recipientGuid = pendingRetry.value?.retry?.recipient_guid
+  pendingRetry.value = null
+  if (recipientGuid) retry(recipientGuid)
+}
+
+// "Ir a contactos" only makes sense for client staff: vet staff contacts are not edited here.
+const clientProfileGuids = computed(
+  () => new Set(props.managers.filter((m) => m.origin === 'client').map((m) => m.guid)),
+)
+
+function canGoToContacts(line: ProgramAlertLine): boolean {
+  return clientProfileGuids.value.has(line.recipient.profile_guid)
+}
+
+function goToContacts(line: ProgramAlertLine) {
+  router.push({
+    name: 'clients-staff-edit',
+    params: { vetGuid: props.vetGuid, clientGuid: props.clientGuid, profileGuid: line.recipient.profile_guid },
+  })
+}
+
 function onPageChange({ page: next }: { page: number; perPage: number }) {
   ui.setPage(next)
 }
@@ -95,6 +143,15 @@ function onPageChange({ page: next }: { page: number; perPage: number }) {
     <a-spin v-else-if="isLoading" :spinning="true" class="pat-spin" />
 
     <template v-else-if="data && counters">
+      <div v-if="meta && (meta.out_of_sync || meta.warnings.length)" class="pat-banners">
+        <ProgramAlertsOutOfSyncBanner
+          v-if="meta.out_of_sync && !meta.program_cancelled_at"
+          :loading="isRebuilding"
+          @rebuild="rebuild()"
+        />
+        <ProgramWarningsBanner v-if="!meta.program_cancelled_at" :warnings="meta.warnings" />
+      </div>
+
       <BaseEmptyState v-if="isProgramEmpty" :description="ALERTS_COPY.emptyTitle" data-testid="alerts-empty">
         <p class="pat-empty-detail">{{ ALERTS_COPY.emptyDetail }}</p>
         <PermissionGuard v-if="editable" permission="programs.update">
@@ -131,7 +188,11 @@ function onPageChange({ page: next }: { page: number; perPage: number }) {
               :key="line.key"
               :line="line"
               :expanded="expandedKeys.includes(line.key)"
+              :can-go-to-contacts="canGoToContacts(line)"
+              :retrying="retryingGuid !== null && retryingGuid === line.retry?.recipient_guid"
               @toggle="ui.toggleExpanded"
+              @retry="askRetry"
+              @contacts="goToContacts"
             />
           </div>
           <ProgramAlertsTable
@@ -139,7 +200,11 @@ function onPageChange({ page: next }: { page: number; perPage: number }) {
             :lines="lines"
             :loading="isFetching"
             :expanded-keys="expandedKeys"
+            :can-go-to-contacts="canGoToContacts"
+            :retrying-guid="retryingGuid"
             @toggle="ui.toggleExpanded"
+            @retry="askRetry"
+            @contacts="goToContacts"
           />
 
           <BasePagination
@@ -152,10 +217,25 @@ function onPageChange({ page: next }: { page: number; perPage: number }) {
         </template>
       </template>
     </template>
+
+    <BaseConfirmDialog
+      v-model="showRetryConfirm"
+      :title="ACTIONS_COPY.retryConfirmTitle"
+      :message="ACTIONS_COPY.retryConfirmMessage(pendingRetry?.recipient.name ?? '')"
+      :ok-text="ACTIONS_COPY.retry"
+      @confirm="confirmRetry"
+    />
   </div>
 </template>
 
 <style scoped>
+.pat-banners {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 .pat-toolbar {
   display: flex;
   flex-direction: column;

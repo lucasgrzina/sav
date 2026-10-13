@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import ProgramAlertAttemptsDetail from './ProgramAlertAttemptsDetail.vue'
+import ProgramAlertRowActions from './ProgramAlertRowActions.vue'
 import ProgramAlertStatusTag from './ProgramAlertStatusTag.vue'
 import { useAlertLinePresentation } from '../../../composables/useAlertLinePresentation'
 import type { ProgramAlertLine } from '../../../types/program-alerts.types'
 
-defineProps<{ lines: ProgramAlertLine[]; loading: boolean; expandedKeys: string[] }>()
-const emit = defineEmits<{ toggle: [key: string] }>()
+defineProps<{
+  lines: ProgramAlertLine[]
+  loading: boolean
+  expandedKeys: string[]
+  canGoToContacts: (line: ProgramAlertLine) => boolean
+  retryingGuid: string | null
+}>()
+const emit = defineEmits<{
+  toggle: [key: string]
+  retry: [line: ProgramAlertLine]
+  contacts: [line: ProgramAlertLine]
+}>()
 
 const { statusNote, typeLabel, taskLabel, formatDeliveredAt } = useAlertLinePresentation()
 
@@ -61,6 +72,13 @@ const columns = [
         >
           {{ statusNote(record as ProgramAlertLine) }}
         </div>
+        <ProgramAlertRowActions
+          :line="record as ProgramAlertLine"
+          :can-go-to-contacts="canGoToContacts(record as ProgramAlertLine)"
+          :retrying="retryingGuid !== null && retryingGuid === (record as ProgramAlertLine).retry?.recipient_guid"
+          @retry="emit('retry', $event)"
+          @contacts="emit('contacts', $event)"
+        />
       </template>
     </template>
     <template #expandedRowRender="{ record }">

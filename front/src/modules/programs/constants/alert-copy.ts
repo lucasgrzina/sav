@@ -4,6 +4,7 @@ import type {
   AlertStatusFilter,
   AlertType,
   FailureCode,
+  RetryBlockedReason,
   WarningCode,
   WarningSeverity,
 } from '../types/program-alerts.types'
@@ -137,6 +138,36 @@ export const ATTEMPT_STATE_LABEL: Record<string, string> = {
   failed: 'Con problema',
   suppressed: 'No enviado',
 }
+
+// Copy for the "Reenviar" button: why it is disabled (advice) and why the server refused (422 reason).
+export const RETRY_REASON_COPY: Record<RetryBlockedReason, string> = {
+  program_cancelled: 'El programa está cancelado.',
+  alert_cancelled: 'El aviso fue cancelado y ya no corresponde enviarlo.',
+  not_retryable: 'Este aviso no se puede reenviar.',
+  opted_out: 'La persona se dio de baja de los avisos por WhatsApp.',
+  already_delivered: 'Ya llegó por correo',
+  recently_retried: 'Ya se reintentó hace poco. Esperá unos minutos.',
+  contact_still_missing: 'Todavía no tiene un contacto válido. Cargalo y volvé a intentar.',
+}
+
+export const ACTIONS_COPY = {
+  retry: 'Reenviar',
+  retryConfirmTitle: 'Reenviar aviso',
+  retryConfirmMessage: (name: string) => `Se va a intentar enviar de nuevo el aviso a ${name}.`,
+  retrySuccess: 'El aviso se reenviará en instantes.',
+  retryError: 'No pudimos reenviar el aviso.',
+  goToContacts: 'Ir a contactos',
+  rebuild: 'Recalcular avisos',
+  rebuildSuccess: 'Avisos recalculados.',
+  rebuildError: 'No pudimos recalcular los avisos.',
+  outOfSync: 'Los avisos programados no coinciden con el plan actual',
+  warningsBanner: (count: number) =>
+    count === 1
+      ? '1 aviso de este programa no se va a enviar.'
+      : `${count} avisos de este programa no se van a enviar.`,
+  warningsDetail: 'Ver detalle',
+  warningsDrawerTitle: 'Avisos que no se van a enviar',
+} as const
 
 export const ALERTS_COPY = {
   tab: 'Avisos',

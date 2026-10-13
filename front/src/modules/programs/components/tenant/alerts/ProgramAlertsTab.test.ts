@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
@@ -14,6 +14,17 @@ const s = vi.hoisted(() => ({
   isMobile: null as unknown as Ref<boolean>,
   refetch: vi.fn(),
   calls: [] as { filters: Ref<ProgramAlertsFilters>; page: Ref<number> }[],
+  retry: vi.fn(),
+  rebuild: vi.fn(),
+  push: vi.fn(),
+}))
+
+vi.mock('vue-router', () => ({ useRouter: () => ({ push: s.push }) }))
+vi.mock('../../../composables/useRetryProgramAlert', () => ({
+  useRetryProgramAlert: () => ({ mutate: s.retry, isPending: ref(false) }),
+}))
+vi.mock('../../../composables/useRebuildProgramAlerts', () => ({
+  useRebuildProgramAlerts: () => ({ mutate: s.rebuild, isPending: ref(false) }),
 }))
 
 vi.mock('../../../composables/useProgramAlerts', () => ({
@@ -61,7 +72,11 @@ function line(overrides: Partial<ProgramAlertLine> = {}): ProgramAlertLine {
   }
 }
 
-function payload(lines: ProgramAlertLine[], counters = { scheduled: 0, sent: 1, problem: 0, cancelled: 0, total: 1 }) {
+function payload(
+  lines: ProgramAlertLine[],
+  counters = { scheduled: 0, sent: 1, problem: 0, cancelled: 0, total: 1 },
+  metaOverrides: Record<string, unknown> = {},
+) {
   return {
     data: lines,
     current_page: 1,
@@ -71,6 +86,7 @@ function payload(lines: ProgramAlertLine[], counters = { scheduled: 0, sent: 1, 
     meta: {
       counters, warnings: [], timezone: 'America/Argentina/Buenos_Aires',
       out_of_sync: false, multi_group: false, program_cancelled_at: null, last_reconciled_at: null,
+      ...metaOverrides,
     },
   }
 }
@@ -80,6 +96,7 @@ function mountTab() {
     props: {
       vetGuid: 'vet-1',
       guid: 'prog-1',
+      clientGuid: 'client-1',
       targets: [{ guid: 'g1', target_date: '2026-09-23', animals: [] }],
       managers: [{ guid: 'p1', name: 'Maria Perez', role: 'client-manager', origin: 'client' }],
       editable: true,
@@ -88,6 +105,7 @@ function mountTab() {
       plugins: [Antd, createTestingPinia({ stubActions: false, createSpy: vi.fn })],
       stubs: { PermissionGuard: { template: '<div><slot /></div>' } },
     },
+    attachTo: document.body,
   })
 }
 
@@ -99,6 +117,13 @@ describe('ProgramAlertsTab', () => {
     s.isMobile = ref(false)
     s.refetch.mockReset()
     s.calls.length = 0
+    s.retry.mockReset()
+    s.rebuild.mockReset()
+    s.push.mockReset()
+  })
+
+  afterEach(() => {
+    document.body.innerHTML = ''
   })
 
   it('renders the counters and the lines on desktop', () => {
@@ -175,5 +200,113 @@ describe('ProgramAlertsTab', () => {
     const wrapper = mountTab()
 
     expect(wrapper.text()).toContain('No llegó por WhatsApp — se envió por correo')
+  })
+
+  describe('actions and banners', () => {
+    const problemCounters = { scheduled: 0, sent: 0, problem: 1, cancelled: 0, total: 1 }
+    const failedLine = (overrides: Partial<ProgramAlertLine> = {}) =>
+      line({
+        state: 'failed',
+        bucket: 'problem',
+        failure_code: 'no_whatsapp_contact',
+        retry: { allowed: true, recipient_guid: 'rec-1', blocked_reason: null },
+        ...overrides,
+      })
+
+    it('retries only after confirming the dialog', async () => {
+      s.data = ref(payload([failedLine()], problemCounters))
+      const wrapper = mountTab()
+
+      await wrapper.get('[data-testid="alert-retry"]').trigger('click')
+      await flushPromises()
+      expect(s.retry).not.toHaveBeenCalled()
+
+      const ok = document.body.querySelector('.ant-modal-footer .ant-btn-primary') as HTMLElement
+      ok.click()
+      await flushPromises()
+      expect(s.retry).toHaveBeenCalledWith('rec-1')
+    })
+
+    it('disables the retry button and explains why when the server advice blocks it', () => {
+      s.data = ref(payload([
+        failedLine({ retry: { allowed: false, recipient_guid: 'rec-1', blocked_reason: 'already_delivered' } }),
+      ], problemCounters))
+      const wrapper = mountTab()
+
+      expect(wrapper.get('[data-testid="alert-retry"]').attributes('disabled')).toBeDefined()
+      expect(wrapper.get('[data-testid="alert-retry-reason"]').text()).toBe('Ya llegó por correo')
+    })
+
+    it('does not offer retry when there is no advice or it is not retryable', () => {
+      s.data = ref(payload([
+        failedLine({ retry: { allowed: false, recipient_guid: 'rec-1', blocked_reason: 'not_retryable' } }),
+        failedLine({ key: 'a2:p1', retry: null }),
+      ], { ...problemCounters, total: 2, problem: 2 }))
+      const wrapper = mountTab()
+
+      expect(wrapper.find('[data-testid="alert-retry"]').exists()).toBe(false)
+    })
+
+    it('goes to the staff contacts of client recipients', async () => {
+      s.data = ref(payload([failedLine()], problemCounters))
+      const wrapper = mountTab()
+
+      await wrapper.get('[data-testid="alert-go-contacts"]').trigger('click')
+      expect(s.push).toHaveBeenCalledWith({
+        name: 'clients-staff-edit',
+        params: { vetGuid: 'vet-1', clientGuid: 'client-1', profileGuid: 'p1' },
+      })
+    })
+
+    it('hides "Ir a contactos" for vet staff recipients', () => {
+      s.data = ref(payload([failedLine({ recipient: { profile_guid: 'vet-p', name: 'Dr', role: 'vet' } })], problemCounters))
+      const wrapper = mountTab()
+
+      expect(wrapper.find('[data-testid="alert-go-contacts"]').exists()).toBe(false)
+    })
+
+    it('shows the out-of-sync banner and rebuilds on click', async () => {
+      s.data = ref(payload([line()], undefined, { out_of_sync: true }))
+      const wrapper = mountTab()
+
+      expect(wrapper.get('[data-testid="out-of-sync-banner"]').text()).toContain(
+        'Los avisos programados no coinciden con el plan actual',
+      )
+      await wrapper.get('[data-testid="rebuild-alerts"]').trigger('click')
+      expect(s.rebuild).toHaveBeenCalledTimes(1)
+    })
+
+    it('summarizes only critical warnings in the banner and lists them on demand', async () => {
+      s.data = ref(payload([line()], undefined, {
+        warnings: [
+          { code: 'RECIPIENT_WITHOUT_WHATSAPP', severity: 'critical', context: { name: 'Maria', count: 3 } },
+          { code: 'RECIPIENT_EMAIL_ONLY', severity: 'warning', context: { name: 'Juan' } },
+        ],
+      }))
+      const wrapper = mountTab()
+
+      expect(wrapper.get('[data-testid="warnings-banner"]').text()).toContain(
+        '3 avisos de este programa no se van a enviar.',
+      )
+      await wrapper.get('[data-testid="warnings-detail"]').trigger('click')
+      await flushPromises()
+      expect(document.body.textContent).toContain('Responsable sin WhatsApp')
+    })
+
+    it('shows no warning banner without critical warnings or for a cancelled program', () => {
+      s.data = ref(payload([line()], undefined, {
+        warnings: [{ code: 'RECIPIENT_EMAIL_ONLY', severity: 'warning', context: {} }],
+      }))
+      expect(mountTab().find('[data-testid="warnings-banner"]').exists()).toBe(false)
+
+      s.data = ref(payload([line()], undefined, {
+        out_of_sync: true,
+        program_cancelled_at: '2026-10-12T10:00:00Z',
+        warnings: [{ code: 'RECIPIENT_WITHOUT_WHATSAPP', severity: 'critical', context: {} }],
+      }))
+      const cancelled = mountTab()
+      expect(cancelled.find('[data-testid="warnings-banner"]').exists()).toBe(false)
+      expect(cancelled.find('[data-testid="out-of-sync-banner"]').exists()).toBe(false)
+    })
   })
 })
