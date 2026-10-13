@@ -47,9 +47,22 @@ vi.mock('../../composables/useAnimalSearch', () => ({
 vi.mock('../../composables/useProgramDetail', () => ({
   useProgramDetail: () => ({ data: s.programDetail, isLoading: ref(false) }),
 }))
-vi.mock('../../composables/useProgramMutations', () => ({
-  useCreateProgram: () => ({ mutate: vi.fn(), isPending: ref(false), fieldErrors: ref(null) }),
-  useUpdateProgram: () => ({ mutate: vi.fn(), isPending: ref(false), fieldErrors: ref(null) }),
+vi.mock('../../composables/useProgramSaveFlow', () => ({
+  useProgramSaveFlow: () => ({
+    open: ref(false),
+    status: ref('idle'),
+    preview: ref(null),
+    acknowledged: ref(false),
+    requiresAcknowledgement: ref(false),
+    canConfirm: ref(false),
+    isSaving: ref(false),
+    fieldErrors: ref(null),
+    start: vi.fn(),
+    retry: vi.fn(),
+    close: vi.fn(),
+    confirmAndSave: vi.fn(),
+    saveWithoutPreview: vi.fn(),
+  }),
 }))
 // Behaves like the real hook: options depend on the chosen establishment, and nothing
 // is available while no establishment is chosen (disabled query).

@@ -19,7 +19,8 @@ import { useVetProtocolDetail } from '@/modules/protocols/composables/useVetProt
 import { useAnimalSearch } from '../../composables/useAnimalSearch'
 import { useClientManagerOptions } from '../../composables/useClientManagerOptions'
 import { useProgramDetail } from '../../composables/useProgramDetail'
-import { useCreateProgram, useUpdateProgram } from '../../composables/useProgramMutations'
+import { useProgramSaveFlow } from '../../composables/useProgramSaveFlow'
+import ProgramPreviewPanel from '../../components/tenant/preview/ProgramPreviewPanel.vue'
 import { programSchema } from '../../validators/program.validator'
 import type { ProgramFormValues } from '../../validators/program.validator'
 import type { ProgramDetail, CreateProgramPayload, ProgramManagerOption } from '../../types/program.types'
@@ -301,13 +302,11 @@ watch(clientId, (newValue, oldValue) => {
 
 // --- Guardado ---
 
-const { mutate: mutateCreate, isPending: isCreating, fieldErrors: createErrors } = useCreateProgram()
-const { mutate: mutateUpdate, isPending: isUpdating, fieldErrors: updateErrors } = useUpdateProgram()
+const saveFlow = useProgramSaveFlow(vetGuid, editingGuid, backToList)
 
-const isSaving = computed(() => isCreating.value || isUpdating.value)
-const formFieldErrors = computed(() => (isEditMode.value ? updateErrors.value : createErrors.value))
+const isSaving = computed(() => saveFlow.isSaving.value)
 
-watch(formFieldErrors, (errs) => setErrors(errs ?? {}))
+watch(saveFlow.fieldErrors, (errs) => setErrors(errs ?? {}))
 
 function toPayload(values: ProgramFormValues): CreateProgramPayload {
   return {
@@ -328,13 +327,8 @@ const onSubmit = handleSubmit((values) => {
   // Never save while the managers' options are loading or failed (edit mode).
   if (managersUnavailable.value) return
 
-  const payload = toPayload(values)
-
-  if (isEditMode.value && editingGuid.value) {
-    mutateUpdate({ guid: editingGuid.value, payload }, { onSuccess: () => backToList() })
-  } else {
-    mutateCreate(payload, { onSuccess: () => backToList() })
-  }
+  // Saving goes through the review panel (preview -> confirm -> store/update).
+  saveFlow.start(toPayload(values))
 })
 
 // The backend reports client-manager errors per index (`manager_profile_ids.{i}`):
@@ -421,6 +415,20 @@ const title = computed(() => (isEditMode.value ? 'Editar programa' : 'Nuevo prog
         </div>
       </a-form>
     </a-spin>
+
+    <ProgramPreviewPanel
+      v-model:open="saveFlow.open.value"
+      v-model:acknowledged="saveFlow.acknowledged.value"
+      :status="saveFlow.status.value"
+      :preview="saveFlow.preview.value"
+      :requires-acknowledgement="saveFlow.requiresAcknowledgement.value"
+      :can-confirm="saveFlow.canConfirm.value"
+      :saving="saveFlow.isSaving.value"
+      @close="saveFlow.close"
+      @retry="saveFlow.retry"
+      @confirm="saveFlow.confirmAndSave"
+      @save-without-summary="saveFlow.saveWithoutPreview"
+    />
   </div>
 </template>
 

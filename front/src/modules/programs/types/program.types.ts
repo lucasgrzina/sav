@@ -1,4 +1,4 @@
-import type { LocalDateTime } from './program-alerts.types'
+import type { LocalDateTime, ProgramWarning, ReconciliationSummary } from './program-alerts.types'
 
 export interface ProgramTargetAnimalRef {
   guid: string
@@ -93,6 +93,9 @@ export interface ProgramDetail extends Omit<ProgramListItem, 'targets_count' | '
   targets: ProgramTarget[]
   managers: ProgramManagerRef[]
   updated_at: string
+  // Only present in store/update responses (authoritative, computed on what was persisted).
+  warnings?: ProgramWarning[]
+  reconciliation?: ReconciliationSummary
 }
 
 export interface ProgramListParams {

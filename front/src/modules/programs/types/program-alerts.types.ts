@@ -180,3 +180,100 @@ export interface RebuildProgramAlertsResult {
   reconciliation: ReconciliationSummary
   warnings: ProgramWarning[]
 }
+
+// --- Preview (POST programs/preview, POST programs/{guid}/preview) ---
+
+export type PreviewItemSkipReason = 'in_past' | 'no_recipients'
+export type PreviewRecipientSkipReason = 'no_whatsapp_contact' | 'invalid_number' | 'opted_out'
+
+export interface PreviewRecipient {
+  profile_guid: string
+  name: string | null
+  role: string | null
+  channel: 'whatsapp' | 'email'
+  destination_masked: string | null
+  contact_status: ContactStatus
+  will_send: boolean
+  skip_reason: PreviewRecipientSkipReason | null
+  rendered_message: string | null
+}
+
+export interface PreviewItem {
+  target_key: string
+  target_guid: string | null
+  target_ref: string | null
+  target_date: string
+  protocol_task_guid: string | null
+  task_description: string | null
+  task_date: string | null
+  task_time: string | null
+  protocol_task_alert_guid: string | null
+  scheduled_at_local: LocalDateTime
+  scheduled_at_utc: string
+  will_send: boolean
+  skip_reason: PreviewItemSkipReason | null
+  roles: string[]
+  require_confirmation: boolean
+  free_text: string | null
+  recipients: PreviewRecipient[]
+}
+
+export interface PreviewDiff {
+  kept: number
+  updated: number
+  created: number
+  cancelled: number
+  rescheduled: {
+    target_guid: string | null
+    protocol_task_alert_guid: string | null
+    task_description: string | null
+    from: LocalDateTime
+    to: LocalDateTime
+  }[]
+  cancelled_items: {
+    task_description: string | null
+    scheduled_at_local: LocalDateTime
+    reason: AlertCancelReason
+  }[]
+  sent_not_modified: {
+    task_description: string | null
+    scheduled_at_local: LocalDateTime
+    target_date_previous: string | null
+    recipients_count: number
+  }[]
+  protocol_changed: boolean
+}
+
+export interface ProgramPreview {
+  generated_at: string
+  timezone: string
+  truncated: boolean
+  template: { task_due_version: number }
+  program: {
+    company_name: string | null
+    client: { guid: string; name: string }
+    establishment: { guid: string; name: string }
+    protocol: { guid: string; name: string }
+    technique: { guid: string; name: string }
+    managers: { guid: string; name: string; role: string }[]
+  }
+  summary: {
+    alerts_total: number
+    alerts_will_send: number
+    alerts_wont_send: number
+    recipients_total: number
+    groups_count: number
+    window: { from: string | null; to: string | null }
+  }
+  items: PreviewItem[]
+  warnings: ProgramWarning[]
+  diff: PreviewDiff | null
+}
+
+export interface PreviewProgramPayload {
+  client_id: string
+  establishment_id: string
+  protocol_id: string
+  targets: { guid?: string; target_ref: string; target_date: string }[]
+  manager_profile_ids: string[]
+}

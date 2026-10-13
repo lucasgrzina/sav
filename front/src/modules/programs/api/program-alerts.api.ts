@@ -4,6 +4,8 @@ import type {
   ProgramAlertLine,
   ProgramAlertsMeta,
   ProgramAlertsParams,
+  ProgramPreview,
+  PreviewProgramPayload,
   RebuildProgramAlertsResult,
   RetryProgramAlertResult,
 } from '../types/program-alerts.types'
@@ -41,5 +43,18 @@ export async function rebuildProgramAlertsApi(
   const res = await http.post<RebuildProgramAlertsResult>(
     `/v1/vets/${vetGuid}/programs/${guid}/alerts/rebuild`,
   )
+  return res.data
+}
+
+// Read-only: computes what would be scheduled without persisting, queueing or notifying.
+export async function previewProgramApi(
+  vetGuid: string,
+  payload: PreviewProgramPayload,
+  guid?: string | null,
+): Promise<ProgramPreview> {
+  const url = guid
+    ? `/v1/vets/${vetGuid}/programs/${guid}/preview`
+    : `/v1/vets/${vetGuid}/programs/preview`
+  const res = await http.post<ProgramPreview>(url, payload)
   return res.data
 }

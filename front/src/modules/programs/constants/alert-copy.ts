@@ -256,3 +256,55 @@ export const SEVERITY_ORDER: Record<WarningSeverity, number> = {
   warning: 1,
   info: 2,
 }
+
+// RF-09: copy of the "Revisá los avisos" panel shown before saving a program.
+export const PREVIEW_COPY = {
+  title: 'Revisá los avisos',
+  loading: 'Calculando los avisos…',
+  backToEdit: 'Volver a editar',
+  confirm: 'Confirmar y guardar',
+  acknowledge: 'Entiendo que estos avisos no se van a enviar',
+  errorTitle: 'No pudimos generar el resumen',
+  errorDetail: 'Podés reintentar o guardar el programa igual: los avisos se calculan también al guardar.',
+  retry: 'Reintentar',
+  saveWithoutSummary: 'Guardar sin resumen',
+  viewMessage: 'Ver mensaje',
+  messageTitle: 'Mensaje de WhatsApp',
+  messageNote: 'Este es el texto exacto que va a recibir la persona.',
+  willSend: 'Se enviará',
+  willSendEmail: 'Se enviará por correo',
+  wontSend: (reason: string) => `No se enviará — ${reason}`,
+  itemSkip: {
+    in_past: 'la fecha ya pasó',
+    no_recipients: 'no hay destinatarios para este rol',
+  },
+  recipientSkip: {
+    no_whatsapp_contact: 'no tiene WhatsApp cargado',
+    invalid_number: 'el número no es válido',
+    opted_out: 'pidió no recibir avisos',
+  },
+  recipientSentence: (name: string, role: string | null, channel: string, destination: string | null, when: string) =>
+    `${name}${role ? ` (${role})` : ''} recibirá por ${channel}${destination ? ` (${destination})` : ''} el ${when}`,
+  channelLabel: { whatsapp: 'WhatsApp', email: 'correo' } as Record<string, string>,
+  summary: (total: number, people: number, from: string | null, to: string | null, wont: number) => {
+    const base = `Se programarán ${total} ${total === 1 ? 'aviso' : 'avisos'} para ${people} ${people === 1 ? 'persona' : 'personas'}`
+    const range = from && to ? ` entre el ${from} y el ${to}` : ''
+    const skipped = wont > 0 ? ` ${wont === 1 ? 'El 1 no se enviará' : `Los ${wont} no se enviarán`}.` : ''
+    return `${base}${range}.${skipped}`
+  },
+  groupTitle: (date: string, count: number) => `Grupo del ${date} — ${count} ${count === 1 ? 'aviso' : 'avisos'}`,
+  showMore: (n: number) => `Mostrar ${n} más`,
+  truncated: 'El resumen muestra solo una parte de los avisos; el programa se guardará completo.',
+  managers: 'Responsables',
+  client: 'Cliente',
+  establishment: 'Establecimiento',
+  protocol: 'Protocolo',
+  technique: 'Técnica',
+  diffTitle: 'Cambios respecto de lo ya programado',
+  diffCounts: (kept: number, updated: number, created: number, cancelled: number) =>
+    `Se conservan ${kept}, se reprograman ${updated}, se crean ${created} y se cancelan ${cancelled}.`,
+  diffSentNotModified: (n: number) =>
+    `${n} ${n === 1 ? 'aviso ya enviado no se modifica' : 'avisos ya enviados no se modifican'}.`,
+  diffProtocolChanged: 'El protocolo cambió: los avisos se recalcularán con el nuevo plan.',
+  savedWithCritical: 'Programa guardado. Algunos avisos no se van a enviar; revisalos en la pestaña Avisos.',
+} as const
