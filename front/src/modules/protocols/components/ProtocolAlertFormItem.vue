@@ -8,6 +8,7 @@ import {
   REQUIRE_CONFIRMATION_HELP,
   REQUIRE_CONFIRMATION_LABEL,
 } from '@/core/constants/require-confirmation-copy'
+import { ALERT_MESSAGE_SOFT_LIMIT } from '../composables/useActiveProgramsConfirm'
 import type { TenantRole } from '../types/protocol.types'
 import type { ProtocolTaskAlertFormValues } from '../validators/protocol.validator'
 
@@ -42,6 +43,10 @@ function update<K extends keyof ProtocolTaskAlertFormValues>(
 ) {
   emit('update', props.index, { ...props.alert, [field]: value })
 }
+
+const messageLength = computed(() => props.alert.message.length)
+// Soft limit (DEC-13): warns but never blocks saving.
+const messageOverLimit = computed(() => messageLength.value > ALERT_MESSAGE_SOFT_LIMIT)
 
 const rolesEmpty = computed(() => props.alert.roles.length === 0)
 
@@ -98,6 +103,16 @@ const offsetPreview = computed(() =>
       :rows="2"
       @update:value="(v: string) => update('message', v)"
     />
+    <p
+      class="pafi-counter"
+      :class="{ 'pafi-counter--over': messageOverLimit }"
+      data-testid="alert-message-counter"
+    >
+      {{ messageLength }}/{{ ALERT_MESSAGE_SOFT_LIMIT }}
+      <template v-if="messageOverLimit">
+        — El mensaje es largo; algunos canales podrían mostrarlo recortado.
+      </template>
+    </p>
 
     <div class="pafi-row pafi-row--footer">
       <a-tooltip :title="REQUIRE_CONFIRMATION_HELP">
@@ -161,6 +176,17 @@ const offsetPreview = computed(() =>
   font-size: 12px;
   color: var(--dt-muted, #6b8cae);
   margin: 0;
+}
+
+.pafi-counter {
+  font-size: 12px;
+  margin: 0;
+  text-align: right;
+  color: var(--dt-muted, #6b8cae);
+}
+
+.pafi-counter--over {
+  color: #d48806;
 }
 
 .pafi-row--footer {

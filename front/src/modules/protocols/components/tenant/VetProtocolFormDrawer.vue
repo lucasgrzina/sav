@@ -7,7 +7,9 @@ import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import BaseInput from '@/components/atoms/inputs/BaseInput.vue'
 import BaseSelect from '@/components/atoms/selects/BaseSelect.vue'
 import ProtocolTaskList from '../ProtocolTaskList.vue'
+import BaseConfirmDialog from '@/components/atoms/overlays/BaseConfirmDialog.vue'
 import { useTechniqueTree } from '../../composables/useTechniqueTree'
+import { useActiveProgramsConfirm } from '../../composables/useActiveProgramsConfirm'
 import { protocolSchema } from '../../validators/protocol.validator'
 import type { ProtocolFormValues } from '../../validators/protocol.validator'
 import type { VetProtocolDetail } from '../../types/vet-protocol.types'
@@ -141,7 +143,14 @@ function onSubTechniqueSelect(value: string | number | null) {
   techniqueId.value = (value as string) ?? ''
 }
 
-const onSubmit = handleSubmit((values) => emit('submit', values))
+const { confirmOpen, message: confirmMessage, requestSubmit, confirm: onConfirmSave, cancel: onCancelSave } =
+  useActiveProgramsConfirm<ProtocolFormValues>(
+    computed(() => props.initialValues?.active_programs_count),
+    isEditMode,
+    (values) => emit('submit', values),
+  )
+
+const onSubmit = handleSubmit((values) => requestSubmit(values))
 
 watch(
   () => props.fieldErrors,
@@ -236,6 +245,16 @@ const title = computed(() => {
         </BaseButton>
       </a-space>
     </template>
+
+    <BaseConfirmDialog
+      v-model="confirmOpen"
+      title="Guardar cambios"
+      :message="confirmMessage"
+      ok-text="Guardar cambios"
+      :loading="loading"
+      @confirm="onConfirmSave"
+      @cancel="onCancelSave"
+    />
   </BaseDrawer>
 </template>
 
