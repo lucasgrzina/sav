@@ -65,7 +65,7 @@ final class ProgramTaskDueMessageBuilder implements AlertMessageBuilder
             );
         }
 
-        $message =$this->composer->compose($this->context($alert, $program, $payload), $recipient->name, $version);
+        $message = $this->composer->compose($this->context($alert, $program, $payload), $recipient->name, $version);
 
         return new TemplateContent(
             type: AlertType::ProgramTaskDue,

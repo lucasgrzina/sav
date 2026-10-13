@@ -19,6 +19,7 @@ use App\Models\Technique;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Vet;
+use App\Notifications\Builders\ProgramTaskDueMessageBuilder;
 use App\Notifications\Contracts\AlertMessageBuilder;
 use App\Notifications\Data\DeliveryResult;
 use App\Notifications\Data\MessageContent;
@@ -261,6 +262,22 @@ class ProgramTaskDueRevalidatorTest extends TestCase
         $this->assertCount(1, $gateway->sentMessages());
     }
 
+    public function test_with_the_v2_flag_off_a_reconciler_alert_is_delivered_with_the_v1_variables(): void
+    {
+        config(['notifications.templates.program_task_due_v2' => false]);
+        [$alert, $recipient] = $this->dispatchedAlert();
+        $this->assertSame(2, $alert->payload['contextVersion']); // written regardless of the flag
+
+        $gateway = $this->runJob($recipient, new ProgramTaskDueMessageBuilder());
+
+        $sent = $gateway->sentMessages();
+        $this->assertCount(1, $sent);
+        $this->assertSame([1, 2, 3], array_keys($sent[0]->content->variables));
+        $this->assertSame(1, $sent[0]->content->version);
+        $this->assertSame(1, $recipient->fresh()->template_version);
+        $this->assertNotNull($recipient->fresh()->rendered_body);
+    }
+
     // ---- HandleProgramCancelledListener ------------------------------------------------------
 
     public function test_cancelling_a_program_soft_cancels_pending_alerts_and_keeps_the_rows(): void
@@ -337,7 +354,7 @@ class ProgramTaskDueRevalidatorTest extends TestCase
         );
     }
 
-    private function runJob(AlertRecipient $recipient): FakeGateway
+    private function runJob(AlertRecipient $recipient, ?AlertMessageBuilder $realBuilder = null): FakeGateway
     {
         $gateway = new FakeGateway();
         $gateway->willReturn(DeliveryResult::sent('SM1'));
@@ -356,7 +373,7 @@ class ProgramTaskDueRevalidatorTest extends TestCase
         };
 
         (new DeliverAlertJob($recipient->id))->handle(
-            new MessageBuilderRegistry([$builder]),
+            new MessageBuilderRegistry([$realBuilder ?? $builder]),
             new GatewayRegistry(app(), ['whatsapp' => ['gateway' => FakeGateway::class]]),
             new DeliveryPipeline([]),
             new ChannelFallbackService(),

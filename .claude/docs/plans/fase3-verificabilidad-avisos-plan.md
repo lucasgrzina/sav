@@ -86,6 +86,7 @@ DEC-11 — Reenvío manual reutiliza la fila del destinatario
 
 DEC-12 — Selección de plantilla por payload + bandera
   Decisión: `TaskDueComposer::effectiveVersion(payload)` devuelve 2 solo si `config('notifications.templates.program_task_due_v2') === true` (env `WHATSAPP_TASK_DUE_V2_ENABLED`, default `false`) Y `payload.contextVersion >= 2`; si no, 1. El preview llama a la misma función, por lo que muestra el texto de la versión realmente activa. El `contextVersion` se escribe SIEMPRE (con bandera apagada también), así el reconciliador puede enriquecer los pendientes antes de encender la bandera.
+  Siempre activos (NO dependen de la bandera v2): el revalidador de envío, la compuerta de `PhoneValidator`, la supresión de alertas canceladas y el payload `contextVersion: 2`. La bandera solo elige la plantilla (v1/v2) que se renderiza; apagarla no desactiva ninguna de estas protecciones. Cubierto por `ProgramTaskDueRevalidatorTest::test_with_the_v2_flag_off_...`.
   Footer: `Respondé BAJA para dejar de recibir avisos.` (43 caracteres; Meta limita el footer a 60 y no admite variables). El texto del pie sugerido en la spec (65 caracteres) NO entra.
   Cuerpo v2: termina en texto estático (Meta puede rechazar plantillas cuyo cuerpo termina en variable; el cuerpo propuesto en la spec terminaba en `{{8}}`). Se agrega etiqueta "Indicaciones:" y una línea final estática. Ver catálogo en PR-3.
 
