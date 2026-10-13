@@ -14,11 +14,17 @@ use Illuminate\Http\Exceptions\HttpResponseException;
  */
 class PreviewProgramRequest extends StoreProgramRequest
 {
+    public const MAX_TARGETS = 100;
+    public const MAX_MANAGERS = 50;
+
     private ?Program $program = null;
 
     public function rules(): array
     {
         return array_merge(parent::rules(), [
+            // Bounds: the projection runs groups x protocol alerts x responsibles on every call.
+            'targets'              => ['required', 'array', 'min:1', 'max:' . self::MAX_TARGETS],
+            'manager_profile_ids'  => ['required', 'array', 'min:1', 'max:' . self::MAX_MANAGERS],
             'targets.*.guid'       => ['nullable', 'string', 'uuid'],
             'targets.*.target_ref' => ['nullable', 'string', 'max:36'], // client-side id of a group that has no guid yet
         ]);
@@ -71,6 +77,8 @@ class PreviewProgramRequest extends StoreProgramRequest
     {
         return array_merge(parent::messages(), [
             'targets.*.guid.uuid'        => 'El identificador del grupo no es válido.',
+            'targets.max'                 => 'Se pueden previsualizar hasta ' . self::MAX_TARGETS . ' grupos.',
+            'manager_profile_ids.max'     => 'Se pueden previsualizar hasta ' . self::MAX_MANAGERS . ' responsables.',
             'targets.*.target_ref.max'   => 'La referencia del grupo es demasiado larga.',
         ]);
     }

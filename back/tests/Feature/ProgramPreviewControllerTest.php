@@ -87,6 +87,32 @@ class ProgramPreviewControllerTest extends TestCase
             ->assertJsonPath('data.items.0.recipients.0.rendered_message', 'Hola María Pérez, del programa "Protocolo Test": Traer termo');
     }
 
+    public function test_preview_rejects_unbounded_targets_and_managers(): void
+    {
+        $owner = $this->makeResponsible();
+        $targets = array_map(fn (int $i) => ['target_date' => '2030-06-10'], range(1, 101));
+
+        $this->actingAs($this->vetUser, 'sanctum')
+            ->postJson($this->url('/preview'), $this->draftPayload($targets, [$owner]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['targets']);
+
+        $guids = array_map(fn () => Str::uuid()->toString(), range(1, 51));
+        $this->actingAs($this->vetUser, 'sanctum')
+            ->postJson($this->url('/preview'), $this->draftPayload([['target_date' => '2030-06-10']], [$owner], ['manager_profile_ids' => $guids]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['manager_profile_ids']);
+    }
+
+    public function test_both_preview_routes_are_throttled(): void
+    {
+        foreach (['v1/vets/{vet}/programs/preview', 'v1/vets/{vet}/programs/{guid}/preview'] as $uri) {
+            $route = collect(app('router')->getRoutes()->getRoutes())->first(fn ($r) => $r->uri() === "api/{$uri}");
+            $this->assertNotNull($route, $uri);
+            $this->assertContains('throttle:30,1', $route->gatherMiddleware());
+        }
+    }
+
     public function test_no_phone_number_ever_leaves_unmasked(): void
     {
         $owner = $this->makeResponsible(whatsapp: '5491122334455', email: 'maria.perez@example.com');
