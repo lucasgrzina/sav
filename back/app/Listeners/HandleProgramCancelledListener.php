@@ -6,22 +6,22 @@ use App\Events\ProgramCancelledEvent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Models\Alert;
 use App\Notifications\Services\AlertRecipientFactory;
+use App\Services\ProgramAlerts\ProgramAlertReconciler;
 
 class HandleProgramCancelledListener
 {
-    public function __construct(private readonly AlertRecipientFactory $recipientFactory) {}
+    public function __construct(
+        private readonly AlertRecipientFactory $recipientFactory,
+        private readonly ProgramAlertReconciler $reconciler,
+    ) {}
 
     public function handle(ProgramCancelledEvent $event): void
     {
         $program = $event->program;
 
-        Alert::query()
-            ->where('type', AlertType::ProgramTaskDue)
-            ->where('subject_type', 'program')
-            ->where('subject_id', $program->id)
-            ->where('status', 'pending')
-            ->get()
-            ->each(fn (Alert $pending) => $pending->delete());
+        // Soft-cancels the pending task_due alerts (reason program_cancelled); dispatched ones that are
+        // still queued or retrying are stopped by the send-time revalidator.
+        $this->reconciler->reconcile($program, 'program_cancelled', auth()->id());
 
         $alert = new Alert([
             'type' => AlertType::ProgramCancelled,

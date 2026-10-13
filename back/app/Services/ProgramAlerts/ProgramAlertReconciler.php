@@ -276,6 +276,64 @@ final class ProgramAlertReconciler
         });
     }
 
+    /**
+     * Send-time revalidation: does this (possibly already dispatched, possibly retrying) alert still
+     * apply to this person? Read-only. Rules: alert not cancelled; program active; the profile is
+     * still a responsible whose role is in the protocol alert's roles; v2 payload: the group still
+     * exists and the key recomputed from live data matches `logical_key` (same task/alert, same
+     * instant); legacy payload: the protocol alert is still part of the current protocol.
+     */
+    public function isStillValid(Alert $alert, int $userProfileId): bool
+    {
+        if ($alert->status === AlertStatus::Cancelled->value) {
+            return false;
+        }
+
+        $program = $alert->subject;
+        if (! $program instanceof Program) {
+            return false;
+        }
+
+        // Fresh state: a retry must see changes made after the job was queued.
+        $program = Program::with('targets', 'protocol.tasks.alerts', 'managers.role', 'managers.user', 'vet.country')
+            ->find($program->id);
+
+        if ($program === null || $program->cancelled_at !== null) {
+            return false;
+        }
+
+        $manager = $program->managers->firstWhere('id', $userProfileId);
+        $taskAlertGuid = $alert->payload['protocolTaskAlertGuid'] ?? null;
+
+        if ($manager === null || $taskAlertGuid === null) {
+            return false;
+        }
+
+        $protocolAlert = $program->protocol->tasks
+            ->flatMap(fn ($task) => $task->alerts)
+            ->firstWhere('guid', $taskAlertGuid);
+
+        if ($protocolAlert === null || ! in_array($manager->role->name, $protocolAlert->roles ?? [], true)) {
+            return false;
+        }
+
+        $targetGuid = $alert->payload['programTargetGuid'] ?? null;
+
+        if ($targetGuid === null || $alert->logical_key === null) {
+            return true; // legacy payload: program active + still responsible + alert still in the protocol
+        }
+
+        $projection = $this->projector->project(ProjectionInput::fromProgram($program, CarbonImmutable::instance(now())));
+
+        foreach ($projection->items as $item) {
+            if ($item->targetGuid === $targetGuid && $item->logicalKey === $alert->logical_key) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** More than half of the pending alerts would be cancelled by an unattended trigger: refuse. */
     private function violatesValve(ReconcilePlan $plan, string $trigger): bool
     {

@@ -316,7 +316,7 @@ class ProgramAlertGenerationTest extends TestCase
         $this->assertSame('2026-09-20 08:00:00', $regenerated->scheduled_at->format('Y-m-d H:i:s'));
     }
 
-    public function test_cancelling_a_program_deletes_pending_task_due_alerts_and_schedules_an_immediate_cancelled_alert(): void
+    public function test_cancelling_a_program_soft_cancels_pending_task_due_alerts_and_schedules_an_immediate_cancelled_alert(): void
     {
         $task = ProtocolTask::create([
             'guid' => Str::uuid()->toString(), 'protocol_id' => $this->protocol->id,
@@ -336,7 +336,12 @@ class ProgramAlertGenerationTest extends TestCase
 
         $this->service->cancel($program);
 
-        $this->assertSame(0, \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->count());
+        // Soft-cancel: the row is kept, with its reason, instead of being deleted.
+        $this->assertSame(0, \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->where('status', 'pending')->count());
+        $this->assertSame(
+            'program_cancelled',
+            \App\Notifications\Models\Alert::where('type', AlertType::ProgramTaskDue)->where('status', 'cancelled')->firstOrFail()->cancel_reason->value,
+        );
 
         $cancelledAlert = \App\Notifications\Models\Alert::where('type', AlertType::ProgramCancelled)->firstOrFail();
         $this->assertTrue($cancelledAlert->scheduled_at->lessThanOrEqualTo(now()));

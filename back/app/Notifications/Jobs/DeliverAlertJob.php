@@ -16,6 +16,7 @@ use App\Notifications\Exceptions\NotificationConfigurationException;
 use App\Notifications\Exceptions\RecipientContactNotFoundException;
 use App\Notifications\Models\AlertRecipient;
 use App\Notifications\Pipeline\DeliveryPipeline;
+use App\Notifications\Registries\AlertRevalidatorRegistry;
 use App\Notifications\Registries\GatewayRegistry;
 use App\Notifications\Registries\MessageBuilderRegistry;
 use App\Notifications\Services\ChannelFallbackService;
@@ -49,6 +50,7 @@ final class DeliverAlertJob implements ShouldQueue
         GatewayRegistry $gateways,
         DeliveryPipeline $pipeline,
         ChannelFallbackService $fallback,
+        ?AlertRevalidatorRegistry $revalidators = null,
     ): void {
         $recipient = AlertRecipient::with('alert.subject')->find($this->recipientId);
 
@@ -72,6 +74,22 @@ final class DeliverAlertJob implements ShouldQueue
                 'status' => DeliveryStatus::Suppressed,
                 'failure_reason' => 'no_longer_applicable',
                 'failure_code' => FailureCode::NoLongerApplicable,
+            ]);
+
+            return;
+        }
+
+        // Runs on every attempt (queue retries and the email fallback included), so a program
+        // cancelled or a responsible removed after dispatch stops the send. No fallback: the
+        // message no longer applies, it did not fail.
+        $revalidators ??= app(AlertRevalidatorRegistry::class);
+        $code = $revalidators->for($recipient->alert->type)?->check($recipient->alert, $recipient);
+
+        if ($code !== null) {
+            $recipient->update([
+                'status' => DeliveryStatus::Suppressed,
+                'failure_reason' => 'no_longer_applicable',
+                'failure_code' => $code,
             ]);
 
             return;
