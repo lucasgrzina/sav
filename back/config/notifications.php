@@ -114,6 +114,12 @@ return [
     // rebuild, manager unlink) always run: they are the only way alerts get generated.
     'reconciler' => [
         'enabled' => (bool) env('ALERTS_RECONCILER_ENABLED', true),
+
+        // Mass-cancel valve (automatic triggers only): refuse when more than `mass_cancel_ratio`
+        // of the pending alerts would be cancelled, but only for programs with at least
+        // `mass_cancel_min_pending` pending alerts (small programs legitimately lose most of theirs).
+        'mass_cancel_ratio' => (float) env('ALERTS_MASS_CANCEL_RATIO', 0.5),
+        'mass_cancel_min_pending' => (int) env('ALERTS_MASS_CANCEL_MIN_PENDING', 4),
     ],
 
     // Program alert warnings (HIGH_VOLUME_FOR_RECIPIENT): more than this many alerts to the same

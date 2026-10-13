@@ -281,7 +281,9 @@ final class ProgramAlertReconciler
                     'pending' => $plan->pendingCount,
                     'would_cancel' => count($plan->cancel),
                 ]);
-                $this->audit($locked, $trigger, $userId, $report);
+                if (! $this->isRepeatedAbort($locked, $trigger, $report)) {
+                    $this->audit($locked, $trigger, $userId, $report);
+                }
 
                 return $report;
             }
@@ -387,12 +389,30 @@ final class ProgramAlertReconciler
         return $pairs;
     }
 
-    /** More than half of the pending alerts would be cancelled by an unattended trigger: refuse. */
+    /**
+     * Too many of the pending alerts would be cancelled by an unattended trigger: refuse. Programs
+     * with fewer than `mass_cancel_min_pending` pending alerts are exempt (cancelling 1 of 2 is normal).
+     */
     private function violatesValve(ReconcilePlan $plan, string $trigger): bool
     {
+        $ratio = (float) config('notifications.reconciler.mass_cancel_ratio', 0.5);
+        $minPending = (int) config('notifications.reconciler.mass_cancel_min_pending', 4);
+
         return in_array($trigger, self::AUTOMATIC_TRIGGERS, true)
             && $plan->pendingCount > 0
-            && count($plan->cancel) * 2 > $plan->pendingCount;
+            && $plan->pendingCount >= $minPending
+            && count($plan->cancel) > $plan->pendingCount * $ratio;
+    }
+
+    /** The nightly job would otherwise append the same abort row every night for a stuck program. */
+    private function isRepeatedAbort(Program $program, string $trigger, ReconcileReport $report): bool
+    {
+        $last = ProgramAlertReconciliation::where('program_id', $program->id)->latest('id')->first();
+
+        return $last !== null
+            && $last->aborted
+            && $last->trigger === $trigger
+            && $last->counts == $report->counts();
     }
 
     /** The audit row is traceability only: failing to write it must not undo the reconciliation (nor the save around it). */

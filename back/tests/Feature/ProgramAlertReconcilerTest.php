@@ -392,22 +392,40 @@ class ProgramAlertReconcilerTest extends TestCase
     public function test_valve_aborts_automatic_triggers_that_would_cancel_most_pending_alerts(): void
     {
         $this->addTarget('2030-06-10');
-        $drop1 = $this->addTarget('2030-07-10');
-        $drop2 = $this->addTarget('2030-08-10');
+        $drops = [$this->addTarget('2030-07-10'), $this->addTarget('2030-08-10'), $this->addTarget('2030-09-10')];
         $this->reconcile('program_created');
-        $drop1->delete();
-        $drop2->delete();
+        foreach ($drops as $drop) {
+            $drop->delete();
+        }
 
         $report = $this->reconcile('protocol_updated');
 
         $this->assertTrue($report->aborted);
-        $this->assertSame(3, $this->activeAlerts()->where('status', 'pending')->count());
-        $this->assertTrue(ProgramAlertReconciliation::where('program_id', $this->program->id)->where('aborted', true)->exists());
+        $this->assertSame(4, $this->activeAlerts()->where('status', 'pending')->count());
+        $this->assertSame(1, ProgramAlertReconciliation::where('program_id', $this->program->id)->where('aborted', true)->count());
+
+        // The same abort again (e.g. the next nightly run) does not append an identical audit row.
+        $this->assertTrue($this->reconcile('protocol_updated')->aborted);
+        $this->assertSame(1, ProgramAlertReconciliation::where('program_id', $this->program->id)->where('aborted', true)->count());
 
         // A user-driven trigger is not subject to the valve.
         $manual = $this->reconcile('manual_rebuild');
         $this->assertFalse($manual->aborted);
-        $this->assertSame(2, $manual->cancelledTotal());
+        $this->assertSame(3, $manual->cancelledTotal());
+    }
+
+    public function test_valve_does_not_block_automatic_cancels_on_programs_with_few_pending_alerts(): void
+    {
+        $this->addTarget('2030-06-10');
+        $drop = $this->addTarget('2030-07-10');
+        $this->reconcile('program_created');
+        $drop->delete(); // cancels 1 of 2 pending: legitimate, below the minimum-pending threshold
+
+        $report = $this->reconcile('nightly');
+
+        $this->assertFalse($report->aborted);
+        $this->assertSame(1, $report->cancelledTotal());
+        $this->assertSame(1, $this->activeAlerts()->where('status', 'pending')->count());
     }
 
     public function test_a_failing_audit_write_does_not_undo_the_reconciliation(): void
