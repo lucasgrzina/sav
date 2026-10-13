@@ -27,6 +27,7 @@ use App\Services\ProgramAlerts\Data\ReconcileReport;
 use App\Services\ProgramAlerts\ProgramAlertReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -407,6 +408,22 @@ class ProgramAlertReconcilerTest extends TestCase
         $manual = $this->reconcile('manual_rebuild');
         $this->assertFalse($manual->aborted);
         $this->assertSame(2, $manual->cancelledTotal());
+    }
+
+    public function test_a_failing_audit_write_does_not_undo_the_reconciliation(): void
+    {
+        $this->addTarget('2030-06-10');
+        DB::listen(function ($query) {
+            if (str_contains($query->sql, 'program_alert_reconciliations') && str_starts_with(strtolower($query->sql), 'insert')) {
+                throw new \RuntimeException('audit down');
+            }
+        });
+
+        $report = $this->reconcile('program_created');
+
+        $this->assertSame(1, $report->created);
+        $this->assertSame(1, $this->taskDueAlerts()->count());
+        $this->assertSame(0, ProgramAlertReconciliation::count());
     }
 
     public function test_kill_switch_only_disables_automatic_triggers(): void

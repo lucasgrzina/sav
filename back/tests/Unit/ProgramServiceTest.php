@@ -177,6 +177,21 @@ class ProgramServiceTest extends TestCase
         $this->assertCount(0, $program->targets->first()->animals);
     }
 
+    public function test_a_failure_building_the_warnings_does_not_block_the_save(): void
+    {
+        // Only the warning service reads the alerts with this exact column list.
+        \Illuminate\Support\Facades\DB::listen(function ($query) {
+            if (str_starts_with($query->sql, 'select "id", "status", "logical_key"')) {
+                throw new \RuntimeException('warnings down');
+            }
+        });
+
+        $program = $this->service->create($this->basePayload(), $this->vet->id);
+
+        $this->assertNotNull(Program::find($program->id));
+        $this->assertSame([], $program->getRelation('alert_warnings'));
+    }
+
     // -------------------------------------------------------------------------
     // create — N targets con animales nuevos y existentes mezclados
     // -------------------------------------------------------------------------

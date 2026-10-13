@@ -22,6 +22,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Brings the persisted `program.task_due` alerts of a program in line with what the projector
@@ -394,15 +395,21 @@ final class ProgramAlertReconciler
             && count($plan->cancel) * 2 > $plan->pendingCount;
     }
 
+    /** The audit row is traceability only: failing to write it must not undo the reconciliation (nor the save around it). */
     private function audit(Program $program, string $trigger, ?int $userId, ReconcileReport $report): void
     {
-        ProgramAlertReconciliation::create([
-            'program_id' => $program->id,
-            'user_id' => $userId,
-            'trigger' => $trigger,
-            'counts' => $report->counts(),
-            'aborted' => $report->aborted,
-        ]);
+        try {
+            // Savepoint so a failed insert cannot poison the surrounding transaction.
+            DB::transaction(fn () => ProgramAlertReconciliation::create([
+                'program_id' => $program->id,
+                'user_id' => $userId,
+                'trigger' => $trigger,
+                'counts' => $report->counts(),
+                'aborted' => $report->aborted,
+            ]));
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /** CAS: change a still-pending alert. Returns false when it was claimed by the dispatcher meanwhile. */

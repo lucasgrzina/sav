@@ -25,6 +25,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ProgramService
 {
@@ -139,13 +140,19 @@ class ProgramService
     {
         $report = $this->reconciler->reconcile($program, $trigger, auth()->id());
 
-        $input = ProjectionInput::fromProgram($program, CarbonImmutable::instance(now()));
-        $report->warnings = ($this->warningService ??= app(ProgramAlertWarningService::class))->build(
-            $input,
-            $this->projector->project($input),
-            WarningMode::Save,
-            ExistingAlertIndex::forProgram($program),
-        );
+        try {
+            $input = ProjectionInput::fromProgram($program, CarbonImmutable::instance(now()));
+            $report->warnings = ($this->warningService ??= app(ProgramAlertWarningService::class))->build(
+                $input,
+                $this->projector->project($input),
+                WarningMode::Save,
+                ExistingAlertIndex::forProgram($program),
+            );
+        } catch (Throwable $e) {
+            // Informational only (DU-01): a failure computing them must never roll back the save.
+            report($e);
+            $report->warnings = [];
+        }
 
         $program->setRelation('alert_report', $report); // relation, not attribute: attributes would be persisted by later saves
         $program->setRelation('alert_warnings', $report->warnings);
