@@ -13,6 +13,7 @@ use App\Notifications\Data\TemplateContent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Models\Alert;
+use App\Notifications\Support\WhatsappVariableSanitizer;
 use App\Notifications\Templates\TaskDueComposer;
 use App\Notifications\Templates\TaskDueContext;
 use App\Services\ProgramAlerts\Data\ProjectionInput;
@@ -37,17 +38,23 @@ final class ProgramTaskDueMessageBuilder implements AlertMessageBuilder
         $program = $alert->subject;
         $payload = ProgramTaskPayload::from($alert->payload);
 
+        $version = $this->composer->effectiveVersion($payload);
+
         if ($recipient->channel === Channel::Email) {
-            return new EmailContent(
-                subject: "Recordatorio: {$program->protocol->name}",
-                body: "Hola {$recipient->name}, {$payload->message}",
-            );
+            return $version === 2
+                ? $this->emailV2($this->context($alert, $program, $payload), $recipient)
+                : new EmailContent(
+                    subject: "Recordatorio: {$program->protocol->name}",
+                    body: "Hola {$recipient->name}, {$payload->message}",
+                );
         }
 
         if ($recipient->channel === Channel::Push) {
             return new PushContent(
                 title: 'Recordatorio de tarea',
-                body: "{$program->protocol->name}: {$payload->message}",
+                body: $version === 2
+                    ? $this->pushBodyV2($this->context($alert, $program, $payload))
+                    : "{$program->protocol->name}: {$payload->message}",
                 tag: "alert-{$alert->guid}",
                 url: "programas/{$program->guid}",
                 data: [
@@ -58,14 +65,41 @@ final class ProgramTaskDueMessageBuilder implements AlertMessageBuilder
             );
         }
 
-        $version = $this->composer->effectiveVersion($payload);
-        $message = $this->composer->compose($this->context($alert, $program, $payload), $recipient->name, $version);
+        $message =$this->composer->compose($this->context($alert, $program, $payload), $recipient->name, $version);
 
         return new TemplateContent(
             type: AlertType::ProgramTaskDue,
             variables: $message->variables,
             version: $message->version,
         );
+    }
+
+    /** Same lines as the WhatsApp v2 message, as a plain-text e-mail. */
+    private function emailV2(TaskDueContext $ctx, Recipient $recipient): EmailContent
+    {
+        $freeText = WhatsappVariableSanitizer::clean($ctx->freeText, 200, TaskDueComposer::FALLBACK_FREE_TEXT);
+        $name = WhatsappVariableSanitizer::clean($recipient->name, 60, TaskDueComposer::FALLBACK_NAME);
+        $task = WhatsappVariableSanitizer::clean($ctx->taskDescription, 120, TaskDueComposer::FALLBACK_EMPTY);
+
+        return new EmailContent(
+            subject: "Recordatorio: {$task} — {$ctx->protocolName}",
+            body: implode("\n", [
+                "Hola {$name}, te escribe {$ctx->vetName} por el programa \"{$ctx->protocolName}\".",
+                "Cliente: {$ctx->clientName}",
+                "Establecimiento: {$ctx->establishmentName}",
+                "Tarea: {$task}",
+                'Cuándo: ' . $this->composer->whenText($ctx),
+                "Indicaciones: {$freeText}",
+                'Este es un aviso automático de SAV.',
+            ]),
+        );
+    }
+
+    private function pushBodyV2(TaskDueContext $ctx): string
+    {
+        $task = WhatsappVariableSanitizer::clean($ctx->taskDescription, 120, TaskDueComposer::FALLBACK_EMPTY);
+
+        return "{$ctx->protocolName} · {$ctx->establishmentName}: {$task}, " . $this->composer->whenText($ctx);
     }
 
     /** Live program data plus the payload snapshot: the same inputs the preview feeds the composer. */

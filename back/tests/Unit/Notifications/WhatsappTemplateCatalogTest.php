@@ -276,4 +276,33 @@ class WhatsappTemplateCatalogTest extends TestCase
 
         $this->assertFalse($config['templates']['program_task_due_v2']);
     }
+
+    public function test_with_the_flag_on_the_task_due_builder_sends_exactly_the_v2_placeholders(): void
+    {
+        config(['notifications.templates.program_task_due_v2' => true]);
+
+        $alert = $this->alert(AlertType::ProgramTaskDue);
+        $alert->payload = ['protocolTaskAlertGuid' => 'a', 'message' => 'Vacunar', 'taskDescription' => 'Tarea', 'taskDate' => '2030-06-10', 'taskTime' => '08:00', 'contextVersion' => 2];
+
+        $content = (new ProgramTaskDueMessageBuilder())->build($alert, $this->recipient());
+
+        $this->assertInstanceOf(TemplateContent::class, $content);
+        $this->assertSame(2, $content->version);
+        $this->assertSame(
+            WhatsappTemplateCatalog::placeholderCount(WhatsappTemplateCatalog::for(AlertType::ProgramTaskDue, 2)['body']),
+            count($content->variables),
+        );
+        $this->assertSame(range(1, 8), array_keys($content->variables));
+    }
+
+    public function test_a_legacy_alert_stays_on_v1_even_with_the_flag_on(): void
+    {
+        config(['notifications.templates.program_task_due_v2' => true]);
+
+        $content = (new ProgramTaskDueMessageBuilder())->build($this->alert(AlertType::ProgramTaskDue), $this->recipient());
+
+        $this->assertInstanceOf(TemplateContent::class, $content);
+        $this->assertSame(1, $content->version);
+        $this->assertCount(3, $content->variables);
+    }
 }
