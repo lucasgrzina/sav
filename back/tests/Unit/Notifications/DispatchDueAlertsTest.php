@@ -160,6 +160,29 @@ class DispatchDueAlertsTest extends TestCase
         Queue::assertPushed(DeliverAlertJob::class, 1);
     }
 
+    public function test_a_failing_alert_does_not_starve_the_following_ones_and_the_command_fails(): void
+    {
+        Queue::fake();
+
+        $poison = $this->createAlert('-2 minutes');
+        $this->createRecipient($poison);
+        $healthy = $this->createAlert('-1 minute');
+        $this->createRecipient($healthy);
+
+        // The claim UPDATE of the poison alert blows up (once is enough: it is rolled back).
+        DB::listen(function ($query) use ($poison) {
+            if (str_starts_with(strtolower($query->sql), 'update "alerts"') && in_array($poison->id, $query->bindings, true)) {
+                throw new \RuntimeException('boom');
+            }
+        });
+
+        $this->artisan('alerts:dispatch-due')->assertFailed();
+
+        $this->assertSame('pending', $poison->fresh()->status);
+        $this->assertSame('dispatched', $healthy->fresh()->status);
+        Queue::assertPushed(DeliverAlertJob::class, 1);
+    }
+
     public function test_ignores_alerts_that_are_not_pending(): void
     {
         Queue::fake();

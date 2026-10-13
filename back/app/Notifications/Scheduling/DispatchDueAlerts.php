@@ -9,6 +9,7 @@ use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class DispatchDueAlerts extends Command
 {
@@ -19,17 +20,30 @@ class DispatchDueAlerts extends Command
     public function handle(): int
     {
         $dispatched = 0;
+        $failed = 0;
 
         Alert::query()
             ->where('status', AlertStatus::Pending->value)
             ->where('scheduled_at', '<=', now())
-            ->chunkById(100, function ($alerts) use (&$dispatched) {
+            ->chunkById(100, function ($alerts) use (&$dispatched, &$failed) {
                 foreach ($alerts as $alert) {
-                    $dispatched += $this->dispatchAlert($alert);
+                    // One poison alert must not starve the ones behind it on every run.
+                    try {
+                        $dispatched += $this->dispatchAlert($alert);
+                    } catch (Throwable $e) {
+                        $failed++;
+                        report($e);
+                    }
                 }
             });
 
         $this->info(now()->toDateTimeString()." - Se despacharon {$dispatched} destinatarios.");
+
+        if ($failed > 0) {
+            $this->error("{$failed} alertas no se pudieron despachar (ver logs).");
+
+            return Command::FAILURE;
+        }
 
         return Command::SUCCESS;
     }
