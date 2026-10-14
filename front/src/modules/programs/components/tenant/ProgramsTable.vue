@@ -30,6 +30,10 @@ function goToEdit(program: ProgramListItem) {
   router.push({ name: 'vet-programs-edit', params: { guid: program.guid } })
 }
 
+function protocolLabel(program: ProgramListItem) {
+  return `${program.protocol.name} (${program.technique.name})`
+}
+
 const columns = [
   { title: 'Cliente', key: 'client', dataIndex: 'client' },
   { title: 'Establecimiento', key: 'establishment', dataIndex: 'establishment' },
@@ -49,6 +53,14 @@ const headerTooltips: Record<string, string> = {
 </script>
 
 <style scoped>
+.programs-table-protocol {
+  display: block;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .programs-table-help-header {
   cursor: help;
   border-bottom: 1px dotted currentColor;
@@ -77,7 +89,9 @@ const headerTooltips: Record<string, string> = {
         {{ (record as ProgramListItem).establishment.name }}
       </template>
       <template v-else-if="column.key === 'protocol'">
-        {{ (record as ProgramListItem).protocol.name }} ({{ (record as ProgramListItem).technique.name }})
+        <a-tooltip :title="protocolLabel(record as ProgramListItem)">
+          <span class="programs-table-protocol">{{ protocolLabel(record as ProgramListItem) }}</span>
+        </a-tooltip>
       </template>
       <template v-else-if="column.key === 'next_target_date'">
         {{
