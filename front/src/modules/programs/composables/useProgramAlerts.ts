@@ -31,6 +31,9 @@ export function useProgramAlerts(
     queryKey: computed(() => ['program-alerts', toValue(vetGuid), toValue(guid), toValue(filters), toValue(page)]),
     queryFn: ({ signal }) => listProgramAlertsApi(toValue(vetGuid), toValue(guid), params.value, signal),
     placeholderData: keepPreviousData,
+    // Delivery state and contact advice change outside this screen (jobs, provider webhooks,
+    // contact edits), so always refetch on mount/focus instead of serving the 5-minute global cache.
+    staleTime: 0,
     enabled: computed(() => can('programs.alerts.read') && Boolean(toValue(vetGuid)) && Boolean(toValue(guid))),
   })
 }

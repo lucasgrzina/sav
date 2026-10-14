@@ -101,7 +101,8 @@ export const FAILURE_COPY: Record<FailureCode, FailureCopyEntry> = {
 export const CANCEL_REASON_COPY: Record<AlertCancelReason, string> = {
   rescheduled: 'Se reprogramó por un cambio de fecha.',
   protocol_changed: 'El protocolo cambió y este aviso ya no aplica.',
-  recipient_removed: 'La persona ya no es responsable del programa.',
+  recipient_removed:
+    'La persona dejó de ser responsable del programa (por ejemplo, por un cambio de encargado en el establecimiento). Asigná un nuevo responsable editando el programa.',
   group_removed: 'El grupo se quitó del programa.',
   program_cancelled: 'El programa se canceló.',
   superseded: 'Fue reemplazado por un aviso actualizado.',
@@ -238,7 +239,8 @@ export const WARNING_COPY: Record<WarningCode, WarningCopyEntry> = {
   },
   NO_MANAGERS_SELECTED: {
     title: 'Sin responsables',
-    detail: () => 'No hay responsables seleccionados: no se va a enviar ningún aviso.',
+    detail: () =>
+      'El programa no tiene responsables asignados, por lo que no se va a enviar ningún aviso. Si cambiaste al encargado del establecimiento, editá el programa y seleccioná al nuevo responsable.',
   },
   RECIPIENT_EMAIL_ONLY: {
     title: 'Solo recibirá por correo',
