@@ -29,6 +29,8 @@ final class ProgramCreatedMessageBuilder implements AlertMessageBuilder
             return new EmailContent(
                 subject: "Programa creado: {$program->protocol->name}",
                 body: "Hola {$recipient->name}, se creó el programa \"{$program->protocol->name}\".",
+                actionUrl: $alert->payload['pdf_download_url'] ?? null,
+                actionLabel: isset($alert->payload['pdf_download_url']) ? 'Descargar PDF' : null,
             );
         }
 

@@ -29,6 +29,7 @@ class ForgotPasswordEmail extends Mailable
     {
         return new Content(
             view: 'emails.forgot-password',
+            text: 'emails.text.forgot-password',
             with: [
                 'firstName'         => $this->user->first_name,
                 'code'              => $this->code,

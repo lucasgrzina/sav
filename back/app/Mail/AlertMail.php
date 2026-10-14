@@ -15,6 +15,8 @@ class AlertMail extends Mailable
     public function __construct(
         public string $alertSubject,
         public string $body,
+        public ?string $actionUrl = null,
+        public ?string $actionLabel = null,
     ) {}
 
     public function envelope(): Envelope
@@ -26,7 +28,13 @@ class AlertMail extends Mailable
     {
         return new Content(
             view: 'emails.alert',
-            with: ['body' => $this->body],
+            text: 'emails.text.alert',
+            with: [
+                'alertSubject' => $this->alertSubject,
+                'body' => $this->body,
+                'actionUrl' => $this->actionUrl,
+                'actionLabel' => $this->actionLabel,
+            ],
         );
     }
 }

@@ -158,6 +158,8 @@ return [
             'program.created' => env('TWILIO_TEMPLATE_PROGRAM_CREATED'),
             'program.cancelled' => env('TWILIO_TEMPLATE_PROGRAM_CANCELLED'),
             'program.task_due' => env('TWILIO_TEMPLATE_PROGRAM_TASK_DUE'),
+            // twilio/media (or twilio/document) template: variable {{3}} feeds the PDF header.
+            'program.pdf_shared' => env('TWILIO_TEMPLATE_PROGRAM_PDF_SHARED'),
             // v2 (opt-out footer). No default: stays unresolved until Twilio approves it.
             'program.task_due@v2' => env('TWILIO_TEMPLATE_PROGRAM_TASK_DUE_V2'),
             'health_plan.month' => env('TWILIO_TEMPLATE_HEALTH_PLAN_MONTH'),

@@ -36,6 +36,7 @@ class VetStaffInvitationMail extends Mailable
 
         return new Content(
             view: 'emails.vet-staff-invitation',
+            text: 'emails.text.vet-staff-invitation',
             with: [
                 'firstName'       => $this->user->first_name,
                 'vetName'         => $this->vetName,

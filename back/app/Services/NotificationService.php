@@ -7,6 +7,7 @@ use App\Events\News;
 use App\Models\Notification;
 use App\Models\NotificationRecipient;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -35,12 +36,22 @@ class NotificationService
 
         // Despachar evento WebSocket para cada destinatario individualmente
         foreach ($data['user_ids'] as $userId) {
-            event(new News(
-                guid:            $notification->guid,
-                payload:         $notification->payload,
-                recipientUserId: (int) $userId,
-                isRead:          false,
-            ));
+            // El broadcast es best-effort: la notificación ya está persistida, así que una
+            // caída del servidor WebSocket no debe romper el flujo que la originó.
+            try {
+                event(new News(
+                    guid:            $notification->guid,
+                    payload:         $notification->payload,
+                    recipientUserId: (int) $userId,
+                    isRead:          false,
+                ));
+            } catch (\Throwable $e) {
+                Log::warning('No se pudo emitir el broadcast de la notificación', [
+                    'notification_guid' => $notification->guid,
+                    'user_id'           => $userId,
+                    'error'             => $e->getMessage(),
+                ]);
+            }
         }
 
         return $notification;

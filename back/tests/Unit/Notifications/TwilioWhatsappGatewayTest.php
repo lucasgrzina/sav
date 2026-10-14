@@ -9,6 +9,7 @@ use App\Notifications\Data\TextContent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\TemplateNotConfiguredException;
 use App\Notifications\Gateways\Twilio\TwilioWhatsappGateway;
 use Mockery;
@@ -46,6 +47,30 @@ class TwilioWhatsappGatewayTest extends TestCase
             name: 'Juan',
             channel: Channel::Whatsapp,
         );
+    }
+
+    public function test_pdf_share_with_a_local_media_url_fails_clearly_without_calling_twilio(): void
+    {
+        $client = Mockery::mock(Client::class)->shouldAllowMockingProtectedMethods();
+        $client->shouldNotReceive('getMessages');
+
+        $gateway = new TwilioWhatsappGateway($client, 'whatsapp:from', ['program.pdf_shared' => 'HXfake']);
+
+        $message = new OutboundMessage(
+            recipient: $this->recipient(),
+            content: new TemplateContent(
+                type: AlertType::ProgramPdfShared,
+                variables: [1 => 'Juan', 2 => 'IATF', 3 => 'http://localhost:8001/shared/pdf?signature=abc'],
+            ),
+            channel: Channel::Whatsapp,
+            idempotencyKey: 'key-local-url',
+        );
+
+        $result = $gateway->send($message);
+
+        $this->assertSame(DeliveryStatus::Failed, $result->status);
+        $this->assertSame(FailureCode::ServiceMisconfigured, $result->failureCode);
+        $this->assertStringContainsString('APP_URL', $result->failureReason);
     }
 
     public function test_sends_template_content_via_content_api(): void
