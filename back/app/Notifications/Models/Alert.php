@@ -3,8 +3,11 @@
 namespace App\Notifications\Models;
 
 use App\Models\Vet;
+use App\Notifications\Enums\AlertCancelReason;
+use App\Notifications\Enums\AlertStatus;
 use App\Notifications\Enums\AlertType;
 use App\Traits\HasGuid;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +19,7 @@ class Alert extends Model
 
     protected $fillable = [
         'type', 'payload', 'scheduled_at', 'status', 'require_confirmation', 'vet_id',
+        'cancelled_at', 'cancel_reason', 'logical_key',
     ];
 
     protected $hidden = ['id'];
@@ -27,7 +31,14 @@ class Alert extends Model
             'payload' => 'array',
             'scheduled_at' => 'datetime',
             'require_confirmation' => 'boolean',
+            'cancelled_at' => 'datetime',
+            'cancel_reason' => AlertCancelReason::class,
         ];
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', [AlertStatus::Pending->value, AlertStatus::Dispatched->value]);
     }
 
     public function subject(): MorphTo

@@ -20,10 +20,12 @@ use App\Models\UserProfile;
 use App\Models\Vet;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
+use App\Services\ProgramAlerts\ProgramAlertProjector;
 use App\Services\ProgramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class ProgramServiceTest extends TestCase
 {
@@ -40,7 +42,7 @@ class ProgramServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
+        $this->service = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector(), new \App\Services\ProgramAlerts\ProgramAlertReconciler(new ProgramAlertProjector(), new \App\Notifications\Services\AlertRecipientFactory()));
 
         $this->vet = $this->createVet();
         $this->client = $this->createClient('Cliente Test');
@@ -73,7 +75,7 @@ class ProgramServiceTest extends TestCase
         $country = Country::create([
             'guid'         => Str::uuid()->toString(),
             'name'         => 'Argentina',
-            'iso_code'     => 'A' . Str::random(2),
+            'iso_code'     => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 
@@ -100,7 +102,7 @@ class ProgramServiceTest extends TestCase
         $country = Country::create([
             'guid'         => Str::uuid()->toString(),
             'name'         => 'Argentina',
-            'iso_code'     => 'A' . Str::random(2),
+            'iso_code'     => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 
@@ -174,6 +176,21 @@ class ProgramServiceTest extends TestCase
         $this->assertEquals($this->technique->id, $program->technique_id); // DEC-06: siempre desde protocol
         $this->assertCount(1, $program->targets);
         $this->assertCount(0, $program->targets->first()->animals);
+    }
+
+    public function test_a_failure_building_the_warnings_does_not_block_the_save(): void
+    {
+        // Only the warning service reads the alerts with this exact column list.
+        \Illuminate\Support\Facades\DB::listen(function ($query) {
+            if (str_starts_with($query->sql, 'select "id", "status", "logical_key"')) {
+                throw new \RuntimeException('warnings down');
+            }
+        });
+
+        $program = $this->service->create($this->basePayload(), $this->vet->id);
+
+        $this->assertNotNull(Program::find($program->id));
+        $this->assertSame([], $program->getRelation('alert_warnings'));
     }
 
     // -------------------------------------------------------------------------
@@ -482,6 +499,51 @@ class ProgramServiceTest extends TestCase
         $recipientRoles = collect($alert['recipients'])->pluck('role')->all();
 
         $this->assertEqualsCanonicalizing(['vet-assistant'], $recipientRoles);
+    }
+
+    public function test_project_target_tasks_keeps_legacy_fields_and_adds_projection_fields(): void
+    {
+        $owner = $this->createManagerProfileWithRole($this->vet, 'client-owner');
+
+        $task = ProtocolTask::create([
+            'guid' => Str::uuid()->toString(), 'protocol_id' => $this->protocol->id, 'description' => 'Tarea',
+            'days_offset' => 0, 'time_of_day' => 'after', 'time' => '08:00', 'important' => true, 'sort_order' => 1,
+        ]);
+        $withOwner = ProtocolTaskAlert::create([
+            'guid' => Str::uuid()->toString(), 'protocol_task_id' => $task->id, 'offset_days' => 1, 'time_of_day' => 'before',
+            'time' => '09:00', 'roles' => ['client-owner'], 'message' => 'Con dueño', 'require_confirmation' => false, 'sort_order' => 1,
+        ]);
+        $withoutRecipient = ProtocolTaskAlert::create([
+            'guid' => Str::uuid()->toString(), 'protocol_task_id' => $task->id, 'offset_days' => 1, 'time_of_day' => 'before',
+            'time' => '10:00', 'roles' => ['vet'], 'message' => 'Sin destinatario', 'require_confirmation' => true, 'sort_order' => 2,
+        ]);
+
+        $program = $this->service->create($this->basePayload([
+            'targets'             => [['target_date' => '2099-08-15', 'animals' => []]],
+            'manager_profile_ids' => [$owner->id],
+        ]), $this->vet->id);
+
+        $projected = $this->service->findByGuidForVet($program->guid, $this->vet->id)->targets->first()->projected_tasks[0];
+
+        $this->assertSame($task->guid, $projected['protocol_task_guid']);
+        $this->assertSame('2099-08-15', $projected['occurs_on']);
+        $this->assertTrue($projected['important']);
+
+        $alerts = collect($projected['alerts'])->keyBy('protocol_task_alert_guid');
+
+        $first = $alerts[$withOwner->guid];
+        $this->assertSame('2099-08-14', $first['occurs_on']);
+        $this->assertSame('Con dueño', $first['message']);
+        $this->assertSame($owner->guid, $first['recipients'][0]['guid']);
+        $this->assertSame('future', $first['timing']);
+        $this->assertNull($first['skip_reason']);
+        $this->assertSame('2099-08-14', $first['scheduled_at_local']['date']);
+        $this->assertSame('09:00', $first['scheduled_at_local']['time']);
+        $this->assertArrayHasKey('label', $first['scheduled_at_local']);
+
+        $second = $alerts[$withoutRecipient->guid];
+        $this->assertSame([], $second['recipients']);
+        $this->assertSame('no_recipients', $second['skip_reason']);
     }
 
     // -------------------------------------------------------------------------

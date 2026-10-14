@@ -4,6 +4,7 @@ namespace App\Notifications\Builders;
 
 use App\Models\Program;
 use App\Notifications\Contracts\AlertMessageBuilder;
+use App\Notifications\Data\EmailContent;
 use App\Notifications\Data\MessageContent;
 use App\Notifications\Data\PushContent;
 use App\Notifications\Data\Recipient;
@@ -27,6 +28,18 @@ final class ProgramPdfShareMessageBuilder implements AlertMessageBuilder
     {
         /** @var Program $program */
         $program = $alert->subject;
+
+        if ($recipient->channel === Channel::Email) {
+            return new EmailContent(
+                subject: "PDF del programa: {$program->protocol->name}",
+                body: "Hola {$recipient->name}, te compartimos el PDF del programa \"{$program->protocol->name}\".\n"
+                    . 'Descargalo desde el siguiente enlace (disponible por 24 horas).',
+                // The URL travels as a dedicated call-to-action (button + visible fallback link in
+                // the HTML part, raw link in the text part) instead of being buried in the body.
+                actionUrl: $alert->payload['pdf_share_url'],
+                actionLabel: 'Descargar PDF',
+            );
+        }
 
         if ($recipient->channel === Channel::Push) {
             return new PushContent(

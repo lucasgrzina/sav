@@ -4,6 +4,7 @@ import { EditOutlined, EyeOutlined, StopOutlined, MoreOutlined } from '@ant-desi
 import BaseTableActions from '@/components/tables/BaseTableActions.vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import PermissionGuard from '@/components/shared/PermissionGuard.vue'
+import { formatDate } from '@/core/utils/date'
 import type { ProgramListItem } from '../../types/program.types'
 
 defineProps<{
@@ -29,16 +30,42 @@ function goToEdit(program: ProgramListItem) {
   router.push({ name: 'vet-programs-edit', params: { guid: program.guid } })
 }
 
+function protocolLabel(program: ProgramListItem) {
+  return `${program.protocol.name} (${program.technique.name})`
+}
+
 const columns = [
   { title: 'Cliente', key: 'client', dataIndex: 'client' },
   { title: 'Establecimiento', key: 'establishment', dataIndex: 'establishment' },
   { title: 'Protocolo', key: 'protocol', dataIndex: 'protocol' },
   { title: 'Próximo objetivo', key: 'next_target_date', dataIndex: 'next_target_date' },
-  { title: 'Objetivos', key: 'targets_count', dataIndex: 'targets_count' },
+  { title: 'Grupos', key: 'targets_count', dataIndex: 'targets_count' },
   { title: 'Estado', key: 'status', dataIndex: 'status' },
   { title: '', key: 'actions' },
 ]
+
+const headerTooltips: Record<string, string> = {
+  next_target_date:
+    'Fecha del próximo objetivo pendiente (hoy o posterior); si ya pasaron todos, se muestra el último.',
+  targets_count:
+    'Cantidad de grupos de animales del programa. Cada grupo tiene su propia fecha objetivo.',
+}
 </script>
+
+<style scoped>
+.programs-table-protocol {
+  display: block;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.programs-table-help-header {
+  cursor: help;
+  border-bottom: 1px dotted currentColor;
+}
+</style>
 
 <template>
   <BaseDataTable
@@ -48,6 +75,12 @@ const columns = [
     row-key="guid"
     :pagination="false"
   >
+    <template #headerCell="{ column }">
+      <a-tooltip v-if="headerTooltips[String(column.key)]" :title="headerTooltips[String(column.key)]">
+        <span class="programs-table-help-header">{{ column.title }}</span>
+      </a-tooltip>
+      <template v-else>{{ column.title }}</template>
+    </template>
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'client'">
         {{ (record as ProgramListItem).client.name }}
@@ -56,18 +89,20 @@ const columns = [
         {{ (record as ProgramListItem).establishment.name }}
       </template>
       <template v-else-if="column.key === 'protocol'">
-        {{ (record as ProgramListItem).protocol.name }} ({{ (record as ProgramListItem).technique.name }})
+        <a-tooltip :title="protocolLabel(record as ProgramListItem)">
+          <span class="programs-table-protocol">{{ protocolLabel(record as ProgramListItem) }}</span>
+        </a-tooltip>
       </template>
       <template v-else-if="column.key === 'next_target_date'">
         {{
           (record as ProgramListItem).next_target_date
-            ? new Date((record as ProgramListItem).next_target_date as string).toLocaleDateString('es-AR')
+            ? formatDate((record as ProgramListItem).next_target_date as string)
             : '—'
         }}
       </template>
       <template v-else-if="column.key === 'targets_count'">
         <a-tag v-if="(record as ProgramListItem).targets_count > 1" color="blue">
-          {{ (record as ProgramListItem).targets_count }} objetivos
+          {{ (record as ProgramListItem).targets_count }} grupos
         </a-tag>
         <span v-else>{{ (record as ProgramListItem).targets_count }}</span>
       </template>

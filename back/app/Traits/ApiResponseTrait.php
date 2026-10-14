@@ -30,18 +30,25 @@ trait ApiResponseTrait
 
     public function makeSuccessPagination(
         LengthAwarePaginator $paginator,
-        ?string $resource = null
+        ?string $resource = null,
+        ?array $meta = null
     ): JsonResponse {
         $data = $resource
             ? $resource::collection($paginator->items())
             : $paginator->items();
     
-        return $this->makeSuccess([
+        $payload = [
             'data'         => $data,
             'current_page' => $paginator->currentPage(),
             'last_page'    => $paginator->lastPage(),
             'per_page'     => $paginator->perPage(),
             'total'        => $paginator->total(),
-        ]);
+        ];
+
+        if ($meta !== null) {
+            $payload['meta'] = $meta;
+        }
+
+        return $this->makeSuccess($payload);
     }
 }

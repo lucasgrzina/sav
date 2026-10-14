@@ -24,6 +24,7 @@ use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -313,7 +314,7 @@ class EstablishmentStaffControllerTest extends TestCase
 
     public function test_unlinking_detaches_manager_from_active_programs_only(): void
     {
-        Event::fake([ProgramTargetsChangedEvent::class]);
+        Log::spy();
 
         $a = $this->clientProfile();
         $b = $this->clientProfile();
@@ -332,7 +333,8 @@ class EstablishmentStaffControllerTest extends TestCase
         $this->assertSame([$a->id], $cancelled->managers()->pluck('user_profiles.id')->all());
         $this->assertSame([$a->id], $elsewhere->managers()->pluck('user_profiles.id')->all());
 
-        Event::assertDispatchedTimes(ProgramTargetsChangedEvent::class, 1);
+        // Only the active program with a detached manager is reconciled (directly, no event).
+        Log::shouldHaveReceived('info')->withArgs(fn ($message) => $message === 'program.alerts.reconciled')->once();
     }
 
     public function test_unlinking_regenerates_real_alerts_keeping_only_remaining_managers(): void
@@ -364,12 +366,15 @@ class EstablishmentStaffControllerTest extends TestCase
         $this->tenantPut([])->assertOk();
 
         $this->assertSame(0, $program->managers()->count());
-        $this->assertSame(0, Alert::where('type', AlertType::ProgramTaskDue)->where('subject_id', $program->id)->count());
+        $this->assertSame(0, Alert::where('type', AlertType::ProgramTaskDue)->where('subject_id', $program->id)->where('status', 'pending')->count());
+        $this->assertSame(
+            'recipient_removed',
+            Alert::where('type', AlertType::ProgramTaskDue)->where('subject_id', $program->id)->where('status', 'cancelled')->firstOrFail()->cancel_reason->value,
+        );
     }
 
     public function test_unlinking_keeps_vet_manager_and_other_client_managers(): void
     {
-        Event::fake([ProgramTargetsChangedEvent::class]);
         $vetManager = $this->makeProfile(User::factory()->create(), 'vet', $this->vet->id, $this->vetManagerRole);
         $a = $this->clientProfile();
         $b = $this->clientProfile();
@@ -386,7 +391,7 @@ class EstablishmentStaffControllerTest extends TestCase
 
     public function test_unlinking_a_profile_that_manages_nothing_dispatches_no_regeneration(): void
     {
-        Event::fake([ProgramTargetsChangedEvent::class]);
+        Log::spy();
         $vetManager = $this->makeProfile(User::factory()->create(), 'vet', $this->vet->id, $this->vetManagerRole);
         $c = $this->clientProfile();
         $this->establishment->staff()->sync([$c->id]);
@@ -394,7 +399,7 @@ class EstablishmentStaffControllerTest extends TestCase
 
         $this->tenantPut([])->assertOk();
 
-        Event::assertNotDispatched(ProgramTargetsChangedEvent::class);
+        Log::shouldNotHaveReceived('info', ['program.alerts.reconciled', \Mockery::any()]);
     }
 
     public function test_regeneration_failure_keeps_pivot_and_detach_consistent_and_does_not_return_500(): void
@@ -406,8 +411,11 @@ class EstablishmentStaffControllerTest extends TestCase
         $this->seedTaskDueAlerts($program);
 
         Log::spy();
-        Event::listen(ProgramTargetsChangedEvent::class, function () {
-            throw new \RuntimeException('boom');
+        // The reconciliation fails after changing alerts (audit insert) and must roll back as a whole.
+        DB::listen(function ($query) {
+            if (str_contains($query->sql, 'program_alert_reconciliations')) {
+                throw new \RuntimeException('boom');
+            }
         });
 
         $this->tenantPut([$b->guid])->assertOk();
@@ -438,9 +446,9 @@ class EstablishmentStaffControllerTest extends TestCase
         $this->assertGreaterThan(0, $this->pendingRecipients($program, $b));
 
         // Second run: nothing to do.
-        Event::fake([ProgramTargetsChangedEvent::class]);
+        Log::spy();
         $this->assertSame(0, Artisan::call('programs:reconcile-unlinked-managers'));
-        Event::assertNotDispatched(ProgramTargetsChangedEvent::class);
+        Log::shouldNotHaveReceived('info', ['program.alerts.reconciled', \Mockery::any()]);
     }
 
     public function test_reconcile_command_regenerates_stale_alerts_left_by_a_failed_regeneration(): void
@@ -604,7 +612,9 @@ class EstablishmentStaffControllerTest extends TestCase
 
     private function pendingRecipients(Program $program, UserProfile $profile): int
     {
+        // Removed responsibles are suppressed (soft), not deleted: only `pending` rows will be sent.
         return AlertRecipient::where('user_profile_id', $profile->id)
+            ->where('status', 'pending')
             ->whereHas('alert', fn ($q) => $q
                 ->where('type', AlertType::ProgramTaskDue)
                 ->where('subject_type', 'program')

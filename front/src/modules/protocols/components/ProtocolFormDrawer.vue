@@ -6,7 +6,9 @@ import BaseDrawer from '@/components/atoms/overlays/BaseDrawer.vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import BaseInput from '@/components/atoms/inputs/BaseInput.vue'
 import BaseSelect from '@/components/atoms/selects/BaseSelect.vue'
+import BaseConfirmDialog from '@/components/atoms/overlays/BaseConfirmDialog.vue'
 import ProtocolTaskList from './ProtocolTaskList.vue'
+import { useActiveProgramsConfirm } from '../composables/useActiveProgramsConfirm'
 import { useCountries } from '@/modules/vets/composables/useCountries'
 import { protocolSchema } from '../validators/protocol.validator'
 import type { ProtocolFormValues } from '../validators/protocol.validator'
@@ -81,7 +83,14 @@ const [techniqueId, techniqueIdAttrs] = defineField('technique_id')
 const [countryId] = defineField('country_id')
 const [tasks] = defineField('tasks')
 
-const onSubmit = handleSubmit((values) => emit('submit', values))
+const { confirmOpen, message: confirmMessage, requestSubmit, confirm: onConfirmSave, cancel: onCancelSave } =
+  useActiveProgramsConfirm<ProtocolFormValues>(
+    computed(() => props.initialValues?.active_programs_count),
+    computed(() => Boolean(props.initialValues)),
+    (values) => emit('submit', values),
+  )
+
+const onSubmit = handleSubmit((values) => requestSubmit(values))
 
 watch(
   () => props.fieldErrors,
@@ -93,6 +102,10 @@ watch(
   (val) => {
     resetForm({ values: toFormValues(val) })
   },
+)
+
+const targetDateLabel = computed(
+  () => props.technique.children.find((c) => c.guid === techniqueId.value)?.target_date_name ?? null,
 )
 
 const hasNoChildren = computed(() => props.technique.children.length === 0)
@@ -186,7 +199,7 @@ function onCountrySelect(value: string | number | null) {
             relativas a la fecha de la tarea en vez de la fecha objetivo.
           </template>
         </a-alert>
-        <ProtocolTaskList v-model="tasks" />
+        <ProtocolTaskList v-model="tasks" :target-date-label="targetDateLabel" />
       </a-form-item>
     </a-form>
 
@@ -200,6 +213,16 @@ function onCountrySelect(value: string | number | null) {
         </BaseButton>
       </a-space>
     </template>
+
+    <BaseConfirmDialog
+      v-model="confirmOpen"
+      title="Guardar cambios"
+      :message="confirmMessage"
+      ok-text="Guardar cambios"
+      :loading="loading"
+      @confirm="onConfirmSave"
+      @cancel="onCancelSave"
+    />
   </BaseDrawer>
 </template>
 

@@ -8,6 +8,7 @@ use App\Models\UserProfile;
 use App\Notifications\Data\Recipient;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\RecipientContactNotFoundException;
 use App\Notifications\Support\PhoneNumber;
 use App\Traits\HasGuid;
@@ -21,6 +22,8 @@ class AlertRecipient extends Model
     protected $fillable = [
         'alert_id', 'user_profile_id', 'channel', 'status', 'provider_message_id',
         'attempts', 'failure_reason', 'sent_at', 'delivered_at', 'confirmed_at', 'idempotency_key',
+        'failure_code', 'destination_hint', 'rendered_body', 'template_version',
+        'retry_count', 'last_retry_at', 'last_retry_by_user_id',
     ];
 
     protected $hidden = ['id'];
@@ -34,6 +37,8 @@ class AlertRecipient extends Model
             'sent_at' => 'datetime',
             'delivered_at' => 'datetime',
             'confirmed_at' => 'datetime',
+            'failure_code' => FailureCode::class,
+            'last_retry_at' => 'datetime',
         ];
     }
 

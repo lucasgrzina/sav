@@ -6,22 +6,35 @@ use App\Contracts\Repositories\AnimalRepositoryInterface;
 use App\Contracts\Repositories\ProgramRepositoryInterface;
 use App\Events\ProgramCancelledEvent;
 use App\Events\ProgramCreatedEvent;
-use App\Events\ProgramTargetsChangedEvent;
 use App\Exceptions\ProgramManagerNotLinkedException;
 use App\Exceptions\ProgramMustHaveOneTargetException;
 use App\Exceptions\ProgramNotEditableException;
 use App\Models\Program;
 use App\Models\ProgramTarget;
 use App\Models\Protocol;
+use App\Services\ProgramAlerts\Data\ProjectedAlert;
+use App\Services\ProgramAlerts\Data\ProjectedRecipient;
+use App\Services\ProgramAlerts\Data\ProjectedTask;
+use App\Services\ProgramAlerts\Data\ExistingAlertIndex;
+use App\Services\ProgramAlerts\Data\ProjectionInput;
+use App\Services\ProgramAlerts\Data\WarningMode;
+use App\Services\ProgramAlerts\ProgramAlertProjector;
+use App\Services\ProgramAlerts\ProgramAlertReconciler;
+use App\Services\ProgramAlerts\ProgramAlertWarningService;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ProgramService
 {
     public function __construct(
         private ProgramRepositoryInterface $programRepository,
         private AnimalRepositoryInterface $animalRepository,
+        private ProgramAlertProjector $projector,
+        private ProgramAlertReconciler $reconciler,
+        private ?ProgramAlertWarningService $warningService = null,
     ) {}
 
     public function paginateForVet(int $vetId, array $filters, int $perPage): LengthAwarePaginator
@@ -68,7 +81,7 @@ class ProgramService
             $program = $program->fresh()->load('targets.animals', 'managers.user', 'client', 'establishment', 'technique', 'protocol');
 
             event(new ProgramCreatedEvent($program));
-            event(new ProgramTargetsChangedEvent($program));
+            $this->reconcileAlerts($program, 'program_created');
 
             return $program;
         });
@@ -111,10 +124,38 @@ class ProgramService
 
             $program = $program->fresh()->load('targets.animals', 'managers.user', 'client', 'establishment', 'technique', 'protocol');
 
-            event(new ProgramTargetsChangedEvent($program));
+            $this->reconcileAlerts($program, 'program_updated');
 
             return $program;
         });
+    }
+
+    /**
+     * Syncs the persisted alerts and leaves the report and the warnings on the model for the
+     * response layer. The warnings are computed AFTER reconciling, over what is really persisted,
+     * so they are authoritative (an alert that turned into the past since the preview shows up here).
+     * They never block the save (DU-01).
+     */
+    private function reconcileAlerts(Program $program, string $trigger): void
+    {
+        $report = $this->reconciler->reconcile($program, $trigger, auth()->id());
+
+        try {
+            $input = ProjectionInput::fromProgram($program, CarbonImmutable::instance(now()));
+            $report->warnings = ($this->warningService ??= app(ProgramAlertWarningService::class))->build(
+                $input,
+                $this->projector->project($input),
+                WarningMode::Save,
+                ExistingAlertIndex::forProgram($program),
+            );
+        } catch (Throwable $e) {
+            // Informational only (DU-01): a failure computing them must never roll back the save.
+            report($e);
+            $report->warnings = [];
+        }
+
+        $program->setRelation('alert_report', $report); // relation, not attribute: attributes would be persisted by later saves
+        $program->setRelation('alert_warnings', $report->warnings);
     }
 
     /**
@@ -210,48 +251,44 @@ class ProgramService
     }
 
     /**
-     * DEC-15/DEC-16: proyecta tareas y alertas del protocolo sobre cada target del programa,
-     * calculando fechas concretas y mapeando receptores por rol. Es una vista de solo lectura/
-     * simulación: no persiste nada, no genera Alert ni dispara notificaciones reales.
+     * DEC-15/DEC-16: proyecta tareas y alertas del protocolo sobre cada target del programa.
+     * Vista de solo lectura: no persiste nada ni dispara notificaciones. El cálculo lo hace
+     * ProgramAlertProjector, el mismo que usa la generación real de alertas (RT-01), así el
+     * detalle y lo realmente programado no pueden divergir.
      * Se invoca únicamente desde findByGuidForVet (detalle), nunca desde paginateForVet (listado).
-     * `occurs_at` se devuelve deliberadamente como hora LOCAL del vet (sin zona): es lo que el
-     * usuario configuró y espera ver. Solo el Alert persistido se guarda en UTC (ver
-     * GenerateProgramTaskDueAlertsListener), así el contrato del frontend no cambia.
+     * `occurs_at` se devuelve como hora LOCAL del vet (sin zona), igual que antes; el contrato se
+     * extiende con `scheduled_at_local` (objeto con zona), `timing` y `skip_reason` por alerta.
      */
     private function projectTargetTasks(Program $program): void
     {
-        $program->loadMissing('protocol.tasks.alerts', 'managers.role', 'managers.user');
+        $projection = $this->projector->project(
+            ProjectionInput::fromProgram($program, CarbonImmutable::instance(now()))
+        );
 
         foreach ($program->targets as $target) {
-            $target->projected_tasks = $program->protocol->tasks->map(function ($task) use ($target, $program) {
-                $taskDate = $this->applyOffset($target->target_date, $task->days_offset, $task->time_of_day);
-
-                return [
-                    'protocol_task_guid' => $task->guid,
-                    'description'        => $task->description,
-                    'occurs_on'          => $taskDate->toDateString(),
-                    'occurs_at'          => $task->time,
-                    'important'          => $task->important,
-                    'alerts'             => $task->alerts->map(function ($alert) use ($taskDate, $program) {
-                        $alertDate  = $this->applyOffset($taskDate, $alert->offset_days, $alert->time_of_day);
-                        $recipients = $program->managers->filter(
-                            fn ($m) => in_array($m->role->name, $alert->roles, true)
-                        )->values();
-
-                        return [
-                            'protocol_task_alert_guid' => $alert->guid,
-                            'occurs_on'                => $alertDate->toDateString(),
-                            'occurs_at'                => $alert->time,
-                            'roles'                    => $alert->roles,
-                            'message'                  => $alert->message,
-                            'require_confirmation'     => $alert->require_confirmation,
-                            'recipients'               => $recipients->map(fn ($m) => [
-                                'guid' => $m->guid, 'name' => $m->user->name, 'role' => $m->role->name,
-                            ])->all(),
-                        ];
-                    })->all(),
-                ];
-            })->all();
+            $target->projected_tasks = array_map(fn (ProjectedTask $task) => [
+                'protocol_task_guid' => $task->protocolTaskGuid,
+                'description'        => $task->description,
+                'occurs_on'          => $task->date,
+                'occurs_at'          => $task->time,
+                'important'          => $task->important,
+                'alerts'             => array_map(fn (ProjectedAlert $alert) => [
+                    'protocol_task_alert_guid' => $alert->protocolTaskAlertGuid,
+                    'occurs_on'                => $alert->scheduledAtLocal->date,
+                    'occurs_at'                => $alert->alertTime,
+                    'roles'                    => $alert->roles,
+                    'message'                  => $alert->message,
+                    'require_confirmation'     => $alert->requireConfirmation,
+                    'recipients'               => array_map(fn (ProjectedRecipient $recipient) => [
+                        'guid' => $recipient->profile->guid,
+                        'name' => $recipient->profile->user->name,
+                        'role' => $recipient->role,
+                    ], $alert->recipients),
+                    'scheduled_at_local'       => $alert->scheduledAtLocal->toArray(),
+                    'timing'                   => $alert->isPast ? 'past' : 'future',
+                    'skip_reason'              => $alert->recipients === [] ? 'no_recipients' : null,
+                ], $task->alerts),
+            ], $projection->tasksForTarget($target->guid));
         }
     }
 

@@ -9,6 +9,7 @@ use App\Notifications\Data\TextContent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\TemplateNotConfiguredException;
 use App\Notifications\Gateways\Twilio\TwilioWhatsappGateway;
 use Mockery;
@@ -46,6 +47,30 @@ class TwilioWhatsappGatewayTest extends TestCase
             name: 'Juan',
             channel: Channel::Whatsapp,
         );
+    }
+
+    public function test_pdf_share_with_a_local_media_url_fails_clearly_without_calling_twilio(): void
+    {
+        $client = Mockery::mock(Client::class)->shouldAllowMockingProtectedMethods();
+        $client->shouldNotReceive('getMessages');
+
+        $gateway = new TwilioWhatsappGateway($client, 'whatsapp:from', ['program.pdf_shared' => 'HXfake']);
+
+        $message = new OutboundMessage(
+            recipient: $this->recipient(),
+            content: new TemplateContent(
+                type: AlertType::ProgramPdfShared,
+                variables: [1 => 'Juan', 2 => 'IATF', 3 => 'http://localhost:8001/shared/pdf?signature=abc'],
+            ),
+            channel: Channel::Whatsapp,
+            idempotencyKey: 'key-local-url',
+        );
+
+        $result = $gateway->send($message);
+
+        $this->assertSame(DeliveryStatus::Failed, $result->status);
+        $this->assertSame(FailureCode::ServiceMisconfigured, $result->failureCode);
+        $this->assertStringContainsString('APP_URL', $result->failureReason);
     }
 
     public function test_sends_template_content_via_content_api(): void
@@ -129,6 +154,7 @@ class TwilioWhatsappGatewayTest extends TestCase
 
         $this->assertSame(DeliveryStatus::Failed, $result->status);
         $this->assertSame('Invalid phone number', $result->failureReason);
+        $this->assertSame(\App\Notifications\Enums\FailureCode::InvalidNumber, $result->failureCode);
     }
 
     public function test_an_unconfigured_template_throws_instead_of_reporting_a_delivery_failure(): void
@@ -149,6 +175,59 @@ class TwilioWhatsappGatewayTest extends TestCase
             content: new TemplateContent(type: AlertType::ProgramCancelled, variables: ['1' => 'Juan']),
             channel: Channel::Whatsapp,
             idempotencyKey: 'key-5',
+        ));
+    }
+
+    public function test_a_v2_template_resolves_its_own_content_sid(): void
+    {
+        $messageList = Mockery::mock(MessageList::class);
+        $messageList->shouldReceive('create')
+            ->once()
+            ->with('whatsapp:+5491122334455', [
+                'from' => 'whatsapp:from',
+                'contentSid' => 'HXv2',
+                'contentVariables' => json_encode(['1' => 'Juan']),
+            ])
+            ->andReturn($this->messageInstanceWithSid('SMv2'));
+
+        $client = Mockery::mock(Client::class)->shouldAllowMockingProtectedMethods();
+        $client->shouldReceive('getMessages')->andReturn($messageList);
+
+        $gateway = new TwilioWhatsappGateway($client, 'whatsapp:from', [
+            'program.task_due' => 'HXv1',
+            'program.task_due@v2' => 'HXv2',
+        ]);
+
+        $result = $gateway->send(new OutboundMessage(
+            recipient: $this->recipient(),
+            content: new TemplateContent(type: AlertType::ProgramTaskDue, variables: ['1' => 'Juan'], version: 2),
+            channel: Channel::Whatsapp,
+            idempotencyKey: 'key-v2',
+        ));
+
+        $this->assertSame('SMv2', $result->providerMessageId);
+    }
+
+    public function test_a_v2_template_without_content_sid_throws_even_if_v1_is_configured(): void
+    {
+        $messageList = Mockery::mock(MessageList::class);
+        $messageList->shouldNotReceive('create');
+
+        $client = Mockery::mock(Client::class)->shouldAllowMockingProtectedMethods();
+        $client->shouldReceive('getMessages')->andReturn($messageList);
+
+        $gateway = new TwilioWhatsappGateway($client, 'whatsapp:from', [
+            'program.task_due' => 'HXv1',
+            'program.task_due@v2' => null,
+        ]);
+
+        $this->expectException(TemplateNotConfiguredException::class);
+
+        $gateway->send(new OutboundMessage(
+            recipient: $this->recipient(),
+            content: new TemplateContent(type: AlertType::ProgramTaskDue, variables: ['1' => 'Juan'], version: 2),
+            channel: Channel::Whatsapp,
+            idempotencyKey: 'key-v2b',
         ));
     }
 

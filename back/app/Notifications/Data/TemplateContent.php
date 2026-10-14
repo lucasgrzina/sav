@@ -21,5 +21,15 @@ final readonly class TemplateContent implements MessageContent
     public function __construct(
         public AlertType $type,
         public array $variables,
+        public int $version = 1,
     ) {}
+
+    /**
+     * Key under which gateways and config look the template up: the bare AlertType value for
+     * v1 (so existing config keeps working), `type@vN` for later versions.
+     */
+    public function templateKey(): string
+    {
+        return $this->version === 1 ? $this->type->value : "{$this->type->value}@v{$this->version}";
+    }
 }

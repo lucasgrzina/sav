@@ -11,6 +11,7 @@ use App\Repositories\ProtocolRepositoryEloquent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class ProtocolRepositoryEloquentTest extends TestCase
 {
@@ -57,7 +58,7 @@ class ProtocolRepositoryEloquentTest extends TestCase
         $country = Country::create([
             'guid'         => Str::uuid()->toString(),
             'name'         => 'Argentina',
-            'iso_code'     => 'A' . Str::random(1),
+            'iso_code'     => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 

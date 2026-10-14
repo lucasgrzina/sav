@@ -61,11 +61,58 @@ final class WhatsappTemplateCatalog
         ];
     }
 
-    /** @return array{body: string, examples: list<string>} */
-    public static function for(AlertType $type): array
+    /**
+     * Every version of every template, keyed type => version => definition. Version 1 is
+     * exactly definitions(); later versions are declared here. A definition may carry a
+     * `footer`: Meta renders it as a separate FOOTER component (max 60 chars, no variables).
+     *
+     * @return array<string, array<int, array{body: string, examples: list<string>, footer?: string}>>
+     */
+    public static function versions(): array
     {
-        return self::definitions()[$type->value]
+        $versions = [];
+
+        foreach (self::definitions() as $type => $definition) {
+            $versions[$type] = [1 => $definition];
+        }
+
+        // v2 (DU-06): richer copy plus an opt-out footer. The body ends in static text because
+        // Meta may reject templates whose body ends in a variable.
+        $versions[AlertType::ProgramTaskDue->value][2] = [
+            'body' => "Hola {{1}}, te escribe {{2}} por el programa \"{{3}}\" ({{4}}, {{5}}).\n"
+                . "Tarea: {{6}}\n"
+                . "Cuándo: {{7}}\n"
+                . "Indicaciones: {{8}}\n"
+                . 'Este es un aviso automático de SAV.',
+            'examples' => [
+                'María',
+                'Agropecuaria ID',
+                'Superovulación P500',
+                'Cliente SA',
+                'Estancia La Invernada',
+                'Colecta de embriones',
+                'mañana, jueves 24/09/2026 a las 09:00',
+                'Traer termo y camiseta de colecta.',
+            ],
+            'footer' => 'Respondé BAJA para dejar de recibir avisos.',
+        ];
+
+        return $versions;
+    }
+
+    public static function latestVersion(AlertType $type): int
+    {
+        $versions = self::versions()[$type->value]
             ?? throw new InvalidArgumentException("Sin copy de template para {$type->value}");
+
+        return max(array_keys($versions));
+    }
+
+    /** @return array{body: string, examples: list<string>, footer?: string} */
+    public static function for(AlertType $type, int $version = 1): array
+    {
+        return self::versions()[$type->value][$version]
+            ?? throw new InvalidArgumentException("Sin copy de template para {$type->value} v{$version}");
     }
 
     /**
@@ -73,15 +120,36 @@ final class WhatsappTemplateCatalog
      *
      * @return array<int, string>
      */
-    public static function exampleVariables(AlertType $type): array
+    public static function exampleVariables(AlertType $type, int $version = 1): array
     {
         $variables = [];
 
-        foreach (self::for($type)['examples'] as $index => $example) {
+        foreach (self::for($type, $version)['examples'] as $index => $example) {
             $variables[$index + 1] = $example;
         }
 
         return $variables;
+    }
+
+    /**
+     * Renders the template copy with the variables a builder sent, i.e. the text the
+     * recipient sees (stored in alert_recipients.rendered_body for traceability). The
+     * footer, when the version has one, goes last after a blank line.
+     *
+     * @param array<int, string> $variables
+     * @throws InvalidArgumentException when the type/version has no template copy
+     */
+    public static function render(AlertType $type, int $version, array $variables): string
+    {
+        $definition = self::for($type, $version);
+
+        $body = (string) preg_replace_callback(
+            '/\{\{(\d+)\}\}/',
+            fn (array $m): string => $variables[(int) $m[1]] ?? '',
+            $definition['body'],
+        );
+
+        return isset($definition['footer']) ? $body . "\n\n" . $definition['footer'] : $body;
     }
 
     /** Counts distinct {{n}} placeholders, so a repeated one is not double-counted. */

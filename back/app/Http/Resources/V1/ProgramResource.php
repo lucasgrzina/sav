@@ -27,6 +27,13 @@ class ProgramResource extends JsonResource
                 // que ya vive en UserProfileService::VET_STAFF_ROLES.
                 'origin' => in_array($m->role->name, \App\Services\UserProfileService::VET_STAFF_ROLES, true) ? 'vet' : 'client',
             ])),
+            // Fase 3: solo en la respuesta de store/update (ProgramService::reconcileAlerts anota ambos
+            // sobre el modelo en memoria). Advertencias autoritativas, calculadas sobre lo persistido.
+            'warnings'       => $this->when($this->relationLoaded('alert_warnings'), fn () => array_map(
+                fn ($warning) => $warning->toArray(),
+                $this->getRelation('alert_warnings'),
+            )),
+            'reconciliation' => $this->when($this->relationLoaded('alert_report'), fn () => $this->getRelation('alert_report')->summary()),
             'created_at'    => $this->created_at?->toISOString(),
             'updated_at'    => $this->updated_at?->toISOString(),
         ];

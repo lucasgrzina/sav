@@ -19,6 +19,11 @@ class ProtocolResource extends JsonResource
             'tasks_count'      => $this->tasks_count ?? ($this->relationLoaded('tasks') ? $this->tasks->count() : 0),
             'created_by_type'  => $this->created_by_type,
             'tasks'            => ProtocolTaskResource::collection($this->whenLoaded('tasks')),
+            // Only set by detail/edit endpoints (one query); never computed for lists.
+            'active_programs_count' => $this->when(
+                array_key_exists('active_programs_count', $this->resource->getAttributes()),
+                fn () => (int) $this->resource->getAttributes()['active_programs_count'],
+            ),
             'created_at'       => $this->created_at?->toISOString(),
             'updated_at'       => $this->updated_at?->toISOString(),
         ];

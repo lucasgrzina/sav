@@ -28,15 +28,35 @@ class ProcessExportJob implements ShouldQueue
     {
         $export = Export::findOrFail($this->exportId);
 
+        $this->notify(new ExportStartedEvent($export));
+
         try {
-            event(new ExportStartedEvent($export));
             $completed = $exportService->process($export);
-            event(new ExportCompletedEvent($completed));
         } catch (\Throwable $e) {
             // El ExportService ya actualizó el status a FAILED.
             // Solo disparamos el evento de fallo.
-            event(new ExportFailedEvent($export->fresh(), $e->getMessage()));
+            $this->notify(new ExportFailedEvent($export->fresh(), $e->getMessage()));
             $this->fail($e);
+
+            return;
+        }
+
+        $this->notify(new ExportCompletedEvent($completed));
+    }
+
+    /**
+     * Un fallo al notificar nunca debe contar como fallo del export.
+     */
+    private function notify(object $event): void
+    {
+        try {
+            event($event);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo despachar la notificación del export', [
+                'export_id' => $this->exportId,
+                'event'     => $event::class,
+                'error'     => $e->getMessage(),
+            ]);
         }
     }
 

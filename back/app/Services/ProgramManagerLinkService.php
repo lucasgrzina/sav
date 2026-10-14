@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\Repositories\ProgramRepositoryInterface;
-use App\Events\ProgramTargetsChangedEvent;
+use App\Services\ProgramAlerts\ProgramAlertReconciler;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -14,10 +14,13 @@ use Throwable;
  */
 class ProgramManagerLinkService
 {
-    public function __construct(private ProgramRepositoryInterface $programRepository) {}
+    public function __construct(
+        private ProgramRepositoryInterface $programRepository,
+        private ProgramAlertReconciler $reconciler,
+    ) {}
 
     /**
-     * Deletes and recreates the pending task_due alerts of one program atomically.
+     * Reconciles the pending task_due alerts of one program atomically (soft-cancel, recipient suppression).
      * Returns false (after logging) when the regeneration failed and was rolled back.
      *
      * @param int[] $profileIds profiles that triggered the regeneration (log context only)
@@ -29,7 +32,7 @@ class ProgramManagerLinkService
                 $program = $this->programRepository->findForAlertRegeneration($programId);
 
                 if ($program !== null) {
-                    event(new ProgramTargetsChangedEvent($program));
+                    $this->reconciler->reconcile($program, 'managers_unlinked');
                 }
             });
 

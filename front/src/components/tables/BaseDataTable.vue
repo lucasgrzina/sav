@@ -66,6 +66,7 @@ const classes = computed(() => [
     <ATable
       v-bind="props"
       v-bind.attrs="attrs"
+      :scroll="attrs.scroll ?? { x: 'max-content' }"
     >
       <!-- Forward ALL slots -->
       <template

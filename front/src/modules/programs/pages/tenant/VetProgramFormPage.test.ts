@@ -12,6 +12,7 @@ const s = vi.hoisted(() => ({
   routeParams: {} as Record<string, string>,
   managerOptionsByEstablishment: null as unknown as Ref<Record<string, ManagerOption[] | undefined>>,
   fetching: null as unknown as Ref<boolean>,
+  optionsError: null as unknown as Ref<boolean>,
   vetStaff: null as unknown as Ref<unknown[] | undefined>,
   vetStaffLoading: null as unknown as Ref<boolean>,
   programDetail: null as unknown as Ref<unknown>,
@@ -46,9 +47,22 @@ vi.mock('../../composables/useAnimalSearch', () => ({
 vi.mock('../../composables/useProgramDetail', () => ({
   useProgramDetail: () => ({ data: s.programDetail, isLoading: ref(false) }),
 }))
-vi.mock('../../composables/useProgramMutations', () => ({
-  useCreateProgram: () => ({ mutate: vi.fn(), isPending: ref(false), fieldErrors: ref(null) }),
-  useUpdateProgram: () => ({ mutate: vi.fn(), isPending: ref(false), fieldErrors: ref(null) }),
+vi.mock('../../composables/useProgramSaveFlow', () => ({
+  useProgramSaveFlow: () => ({
+    open: ref(false),
+    status: ref('idle'),
+    preview: ref(null),
+    acknowledged: ref(false),
+    requiresAcknowledgement: ref(false),
+    canConfirm: ref(false),
+    isSaving: ref(false),
+    fieldErrors: ref(null),
+    start: vi.fn(),
+    retry: vi.fn(),
+    close: vi.fn(),
+    confirmAndSave: vi.fn(),
+    saveWithoutPreview: vi.fn(),
+  }),
 }))
 // Behaves like the real hook: options depend on the chosen establishment, and nothing
 // is available while no establishment is chosen (disabled query).
@@ -59,6 +73,7 @@ vi.mock('../../composables/useClientManagerOptions', () => ({
       data: computed(() => s.managerOptionsByEstablishment.value[toValue(establishmentId as string)]),
       isLoading: ref(false),
       isFetching: s.fetching,
+      isError: s.optionsError,
     }
   },
 }))
@@ -71,7 +86,10 @@ const ClientSectionStub = defineComponent({
 })
 const ManagersSectionStub = defineComponent({
   name: 'ProgramManagersSection',
-  props: ['managerProfileIds', 'clientId', 'establishmentId', 'vetStaffOptions', 'clientStaffOptions'],
+  props: [
+    'managerProfileIds', 'clientId', 'establishmentId', 'vetStaffOptions', 'clientStaffOptions',
+    'staleClientManagers', 'clientOptionsError',
+  ],
   emits: ['update:managerProfileIds'],
   setup: () => () => h('div'),
 })
@@ -127,6 +145,7 @@ describe('VetProgramFormPage client managers', () => {
     s.routeParams = { vetGuid: 'vet-tenant' }
     s.managerOptionsByEstablishment = ref({ 'est-1': [ana, beto], 'est-2': [beto, carla] })
     s.fetching = ref(false)
+    s.optionsError = ref(false)
     s.vetStaff = ref(vetStaff)
     s.vetStaffLoading = ref(false)
     s.programDetail = ref(null)
@@ -245,28 +264,74 @@ describe('VetProgramFormPage client managers', () => {
   })
 
   describe('edit mode', () => {
-    it('hydrates managers from the saved program and prunes stale client managers', async () => {
+    const savedProgram = () => ({
+      guid: 'prog-1',
+      client: { guid: 'client-1', name: 'Cliente' },
+      establishment: { guid: 'est-1', name: 'Campo' },
+      technique: { guid: 'tech-1', name: 'Tecnica' },
+      protocol: { guid: 'proto-1', name: 'Protocolo' },
+      comments: null,
+      targets: [],
+      managers: [
+        { guid: 'vet-1', name: 'Vet Uno', role: 'vet', origin: 'vet' },
+        { guid: 'cli-ana', name: 'Ana', role: 'client-manager', origin: 'client' },
+        { guid: 'cli-stale', name: 'Stale', role: 'client-manager', origin: 'client' },
+      ],
+    })
+    const staleGuids = (w: Wrapper) =>
+      (managersSection(w).props('staleClientManagers') as { guid: string }[]).map((o) => o.guid)
+
+    beforeEach(() => {
       s.routeParams = { vetGuid: 'vet-tenant', guid: 'prog-1' }
       s.managerOptionsByEstablishment = ref({ 'est-1': [ana] })
-      s.programDetail = ref({
-        guid: 'prog-1',
-        client: { guid: 'client-1', name: 'Cliente' },
-        establishment: { guid: 'est-1', name: 'Campo' },
-        technique: { guid: 'tech-1', name: 'Tecnica' },
-        protocol: { guid: 'proto-1', name: 'Protocolo' },
-        comments: null,
-        targets: [],
-        managers: [
-          { guid: 'vet-1', name: 'Vet Uno', role: 'vet', origin: 'vet' },
-          { guid: 'cli-ana', name: 'Ana', role: 'client-manager', origin: 'client' },
-          { guid: 'cli-stale', name: 'Stale', role: 'client-manager', origin: 'client' },
-        ],
-      })
+      s.programDetail = ref(savedProgram())
+    })
 
+    it('hydrates managers from the saved program and keeps the ones not linked, flagged as stale', async () => {
       const wrapper = mountPage()
       await flushPromises()
 
       expect(clientSection(wrapper).props('establishmentId')).toBe('est-1')
+      expect(selectedManagers(wrapper)).toEqual(['vet-1', 'cli-ana', 'cli-stale'])
+      expect(staleGuids(wrapper)).toEqual(['cli-stale'])
+    })
+
+    it('keeps every saved client manager when the establishment has no linked staff (empty options)', async () => {
+      s.managerOptionsByEstablishment = ref({ 'est-1': [] })
+      const wrapper = mountPage()
+      await flushPromises()
+
+      expect(selectedManagers(wrapper)).toEqual(['vet-1', 'cli-ana', 'cli-stale'])
+      expect(staleGuids(wrapper)).toEqual(['cli-ana', 'cli-stale'])
+    })
+
+    it('does not prune nor flag anything while the options are unavailable (error / loading)', async () => {
+      s.managerOptionsByEstablishment = ref({ 'est-1': undefined })
+      s.optionsError = ref(true)
+      const wrapper = mountPage()
+      await flushPromises()
+
+      expect(selectedManagers(wrapper)).toEqual(['vet-1', 'cli-ana', 'cli-stale'])
+      expect(staleGuids(wrapper)).toEqual([])
+      expect(managersSection(wrapper).props('clientOptionsError')).toBe(true)
+    })
+
+    it('disables saving while the options of the establishment are unavailable', async () => {
+      s.managerOptionsByEstablishment = ref({ 'est-1': undefined })
+      s.optionsError = ref(true)
+      const wrapper = mountPage()
+      await flushPromises()
+
+      const save = wrapper.findAll('button').find((b) => b.text().includes('Guardar cambios'))
+      expect(save?.attributes('disabled')).toBeDefined()
+    })
+
+    it('lets the user remove a stale manager explicitly', async () => {
+      const wrapper = mountPage()
+      await flushPromises()
+
+      await setManagers(wrapper, ['vet-1', 'cli-ana'])
+
       expect(selectedManagers(wrapper)).toEqual(['vet-1', 'cli-ana'])
     })
   })

@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { ArrowUpOutlined, ArrowDownOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { describeTaskOffset } from '@/core/utils/offset-preview'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import ProtocolAlertList from './ProtocolAlertList.vue'
 import type { ProtocolTaskFormValues } from '../validators/protocol.validator'
@@ -9,7 +11,12 @@ const props = defineProps<{
   index: number
   isFirst: boolean
   isLast: boolean
+  targetDateLabel?: string | null
 }>()
+
+const offsetPreview = computed(() =>
+  describeTaskOffset(props.task.days_offset, props.task.time_of_day, props.targetDateLabel),
+)
 
 const emit = defineEmits<{
   update: [index: number, value: ProtocolTaskFormValues]
@@ -97,6 +104,7 @@ function updateAlerts(value: ProtocolTaskFormValues['alerts']) {
         @update:value="(v: string) => update('time', v ?? '')"
       />
     </div>
+    <p class="ptfi-preview">{{ offsetPreview }}</p>
 
     <a-checkbox
       :checked="task.important"
@@ -140,6 +148,12 @@ function updateAlerts(value: ProtocolTaskFormValues['alerts']) {
 .ptfi-row {
   display: flex;
   gap: 8px;
+}
+
+.ptfi-preview {
+  font-size: 12px;
+  color: var(--dt-muted, #6b8cae);
+  margin: 0;
 }
 
 .ptfi-alerts {

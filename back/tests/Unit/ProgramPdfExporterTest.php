@@ -14,11 +14,13 @@ use App\Models\Technique;
 use App\Models\Vet;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
+use App\Services\ProgramAlerts\ProgramAlertProjector;
 use App\Services\ProgramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class ProgramPdfExporterTest extends TestCase
 {
@@ -37,7 +39,7 @@ class ProgramPdfExporterTest extends TestCase
 
         Storage::fake('local');
 
-        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
+        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector(), new \App\Services\ProgramAlerts\ProgramAlertReconciler(new ProgramAlertProjector(), new \App\Notifications\Services\AlertRecipientFactory()));
         $this->exporter = new ProgramPdfExporter(new ProgramRepositoryEloquent(), $this->programService);
 
         $this->vet = $this->createVet();
@@ -68,7 +70,7 @@ class ProgramPdfExporterTest extends TestCase
     {
         $country = Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,
@@ -86,7 +88,7 @@ class ProgramPdfExporterTest extends TestCase
     {
         $country = Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,

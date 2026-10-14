@@ -9,9 +9,11 @@ use App\Notifications\Jobs\DeliverAlertJob;
 use App\Notifications\Models\Alert;
 use App\Notifications\Models\AlertRecipient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class DispatchDueAlertsTest extends TestCase
 {
@@ -42,7 +44,7 @@ class DispatchDueAlertsTest extends TestCase
     {
         $country = \App\Models\Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = \App\Models\DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,
@@ -107,6 +109,79 @@ class DispatchDueAlertsTest extends TestCase
         $this->artisan('alerts:dispatch-due')->assertSuccessful();
 
         Queue::assertNothingPushed();
+    }
+
+    public function test_ignores_cancelled_alerts(): void
+    {
+        Queue::fake();
+
+        $alert = $this->createAlert('-1 minute', 'cancelled');
+        $this->createRecipient($alert);
+
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+
+        Queue::assertNothingPushed();
+        $this->assertSame('cancelled', $alert->fresh()->status);
+    }
+
+    public function test_does_not_dispatch_when_the_alert_is_taken_by_someone_else_before_the_claim(): void
+    {
+        Queue::fake();
+
+        $alert = $this->createAlert('-1 minute');
+        $this->createRecipient($alert);
+
+        // Simulates a concurrent edit: right after the dispatcher reads the pending alert,
+        // another process cancels it. The compare-and-set claim must then lose.
+        $raced = false;
+        DB::listen(function ($query) use (&$raced, $alert) {
+            if (! $raced && str_starts_with(strtolower($query->sql), 'select') && str_contains($query->sql, '"alerts"')) {
+                $raced = true;
+                DB::table('alerts')->where('id', $alert->id)->update(['status' => 'cancelled']);
+            }
+        });
+
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+
+        $this->assertTrue($raced);
+        Queue::assertNothingPushed();
+        $this->assertSame('cancelled', $alert->fresh()->status);
+    }
+
+    public function test_an_alert_is_claimed_only_once_across_consecutive_runs(): void
+    {
+        Queue::fake();
+
+        $alert = $this->createAlert('-1 minute');
+        $this->createRecipient($alert);
+
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+        $this->artisan('alerts:dispatch-due')->assertSuccessful();
+
+        Queue::assertPushed(DeliverAlertJob::class, 1);
+    }
+
+    public function test_a_failing_alert_does_not_starve_the_following_ones_and_the_command_fails(): void
+    {
+        Queue::fake();
+
+        $poison = $this->createAlert('-2 minutes');
+        $this->createRecipient($poison);
+        $healthy = $this->createAlert('-1 minute');
+        $this->createRecipient($healthy);
+
+        // The claim UPDATE of the poison alert blows up (once is enough: it is rolled back).
+        DB::listen(function ($query) use ($poison) {
+            if (str_starts_with(strtolower($query->sql), 'update "alerts"') && in_array($poison->id, $query->bindings, true)) {
+                throw new \RuntimeException('boom');
+            }
+        });
+
+        $this->artisan('alerts:dispatch-due')->assertFailed();
+
+        $this->assertSame('pending', $poison->fresh()->status);
+        $this->assertSame('dispatched', $healthy->fresh()->status);
+        Queue::assertPushed(DeliverAlertJob::class, 1);
     }
 
     public function test_ignores_alerts_that_are_not_pending(): void

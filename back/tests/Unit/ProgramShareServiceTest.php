@@ -24,12 +24,14 @@ use App\Notifications\Services\AlertRecipientFactory;
 use App\Repositories\AnimalRepositoryEloquent;
 use App\Repositories\ProgramRepositoryEloquent;
 use App\Services\Exports\ExportService;
+use App\Services\ProgramAlerts\ProgramAlertProjector;
 use App\Services\ProgramService;
 use App\Services\ProgramShareService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use Tests\Concerns\UniqueIsoCode;
 
 class ProgramShareServiceTest extends TestCase
 {
@@ -47,7 +49,7 @@ class ProgramShareServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent());
+        $this->programService = new ProgramService(new ProgramRepositoryEloquent(), new AnimalRepositoryEloquent(), new ProgramAlertProjector(), new \App\Services\ProgramAlerts\ProgramAlertReconciler(new ProgramAlertProjector(), new \App\Notifications\Services\AlertRecipientFactory()));
         $this->service = new ProgramShareService(
             new ExportService(app(ExportRepositoryInterface::class), app(\App\Contracts\Exports\ExportResolverInterface::class)),
             new AlertRecipientFactory(),
@@ -82,7 +84,7 @@ class ProgramShareServiceTest extends TestCase
     {
         $country = Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,
@@ -100,7 +102,7 @@ class ProgramShareServiceTest extends TestCase
     {
         $country = Country::create([
             'guid' => Str::uuid()->toString(), 'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4), 'phone_prefix' => '+54',
+            'iso_code' => UniqueIsoCode::next(), 'phone_prefix' => '+54',
         ]);
         $documentType = DocumentType::create([
             'guid' => Str::uuid()->toString(), 'country_id' => $country->id,

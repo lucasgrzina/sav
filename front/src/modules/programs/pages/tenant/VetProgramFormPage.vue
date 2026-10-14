@@ -19,10 +19,11 @@ import { useVetProtocolDetail } from '@/modules/protocols/composables/useVetProt
 import { useAnimalSearch } from '../../composables/useAnimalSearch'
 import { useClientManagerOptions } from '../../composables/useClientManagerOptions'
 import { useProgramDetail } from '../../composables/useProgramDetail'
-import { useCreateProgram, useUpdateProgram } from '../../composables/useProgramMutations'
+import { useProgramSaveFlow } from '../../composables/useProgramSaveFlow'
+import ProgramPreviewPanel from '../../components/tenant/preview/ProgramPreviewPanel.vue'
 import { programSchema } from '../../validators/program.validator'
 import type { ProgramFormValues } from '../../validators/program.validator'
-import type { ProgramDetail, CreateProgramPayload } from '../../types/program.types'
+import type { ProgramDetail, CreateProgramPayload, ProgramManagerOption } from '../../types/program.types'
 
 // DEC-11: vista de página completa por secciones (no Drawer/modal). Reemplaza
 // ProgramFormDrawer.vue — ver .claude/docs/plans/program-module-plan.md.
@@ -185,13 +186,38 @@ const {
   data: clientManagerOptions,
   isLoading: isLoadingClientManagers,
   isFetching: isFetchingClientManagers,
+  isError: isClientManagersError,
 } = useClientManagerOptions(clientId, establishmentId)
 const clientStaffOptions = computed(
   () => clientManagerOptions.value?.map((p) => ({ guid: p.guid, label: p.name, role: p.role })) ?? [],
 )
 
-// Drops client managers that are not linked to the current establishment (change of
-// establishment, or a stale manager when editing). Vet managers are always kept.
+// Client managers already assigned to the program that are NOT linked to its (saved) establishment
+// anymore (legacy data, or staff unlinked afterwards). They must never be dropped silently: the
+// section shows them flagged so the user removes them explicitly. Only computed once the options
+// of the establishment are known: unknown is not "not linked".
+const staleClientManagers = computed<ProgramManagerOption[]>(() => {
+  const detail = programDetail.value
+  if (!isEditMode.value || !detail) return []
+  if (!establishmentId.value || establishmentId.value !== detail.establishment.guid) return []
+  if (clientManagerOptions.value === undefined) return []
+  const linked = new Set(clientStaffOptions.value.map((o) => o.guid))
+  return detail.managers
+    .filter((m) => m.origin === 'client' && !linked.has(m.guid))
+    .map((m) => ({ guid: m.guid, label: m.name, role: m.role }))
+})
+
+// In edit mode the options of the establishment must be available to save: otherwise the
+// managers cannot be validated and a transient failure could end up persisting a wrong list.
+const managersUnavailable = computed(
+  () => isEditMode.value
+    && Boolean(establishmentId.value)
+    && (clientManagerOptions.value === undefined || isClientManagersError.value),
+)
+
+// Drops client managers that are not linked to the current establishment (e.g. after switching
+// establishment). Vet managers are always kept, and so are the stale managers already saved in
+// the program (edit mode): those are removed only by an explicit user action.
 // Never prunes while the sources are loading/hydrating or failed: unknown is not "not linked".
 watch(
   [clientStaffOptions, vetStaffResponse, isFetchingClientManagers, isLoadingVetStaff, isResettingForm],
@@ -203,6 +229,7 @@ watch(
     const allowed = new Set([
       ...vetStaffResponse.value.map((p) => p.guid),
       ...clientStaffOptions.value.map((o) => o.guid),
+      ...staleClientManagers.value.map((o) => o.guid),
     ])
     const pruned = managerProfileIds.value.filter((guid) => allowed.has(guid))
     if (pruned.length !== managerProfileIds.value.length) {
@@ -275,13 +302,11 @@ watch(clientId, (newValue, oldValue) => {
 
 // --- Guardado ---
 
-const { mutate: mutateCreate, isPending: isCreating, fieldErrors: createErrors } = useCreateProgram()
-const { mutate: mutateUpdate, isPending: isUpdating, fieldErrors: updateErrors } = useUpdateProgram()
+const saveFlow = useProgramSaveFlow(vetGuid, editingGuid, backToList)
 
-const isSaving = computed(() => isCreating.value || isUpdating.value)
-const formFieldErrors = computed(() => (isEditMode.value ? updateErrors.value : createErrors.value))
+const isSaving = computed(() => saveFlow.isSaving.value)
 
-watch(formFieldErrors, (errs) => setErrors(errs ?? {}))
+watch(saveFlow.fieldErrors, (errs) => setErrors(errs ?? {}))
 
 function toPayload(values: ProgramFormValues): CreateProgramPayload {
   return {
@@ -299,13 +324,11 @@ function toPayload(values: ProgramFormValues): CreateProgramPayload {
 }
 
 const onSubmit = handleSubmit((values) => {
-  const payload = toPayload(values)
+  // Never save while the managers' options are loading or failed (edit mode).
+  if (managersUnavailable.value) return
 
-  if (isEditMode.value && editingGuid.value) {
-    mutateUpdate({ guid: editingGuid.value, payload }, { onSuccess: () => backToList() })
-  } else {
-    mutateCreate(payload, { onSuccess: () => backToList() })
-  }
+  // Saving goes through the review panel (preview -> confirm -> store/update).
+  saveFlow.start(toPayload(values))
 })
 
 // The backend reports client-manager errors per index (`manager_profile_ids.{i}`):
@@ -364,6 +387,8 @@ const title = computed(() => (isEditMode.value ? 'Editar programa' : 'Nuevo prog
           :establishment-id="establishmentId"
           :vet-staff-options="vetStaffOptions"
           :client-staff-options="clientStaffOptions"
+          :stale-client-managers="staleClientManagers"
+          :client-options-error="isEditMode && isClientManagersError"
           :loading-vet-staff="isLoadingVetStaff"
           :loading-client-staff="isLoadingClientManagers"
           :allowed-roles="allowedRoles"
@@ -384,12 +409,26 @@ const title = computed(() => (isEditMode.value ? 'Editar programa' : 'Nuevo prog
           <BaseButton variant="secondary" html-type="button" @click="backToList">
             Cancelar
           </BaseButton>
-          <BaseButton variant="primary" html-type="button" :loading="isSaving" @click="onSubmit">
+          <BaseButton variant="primary" html-type="button" :loading="isSaving" :disabled="managersUnavailable" @click="onSubmit">
             {{ isEditMode ? 'Guardar cambios' : 'Crear programa' }}
           </BaseButton>
         </div>
       </a-form>
     </a-spin>
+
+    <ProgramPreviewPanel
+      v-model:open="saveFlow.open.value"
+      v-model:acknowledged="saveFlow.acknowledged.value"
+      :status="saveFlow.status.value"
+      :preview="saveFlow.preview.value"
+      :requires-acknowledgement="saveFlow.requiresAcknowledgement.value"
+      :can-confirm="saveFlow.canConfirm.value"
+      :saving="saveFlow.isSaving.value"
+      @close="saveFlow.close"
+      @retry="saveFlow.retry"
+      @confirm="saveFlow.confirmAndSave"
+      @save-without-summary="saveFlow.saveWithoutPreview"
+    />
   </div>
 </template>
 

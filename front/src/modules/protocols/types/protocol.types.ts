@@ -54,6 +54,8 @@ export interface ProtocolDetail extends ProtocolListItem {
   created_by_type: 'superadmin' | 'vet'
   updated_at: string
   tasks: ProtocolTask[]
+  /** Only present on show/update responses. */
+  active_programs_count?: number
 }
 
 export interface ProtocolListParams {

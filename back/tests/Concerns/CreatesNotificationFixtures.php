@@ -29,7 +29,7 @@ trait CreatesNotificationFixtures
         $country = Country::create([
             'guid' => Str::uuid()->toString(),
             'name' => 'Argentina',
-            'iso_code' => 'A' . Str::random(4),
+            'iso_code' => UniqueIsoCode::next(),
             'phone_prefix' => '+54',
         ]);
 

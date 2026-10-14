@@ -1,3 +1,5 @@
+import type { LocalDateTime, ProgramWarning, ReconciliationSummary } from './program-alerts.types'
+
 export interface ProgramTargetAnimalRef {
   guid: string
   rp: string
@@ -20,6 +22,10 @@ export interface ProgramProjectedAlert {
   message: string
   require_confirmation: boolean
   recipients: ProgramAlertRecipient[]
+  // Present once the backend projection exposes it (DEC-08); optional for older payloads.
+  scheduled_at_local?: LocalDateTime
+  timing?: 'past' | 'future'
+  skip_reason?: 'no_recipients' | null
 }
 
 export interface ProgramProjectedTask {
@@ -87,6 +93,9 @@ export interface ProgramDetail extends Omit<ProgramListItem, 'targets_count' | '
   targets: ProgramTarget[]
   managers: ProgramManagerRef[]
   updated_at: string
+  // Only present in store/update responses (authoritative, computed on what was persisted).
+  warnings?: ProgramWarning[]
+  reconciliation?: ReconciliationSummary
 }
 
 export interface ProgramListParams {

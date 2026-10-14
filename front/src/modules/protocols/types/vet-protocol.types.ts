@@ -19,6 +19,8 @@ export interface VetProtocolListItem {
 export interface VetProtocolDetail extends VetProtocolListItem {
   updated_at: string
   tasks: ProtocolTask[]
+  /** Only present on show/update responses. */
+  active_programs_count?: number
 }
 
 export interface VetProtocolListParams {

@@ -36,6 +36,7 @@ class ClientStaffInvitationMail extends Mailable
 
         return new Content(
             view: 'emails.client-staff-invitation',
+            text: 'emails.text.client-staff-invitation',
             with: [
                 'firstName'       => $this->user->first_name,
                 'clientName'      => $this->clientName,

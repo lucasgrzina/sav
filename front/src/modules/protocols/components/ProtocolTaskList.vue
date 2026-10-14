@@ -4,6 +4,8 @@ import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import ProtocolTaskFormItem from './ProtocolTaskFormItem.vue'
 import type { ProtocolTaskFormValues } from '../validators/protocol.validator'
 
+defineProps<{ targetDateLabel?: string | null }>()
+
 const tasks = defineModel<ProtocolTaskFormValues[]>({ required: true })
 
 function emptyTask(): ProtocolTaskFormValues {
@@ -57,6 +59,7 @@ function moveDown(index: number) {
       :index="idx"
       :is-first="idx === 0"
       :is-last="idx === tasks.length - 1"
+      :target-date-label="targetDateLabel"
       @update="updateTask"
       @remove="removeTask"
       @move-up="moveUp"

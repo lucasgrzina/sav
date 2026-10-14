@@ -20,6 +20,7 @@ class KapsoCreateTemplatesCommand extends Command
     protected $signature = 'kapso:create-templates
         {--business-account-id= : WABA id; por defecto se descubre desde KAPSO_PHONE_NUMBER_ID}
         {--category=UTILITY : AUTHENTICATION | MARKETING | UTILITY}
+        {--only=* : Crea solo estas plantillas (type o type@vN, repetible). Ej: --only=program.task_due@v2}
         {--dry-run : Muestra los payloads sin crear nada}';
 
     protected $description = 'Crea en Kapso los templates de WhatsApp de cada AlertType y reporta su estado de aprobación.';
@@ -102,34 +103,77 @@ class KapsoCreateTemplatesCommand extends Command
     {
         $payloads = [];
 
-        foreach (WhatsappTemplateCatalog::definitions() as $type => $definition) {
-            $template = $config['templates'][$type] ?? null;
-            $name = $template['name'] ?? null;
+        $only = array_map('strval', (array) $this->option('only'));
+        $known = [];
 
-            if (! is_string($name) || $name === '') {
-                $this->error("Sin nombre de template configurado para {$type} (revisá KAPSO_TEMPLATE_*).");
+        foreach (WhatsappTemplateCatalog::versions() as $baseType => $byVersion) {
+            foreach ($byVersion as $version => $definition) {
+                $type = $version === 1 ? $baseType : "{$baseType}@v{$version}";
+                $known[] = $type;
 
-                return null;
+                if ($only !== [] && ! in_array($type, $only, true)) {
+                    continue;
+                }
+
+                $payload = $this->payloadFor($type, $definition, $config, $category);
+
+                if ($payload === null) {
+                    return null;
+                }
+
+                $payloads[$type] = $payload;
             }
+        }
 
-            $payloads[$type] = [
-                'name' => $name,
-                'language' => (string) ($template['language'] ?? 'es'),
-                'category' => $category,
-                // POSITIONAL, not NAMED: KapsoWhatsappGateway sends parameters by position.
-                // A NAMED template would reject those sends.
-                'parameter_format' => 'POSITIONAL',
-                'components' => [[
-                    'type' => 'BODY',
-                    'text' => $definition['body'],
-                    // Meta expects positional examples as an array of rows, one row per
-                    // component instance — hence the extra nesting.
-                    'example' => ['body_text' => [$definition['examples']]],
-                ]],
-            ];
+        $unknown = array_diff($only, $known);
+
+        if ($unknown !== []) {
+            $this->error('--only desconocido: ' . implode(', ', $unknown) . '. Disponibles: ' . implode(', ', $known));
+
+            return null;
         }
 
         return $payloads;
+    }
+
+    /**
+     * @param array{body: string, examples: list<string>, footer?: string} $definition
+     * @param array<string, mixed> $config
+     * @return array<string, mixed>|null
+     */
+    private function payloadFor(string $type, array $definition, array $config, string $category): ?array
+    {
+        $template = $config['templates'][$type] ?? null;
+        $name = $template['name'] ?? null;
+
+        if (! is_string($name) || $name === '') {
+            $this->error("Sin nombre de template configurado para {$type} (revisá KAPSO_TEMPLATE_*).");
+
+            return null;
+        }
+
+        $components = [[
+            'type' => 'BODY',
+            'text' => $definition['body'],
+            // Meta expects positional examples as an array of rows, one row per
+            // component instance — hence the extra nesting.
+            'example' => ['body_text' => [$definition['examples']]],
+        ]];
+
+        if (isset($definition['footer'])) {
+            // Footer: max 60 chars and no variables (Meta); no example needed.
+            $components[] = ['type' => 'FOOTER', 'text' => $definition['footer']];
+        }
+
+        return [
+            'name' => $name,
+            'language' => (string) ($template['language'] ?? 'es'),
+            'category' => $category,
+            // POSITIONAL, not NAMED: KapsoWhatsappGateway sends parameters by position.
+            // A NAMED template would reject those sends.
+            'parameter_format' => 'POSITIONAL',
+            'components' => $components,
+        ];
     }
 
     /**

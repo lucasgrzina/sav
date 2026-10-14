@@ -10,6 +10,7 @@ use App\Notifications\Data\TextContent;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Exceptions\NotificationConfigurationException;
 use App\Notifications\Exceptions\TemplateNotConfiguredException;
+use App\Notifications\Services\FailureClassifier;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Str;
@@ -35,6 +36,7 @@ final class KapsoWhatsappGateway implements NotificationChannelGateway
         private readonly string $apiKey,
         private readonly array $templates = [],
         private readonly int $timeout = 10,
+        private readonly ?FailureClassifier $classifier = null,
     ) {
         if ($this->apiKey === '') {
             throw new NotificationConfigurationException('Falta KAPSO_API_KEY.');
@@ -65,7 +67,15 @@ final class KapsoWhatsappGateway implements NotificationChannelGateway
         }
 
         if ($response->failed()) {
-            return DeliveryResult::failed($this->errorFrom($response));
+            $code = $response->json('error.code');
+
+            return DeliveryResult::failed(
+                $this->errorFrom($response),
+                ($this->classifier ?? new FailureClassifier())->fromProviderCode(
+                    FailureClassifier::PROVIDER_META,
+                    is_scalar($code) ? $code : null,
+                ),
+            );
         }
 
         $wamid = $response->json('messages.0.id');
@@ -109,17 +119,18 @@ final class KapsoWhatsappGateway implements NotificationChannelGateway
     /** @return array<string, mixed> */
     private function templateFor(TemplateContent $content): array
     {
-        $name = $this->templates[$content->type->value]['name'] ?? null;
+        $key = $content->templateKey();
+        $name = $this->templates[$key]['name'] ?? null;
 
         if (! is_string($name) || $name === '') {
             throw new TemplateNotConfiguredException(
-                "Sin template de Kapso configurado para {$content->type->value}",
+                "Sin template de Kapso configurado para {$key}",
             );
         }
 
         $template = [
             'name' => $name,
-            'language' => ['code' => $this->templates[$content->type->value]['language'] ?? 'es'],
+            'language' => ['code' => $this->templates[$key]['language'] ?? 'es'],
         ];
 
         // Meta rejects a body component carrying an empty parameter list, so a template

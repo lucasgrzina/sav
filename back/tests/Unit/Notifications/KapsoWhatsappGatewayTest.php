@@ -9,6 +9,7 @@ use App\Notifications\Data\TextContent;
 use App\Notifications\Enums\AlertType;
 use App\Notifications\Enums\Channel;
 use App\Notifications\Enums\DeliveryStatus;
+use App\Notifications\Enums\FailureCode;
 use App\Notifications\Exceptions\NotificationConfigurationException;
 use App\Notifications\Exceptions\TemplateNotConfiguredException;
 use App\Notifications\Gateways\Kapso\KapsoWhatsappGateway;
@@ -189,6 +190,28 @@ class KapsoWhatsappGatewayTest extends TestCase
         $this->assertStringContainsString('24 hours', $result->failureReason);
     }
 
+    public function test_a_4xx_is_classified_from_the_meta_error_code(): void
+    {
+        Http::fake([
+            self::ENDPOINT => Http::response(['error' => ['message' => 'Recipient not on WhatsApp', 'code' => 131026]], 400),
+        ]);
+
+        $result = $this->gateway()->send($this->message(new TextContent('hola')));
+
+        $this->assertSame(FailureCode::InvalidNumber, $result->failureCode);
+    }
+
+    public function test_a_4xx_with_an_unmapped_code_is_unknown(): void
+    {
+        Http::fake([
+            self::ENDPOINT => Http::response(['error' => ['message' => 'weird', 'code' => 424242]], 400),
+        ]);
+
+        $result = $this->gateway()->send($this->message(new TextContent('hola')));
+
+        $this->assertSame(FailureCode::Unknown, $result->failureCode);
+    }
+
     public function test_a_failure_reason_is_truncated_to_fit_the_column(): void
     {
         Http::fake([
@@ -240,6 +263,34 @@ class KapsoWhatsappGatewayTest extends TestCase
             $this->gateway()->send($this->message(
                 new TemplateContent(AlertType::ProgramCancelled, ['1' => 'Juan']),
             ));
+        } finally {
+            Http::assertNothingSent();
+        }
+    }
+
+    public function test_a_v2_template_resolves_its_own_versioned_name(): void
+    {
+        $this->fakeAccepted();
+
+        $this->gateway([
+            'program.task_due' => ['name' => 'sav_program_task_due', 'language' => 'es'],
+            'program.task_due@v2' => ['name' => 'sav_program_task_due_v2', 'language' => 'es'],
+        ])->send($this->message(
+            new TemplateContent(AlertType::ProgramTaskDue, ['1' => 'Juan'], version: 2),
+        ));
+
+        Http::assertSent(fn (Request $request) => $request->data()['template']['name'] === 'sav_program_task_due_v2');
+    }
+
+    public function test_a_v2_template_without_config_throws_even_if_v1_is_configured(): void
+    {
+        Http::fake();
+
+        $this->expectException(TemplateNotConfiguredException::class);
+
+        try {
+            $this->gateway(['program.task_due' => ['name' => 'sav_program_task_due', 'language' => 'es']])
+                ->send($this->message(new TemplateContent(AlertType::ProgramTaskDue, ['1' => 'Juan'], version: 2)));
         } finally {
             Http::assertNothingSent();
         }

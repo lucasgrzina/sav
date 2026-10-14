@@ -32,7 +32,12 @@ final class MailGateway implements NotificationChannelGateway
         // Mail::send() no distingue fallos definitivos (dirección inválida) de transitorios
         // (SMTP caído): cualquier excepción se relanza para que la cola reintente con backoff.
         Mail::to($message->recipient->email)->send(
-            new AlertMail($message->content->subject, $message->content->body),
+            new AlertMail(
+                $message->content->subject,
+                $message->content->body,
+                $message->content->actionUrl,
+                $message->content->actionLabel,
+            ),
         );
 
         return DeliveryResult::sent(Str::uuid()->toString());

@@ -13,8 +13,11 @@ use App\Notifications\Gateways\Twilio\TwilioWhatsappGateway;
 use App\Notifications\Gateways\WebPush\WebPushGateway;
 use App\Notifications\Pipeline\DeliveryPipeline;
 use App\Notifications\Policies\OptOutPolicy;
+use App\Notifications\Registries\AlertRevalidatorRegistry;
 use App\Notifications\Registries\GatewayRegistry;
+use App\Notifications\Revalidators\ProgramTaskDueRevalidator;
 use App\Notifications\Registries\MessageBuilderRegistry;
+use App\Notifications\Support\AlertsSchemaGuard;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Support\ServiceProvider;
 use Twilio\Rest\Client;
@@ -24,6 +27,8 @@ class NotificationServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/notifications.php', 'notifications');
+
+        $this->app->singleton(AlertsSchemaGuard::class);
 
         $this->app->singleton(TwilioWhatsappGateway::class, function ($app) {
             $config = $app['config']->get('notifications.twilio');
@@ -102,6 +107,14 @@ class NotificationServiceProvider extends ServiceProvider
 
         $this->app->singleton(MessageBuilderRegistry::class, function ($app) {
             return new MessageBuilderRegistry(iterator_to_array($app->tagged('alert.builders')));
+        });
+
+        $this->app->tag([
+            ProgramTaskDueRevalidator::class,
+        ], 'alert.revalidators');
+
+        $this->app->singleton(AlertRevalidatorRegistry::class, function ($app) {
+            return new AlertRevalidatorRegistry(iterator_to_array($app->tagged('alert.revalidators')));
         });
 
         $this->app->tag([
