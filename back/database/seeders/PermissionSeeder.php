@@ -27,6 +27,7 @@ class PermissionSeeder extends Seeder
             'support-messages.reply',
             'support-messages.close',
             'system-settings.manage',
+            'dashboard.admin.read',
             'vets.read',
             'vets.create',
             'vets.update',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   DashboardOutlined,
   TeamOutlined,
@@ -20,15 +21,16 @@ defineProps<{ collapsed: boolean }>()
 
 const route = useRoute()
 const { can } = usePermission()
+const { t } = useI18n()
 
-const systemNavItems = [
-  { path: '/dashboard',        label: 'Dashboard',        icon: DashboardOutlined,         permission: null                    },
+const systemNavItems = computed(() => [
+  { path: '/dashboard',        label: t('dashboard.menu'),        icon: DashboardOutlined,         permission: 'dashboard.admin.read'  },
   { path: '/users',            label: 'Usuarios',          icon: TeamOutlined,              permission: 'users.read'            },
   { path: '/roles',            label: 'Roles y Permisos',  icon: SafetyCertificateOutlined, permission: 'roles.read'            },
   { path: '/settings',         label: 'Configuración',     icon: SettingOutlined,           permission: null                    },
   { path: '/support-messages', label: 'Soporte',           icon: CustomerServiceOutlined,   permission: 'support-messages.read' },
   { path: '/tutorials',        label: 'Tutoriales',        icon: PlayCircleOutlined,        permission: 'tutorials.read'        },
-]
+])
 
 const adminNavItems = [
   { path: '/admin/vets',            label: 'Empresas',   icon: MedicineBoxOutlined, permission: 'vets.read'              },
@@ -47,7 +49,7 @@ const healthNavItems = [
 ]
 
 const navItems = computed(() =>
-  systemNavItems.filter(item => !item.permission || can(item.permission))
+  systemNavItems.value.filter(item => !item.permission || can(item.permission))
 )
 
 const adminItems = computed(() =>

@@ -1,0 +1,45 @@
+export default {
+  dashboard: {
+    greeting: {
+      morning: 'Buenos días',
+      afternoon: 'Buenas tardes',
+      evening: 'Buenas noches',
+    },
+    menu: 'Dashboard',
+    generatedAt: 'Datos en caché desde {time}',
+    refresh: 'Actualizar',
+    noAccess: 'No tenés acceso a las estadísticas de la plataforma.',
+    errorMessage: 'No se pudieron cargar las estadísticas.',
+    metrics: {
+      activeVets: 'Empresas activas',
+      activeVetsDesc: '{suspended} suspendidas de {total} en total',
+      pendingVets: 'Pendientes de validación',
+      pendingVetsDesc: 'Empresas esperando aprobación',
+      clients: 'Clientes',
+      establishments: 'Establecimientos',
+      animals: 'Animales',
+      activePrograms: 'Programas activos',
+      activeProgramsDesc: 'Con fechas objetivo vigentes',
+    },
+    sent: {
+      chartLabel: 'Avisos enviados por día, últimos 7 días',
+      title: 'Avisos enviados',
+      subtitle: 'Últimos 7 días',
+      empty: 'No se enviaron avisos en los últimos 7 días.',
+      total: '{count} en total',
+    },
+    delivery: {
+      title: 'Tasa de entrega',
+      subtitle: 'Últimos 30 días por canal',
+      empty: 'Sin envíos en los últimos 30 días.',
+      detail: '{ok} entregados, {failed} fallidos',
+      progressLabel: 'Tasa de entrega de {channel}: {rate}',
+    },
+    channels: {
+      whatsapp: 'WhatsApp',
+      sms: 'SMS',
+      email: 'Email',
+      push: 'Push',
+    },
+  },
+}

@@ -1,36 +1,34 @@
-export interface MetricData {
-    clinics: number;
-    doctors: number;
-    activeAlerts: number;
-    alertsToday: number;
-    patients: number;
-    resolvedAlerts: number;
+export type DashboardChannel = 'whatsapp' | 'sms' | 'email' | 'push'
+
+export interface SentPerDay {
+  date: string
+  count: number
 }
 
-export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low';
-export type AlertStatus   = 'active' | 'acknowledged' | 'resolved';
-export type ActivityType  = 'alert' | 'user' | 'clinic' | 'system';
-
-export interface AlertItem {
-    id: string;
-    clinic: string;
-    patient: string;
-    type: string;
-    severity: AlertSeverity;
-    status: AlertStatus;
-    createdAt: string;
+export interface ChannelDelivery {
+  channel: DashboardChannel
+  ok: number
+  failed: number
+  rate: number | null
 }
 
-export interface ActivityItem {
-    id: string;
-    type: ActivityType;
-    description: string;
-    detail?: string;
-    time: string;
-}
-
-export interface ChartData {
-    labels: string[];
-    alerts: number[];
-    resolved: number[];
+export interface AdminDashboardData {
+  generated_at: string
+  vets: {
+    active: number
+    pending: number
+    suspended: number
+    total: number
+  }
+  totals: {
+    clients: number
+    establishments: number
+    animals: number
+    active_programs: number
+  }
+  sent_last_7d: SentPerDay[]
+  delivery_30d: {
+    rate: number | null
+    by_channel: ChannelDelivery[]
+  }
 }
