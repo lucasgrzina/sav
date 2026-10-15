@@ -1,207 +1,149 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useAuth } from '@/composables/useAuth';
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useAuth } from '@/composables/useAuth'
+import { usePermission } from '@/core/composables/usePermissions'
 import {
-    MedicineBoxOutlined,
-    TeamOutlined,
-    BellOutlined,
-    HeartOutlined,
-    CheckCircleOutlined,
-    HomeOutlined,
-} from '@ant-design/icons-vue';
+  HomeOutlined,
+  ClockCircleOutlined,
+  IdcardOutlined,
+  EnvironmentOutlined,
+  HeartOutlined,
+  ScheduleOutlined,
+} from '@ant-design/icons-vue'
 
-import AsyncContent from '@/components/shared/AsyncContent.vue';
-import MetricCard   from '../components/MetricCard.vue';
-import TrendChart   from '../components/TrendChart.vue';
-import AlertsTable  from '../components/AlertsTable.vue';
-import ActivityFeed from '../components/ActivityFeed.vue';
+import AsyncContent from '@/components/shared/AsyncContent.vue'
+import MetricCard from '../components/MetricCard.vue'
+import SentBarChart from '../components/SentBarChart.vue'
+import DeliveryRateCard from '../components/DeliveryRateCard.vue'
+import { useAdminDashboard } from '../composables/useAdminDashboard'
+import { formatCount } from '../composables/useDashboardFormat'
 
-import { useMetrics }  from '../composables/useMetrics';
-import { useAlerts }   from '../composables/useAlerts';
-import { useActivity } from '../composables/useActivity';
-import { useChart }    from '../composables/useChart';
+const { t } = useI18n()
+const { user } = useAuth()
+const { can } = usePermission()
 
-const { user } = useAuth();
+const canViewStats = computed(() => can('dashboard.admin.read'))
+const { data, isLoading, isFetching, error, refetch } = useAdminDashboard(canViewStats)
 
-const { data: metrics,  isLoading: metricsLoading,  error: metricsError,  refetch: refetchMetrics  } = useMetrics();
-const { data: alerts,   isLoading: alertsLoading,   error: alertsError,   refetch: refetchAlerts   } = useAlerts();
-const { data: activity, isLoading: activityLoading, error: activityError, refetch: refetchActivity } = useActivity();
-const { data: chart,    isLoading: chartLoading,    error: chartError,    refetch: refetchChart    } = useChart();
-
-const isLoading = computed(() =>
-    metricsLoading.value || alertsLoading.value || activityLoading.value || chartLoading.value
-);
-
-// Cualquier error de las queries se propaga al AsyncContent
-const firstError = computed(() =>
-    metricsError.value ?? alertsError.value ?? activityError.value ?? chartError.value ?? null
-);
-
-function refetchAll() {
-    void refetchMetrics();
-    void refetchAlerts();
-    void refetchActivity();
-    void refetchChart();
+function retry() {
+  void refetch()
 }
 
 const todayLabel = computed(() =>
-    new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
-);
+  new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }),
+)
 
 const greeting = computed(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Buenos días';
-    if (hour < 19) return 'Buenas tardes';
-    return 'Buenas noches';
-});
+  const hour = new Date().getHours()
+  if (hour < 12) return t('dashboard.greeting.morning')
+  if (hour < 19) return t('dashboard.greeting.afternoon')
+  return t('dashboard.greeting.evening')
+})
+
+const generatedAtLabel = computed(() => {
+  if (!data.value) return ''
+  const time = new Date(data.value.generated_at).toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  return t('dashboard.generatedAt', { time })
+})
 </script>
 
 <template>
-    <div class="dash-view">
-        <!-- Welcome -->
-        <div class="dash-welcome">
-            <div>
-                <h2 class="dash-welcome-title">{{ greeting }}, {{ user?.first_name }}</h2>
-                <p class="dash-welcome-sub">{{ todayLabel }}</p>
-            </div>
-            <div class="dash-live-badge">
-                <span class="dash-live-dot" />
-                Sistema en línea
-            </div>
+  <div class="dash-view">
+    <div class="dash-welcome">
+      <div>
+        <h2 class="dash-welcome-title">{{ greeting }}, {{ user?.first_name }}</h2>
+        <p class="dash-welcome-sub">{{ todayLabel }}</p>
+      </div>
+      <div v-if="canViewStats" class="dash-welcome-actions">
+        <span v-if="data" class="dash-welcome-sub" data-testid="generated-at">{{ generatedAtLabel }}</span>
+        <a-button size="small" data-testid="refresh" :loading="isFetching" @click="retry">{{ t('dashboard.refresh') }}</a-button>
+      </div>
+    </div>
+
+    <p v-if="!canViewStats" class="dash-welcome-sub" data-testid="no-access">
+      {{ t('dashboard.noAccess') }}
+    </p>
+
+    <AsyncContent
+      v-else
+      :loading="isLoading"
+      :error="error"
+      :error-message="t('dashboard.errorMessage')"
+      @retry="retry"
+    >
+      <template v-if="data">
+        <div class="dash-metrics-grid">
+          <MetricCard
+            :title="t('dashboard.metrics.activeVets')"
+            :value="formatCount(data.vets.active)"
+            :description="t('dashboard.metrics.activeVetsDesc', { suspended: data.vets.suspended, total: data.vets.total })"
+            color="accent"
+          >
+            <template #icon><div class="metric-icon metric-icon--accent"><HomeOutlined /></div></template>
+          </MetricCard>
+
+          <MetricCard
+            :title="t('dashboard.metrics.pendingVets')"
+            :value="formatCount(data.vets.pending)"
+            :description="t('dashboard.metrics.pendingVetsDesc')"
+            :color="data.vets.pending > 0 ? 'warning' : 'info'"
+            data-testid="pending-vets"
+          >
+            <template #icon><div class="metric-icon metric-icon--info"><ClockCircleOutlined /></div></template>
+          </MetricCard>
+
+          <MetricCard :title="t('dashboard.metrics.clients')" :value="formatCount(data.totals.clients)" color="info">
+            <template #icon><div class="metric-icon metric-icon--info"><IdcardOutlined /></div></template>
+          </MetricCard>
+
+          <MetricCard
+            :title="t('dashboard.metrics.establishments')"
+            :value="formatCount(data.totals.establishments)"
+            color="info"
+          >
+            <template #icon><div class="metric-icon metric-icon--info"><EnvironmentOutlined /></div></template>
+          </MetricCard>
+
+          <MetricCard :title="t('dashboard.metrics.animals')" :value="formatCount(data.totals.animals)" color="accent">
+            <template #icon><div class="metric-icon metric-icon--accent"><HeartOutlined /></div></template>
+          </MetricCard>
+
+          <MetricCard
+            :title="t('dashboard.metrics.activePrograms')"
+            :value="formatCount(data.totals.active_programs)"
+            :description="t('dashboard.metrics.activeProgramsDesc')"
+            color="accent"
+          >
+            <template #icon><div class="metric-icon metric-icon--accent"><ScheduleOutlined /></div></template>
+          </MetricCard>
         </div>
 
-        <AsyncContent :loading="isLoading" :error="firstError" @retry="refetchAll">
-            <!-- Metrics grid -->
-            <div class="dash-metrics-grid">
-                <MetricCard
-                    title="Clínicas activas"
-                    :value="metrics?.clinics ?? '—'"
-                    color="accent"
-                    trend="up"
-                    trend-value="+3 este mes"
-                >
-                    <template #icon>
-                        <div class="metric-icon metric-icon--accent"><HomeOutlined /></div>
-                    </template>
-                </MetricCard>
-
-                <MetricCard
-                    title="Veterinarios"
-                    :value="metrics?.doctors ?? '—'"
-                    color="info"
-                    trend="up"
-                    trend-value="+8 este mes"
-                >
-                    <template #icon>
-                        <div class="metric-icon metric-icon--info"><MedicineBoxOutlined /></div>
-                    </template>
-                </MetricCard>
-
-                <MetricCard
-                    title="Usuarios del sistema"
-                    :value="'—'"
-                    color="info"
-                >
-                    <template #icon>
-                        <div class="metric-icon metric-icon--info"><TeamOutlined /></div>
-                    </template>
-                </MetricCard>
-
-                <MetricCard
-                    title="Pacientes monitoreados"
-                    :value="metrics?.patients != null ? metrics.patients.toLocaleString('es-AR') : '—'"
-                    color="accent"
-                    trend="up"
-                    trend-value="+24 hoy"
-                >
-                    <template #icon>
-                        <div class="metric-icon metric-icon--accent"><HeartOutlined /></div>
-                    </template>
-                </MetricCard>
-
-                <MetricCard
-                    title="Alertas activas"
-                    :value="metrics?.activeAlerts ?? '—'"
-                    color="danger"
-                    trend="down"
-                    trend-value="-5 vs ayer"
-                >
-                    <template #icon>
-                        <div class="metric-icon metric-icon--danger"><BellOutlined /></div>
-                    </template>
-                </MetricCard>
-
-                <MetricCard
-                    title="Resueltas hoy"
-                    :value="metrics?.resolvedAlerts ?? '—'"
-                    color="accent"
-                    trend="up"
-                    trend-value="91% tasa"
-                >
-                    <template #icon>
-                        <div class="metric-icon metric-icon--accent"><CheckCircleOutlined /></div>
-                    </template>
-                </MetricCard>
+        <div class="dash-charts-row">
+          <div class="dash-section-card">
+            <div class="dash-section-header">
+              <div>
+                <h3 class="dash-section-title">{{ t('dashboard.sent.title') }}</h3>
+                <p class="dash-section-sub">{{ t('dashboard.sent.subtitle') }}</p>
+              </div>
             </div>
+            <SentBarChart :items="data.sent_last_7d" />
+          </div>
 
-            <!-- Charts + Activity -->
-            <div class="dash-charts-row">
-                <!-- Alerts trend chart -->
-                <div class="dash-section-card">
-                    <div class="dash-section-header">
-                        <div>
-                            <h3 class="dash-section-title">Alertas por día</h3>
-                            <p class="dash-section-sub">Últimos 7 días</p>
-                        </div>
-                        <div class="dash-today-badge">
-                            <strong>{{ metrics?.alertsToday ?? '—' }}</strong> hoy
-                        </div>
-                    </div>
-
-                    <TrendChart
-                        v-if="chart"
-                        :data="chart.alerts"
-                        :labels="chart.labels"
-                        color="#1AE5A0"
-                    />
-                    <TrendChart
-                        v-if="chart"
-                        :data="chart.resolved"
-                        :labels="chart.labels"
-                        color="#38BDF8"
-                        style="margin-top: 10px"
-                    />
-
-                    <div class="dash-chart-legend">
-                        <span class="dash-legend-dot" style="background: #1AE5A0" />
-                        Generadas
-                        <span class="dash-legend-dot" style="background: #38BDF8; margin-left: 14px" />
-                        Resueltas
-                    </div>
-                </div>
-
-                <!-- Activity feed -->
-                <div class="dash-section-card">
-                    <div class="dash-section-header">
-                        <div>
-                            <h3 class="dash-section-title">Actividad reciente</h3>
-                            <p class="dash-section-sub">Últimas acciones del sistema</p>
-                        </div>
-                    </div>
-                    <ActivityFeed v-if="activity" :items="activity" />
-                </div>
+          <div class="dash-section-card">
+            <div class="dash-section-header">
+              <div>
+                <h3 class="dash-section-title">{{ t('dashboard.delivery.title') }}</h3>
+                <p class="dash-section-sub">{{ t('dashboard.delivery.subtitle') }}</p>
+              </div>
             </div>
-
-            <!-- Recent alerts table -->
-            <div class="dash-section-card">
-                <div class="dash-section-header">
-                    <div>
-                        <h3 class="dash-section-title">Últimas alertas</h3>
-                        <p class="dash-section-sub">Alertas críticas y activas registradas</p>
-                    </div>
-                </div>
-                <AlertsTable v-if="alerts" :items="alerts" />
-            </div>
-        </AsyncContent>
-    </div>
+            <DeliveryRateCard :delivery="data.delivery_30d" />
+          </div>
+        </div>
+      </template>
+    </AsyncContent>
+  </div>
 </template>

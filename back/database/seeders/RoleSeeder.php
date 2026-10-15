@@ -34,6 +34,7 @@ class RoleSeeder extends Seeder
             'users.update',
             'roles.read',
             'exports.create',
+            'dashboard.admin.read',
         ])->get());
 
         $operador->syncPermissions(Permission::whereIn('name', [
