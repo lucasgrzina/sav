@@ -14,7 +14,7 @@ class UpdateRoleRequest extends FormRequest
 
     public function rules(): array
     {
-        $guid = $this->route('role');
+        $guid = $this->route('guid');
 
         return [
             'name'          => ['sometimes', 'nullable', 'string', 'max:80', Rule::unique('roles', 'name')->whereNot('guid', $guid)],
