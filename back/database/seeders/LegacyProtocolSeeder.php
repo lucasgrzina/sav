@@ -25,6 +25,23 @@ use RuntimeException;
  * mayor days_offset que sea <= al days_offset de la alerta (la próxima tarea
  * cronológicamente), heurística acordada porque el JSON no trae el mapeo
  * explícito y en algunos casos arrastra inconsistencias propias del origen.
+ *
+ * Alternativa explícita (opcional, por alerta): `task_index` (posición de la
+ * tarea en el array `tasks` del JSON, tal como está escrito), más `offset_days`
+ * y `time_of_day` ('before'|'after'). Si hay `task_index`, se usan tal cual y
+ * se omite la heurística (necesario cuando hay tareas 'after', ya que la
+ * heurística compara days_offset crudo sin considerar la dirección).
+ *
+ * Theriogenology (Papeles de trabajo 1/2/3): usa el modo explícito.
+ * - Franjas -> hora: 06:00 bien temprano a la mañana, 10:00 media mañana,
+ *   13:00 bien temprano a la tarde, 15:30 media tarde, 18:00 después de media tarde.
+ * - Papel 3: 1er turno de IA a las 06:00 (día 0) y 2do a las 04:00 (día +1), es
+ *   decir 22 h de separación. Valor INICIAL pendiente de validación veterinaria
+ *   (el estudio referencia 20 h entre turnos; mismo horario ambos días = 24 h).
+ * - Los mensajes se guardan con [grupo]/[establecimiento]/[fecha...] como texto
+ *   literal; se resuelven al generar las alertas del programa (AlertMessagePlaceholders).
+ *   [grupo] es el grupo del programa (ProgramTarget): su nombre o, si no tiene,
+ *   "del DD/MM/AAAA (N animales)".
  */
 class LegacyProtocolSeeder extends Seeder
 {
@@ -33,6 +50,7 @@ class LegacyProtocolSeeder extends Seeder
         'iatf_migration.json',
         'fiv_migration.json',
         'hernicol_iatf_migration.json',
+        'theriogenology_iatf_migration.json',
     ];
 
     public function run(): void
@@ -123,7 +141,7 @@ class LegacyProtocolSeeder extends Seeder
         }
     }
 
-    /** @return \Illuminate\Support\Collection<int, ProtocolTask> tareas ordenadas por days_offset descendente (orden cronológico) */
+    /** @return \Illuminate\Support\Collection<int, ProtocolTask> tareas en el orden original del JSON (el índice coincide con sort_order y con `task_index` de las alertas) */
     private function seedTasks(Protocol $protocol, array $tasksData): \Illuminate\Support\Collection
     {
         $tasks = collect();
@@ -141,7 +159,7 @@ class LegacyProtocolSeeder extends Seeder
             ]));
         }
 
-        return $tasks->sortByDesc('days_offset')->values();
+        return $tasks;
     }
 
     private function seedAlerts(\Illuminate\Support\Collection $tasks, array $alertsData): void
@@ -151,18 +169,27 @@ class LegacyProtocolSeeder extends Seeder
         }
 
         $sortOrderByTask = [];
+        $tasksDesc = $tasks->sortByDesc('days_offset')->values();
 
         foreach ($alertsData as $alertData) {
-            $task = $this->resolveTaskForAlert($tasks, $alertData['days_offset']);
+            if (isset($alertData['task_index'])) {
+                $task = $tasks->get($alertData['task_index'])
+                    ?? throw new RuntimeException("task_index {$alertData['task_index']} inexistente para la alerta '{$alertData['text']}'.");
 
-            $offsetDays = $alertData['days_offset'] - $task->days_offset;
-
-            if ($offsetDays > 0) {
-                $timeOfDay = 'before';
-            } elseif ($offsetDays < 0) {
-                $timeOfDay = 'after';
+                $offsetDays = (int) $alertData['offset_days'];
+                $timeOfDay  = strtolower($alertData['time_of_day']);
             } else {
-                $timeOfDay = $alertData['time'] <= (string) $task->time ? 'before' : 'after';
+                $task = $this->resolveTaskForAlert($tasksDesc, $alertData['days_offset']);
+
+                $offsetDays = $alertData['days_offset'] - $task->days_offset;
+
+                if ($offsetDays > 0) {
+                    $timeOfDay = 'before';
+                } elseif ($offsetDays < 0) {
+                    $timeOfDay = 'after';
+                } else {
+                    $timeOfDay = $alertData['time'] <= (string) $task->time ? 'before' : 'after';
+                }
             }
 
             $sortOrder = $sortOrderByTask[$task->id] ??= 0;

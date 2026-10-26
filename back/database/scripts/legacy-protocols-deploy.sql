@@ -1,5 +1,5 @@
 -- =============================================================================
--- Deploy manual (sin SSH) — Catálogo de Protocolos legacy (MOET, IATF, FIV, Hernicol)
+-- Deploy manual (sin SSH) — Catálogo de Protocolos legacy (MOET, IATF, FIV, Hernicol, Theriogenology)
 -- Generado a partir de LegacyProtocolSeeder.php + database/scripts/*_migration.json
 --
 -- 100% ADITIVO: no borra ni trunca nada. Si un Protocol con el mismo nombre ya
@@ -787,5 +787,254 @@ INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of
 SELECT UUID(), @protocol_id, 'Inyectar GnRH 3 cc a vacas sin respuesta a celo (sin repintar)', 0, 'before', '08:00:00', 1, 9, NOW(), NOW()
 WHERE @p_exists = 0;
 
-COMMIT;
+-- ----------------------------------------------------------------------------
+-- Fuente: theriogenology_iatf_migration.json
+-- ----------------------------------------------------------------------------
 
+-- Technique root: IATF
+INSERT INTO techniques (guid, name, target_date_name, type, parent_id, protocols_name, created_at, updated_at)
+SELECT UUID(), 'IATF', 'Fecha de inseminación', 'technique', NULL, NULL, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM techniques WHERE name = 'IATF' AND parent_id IS NULL);
+
+-- Technique child: Vaquillonas - Carne (parent: IATF)
+INSERT INTO techniques (guid, name, target_date_name, type, parent_id, protocols_name, created_at, updated_at)
+SELECT UUID(), 'Vaquillonas - Carne', 'Fecha de inseminación', 'technique', (SELECT id FROM techniques WHERE name = 'IATF' AND parent_id IS NULL), 'Protocolo 1', NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM techniques t2 JOIN techniques root2 ON root2.id = t2.parent_id WHERE t2.name = 'Vaquillonas - Carne' AND root2.name = 'IATF');
+
+-- =====================================================================
+-- Protocol: Papel de trabajo 1
+-- =====================================================================
+SET @p_exists := (SELECT COUNT(*) FROM protocols WHERE name = 'Papel de trabajo 1' AND country_id = @ar_country_id AND vet_id IS NULL);
+
+INSERT INTO protocols (guid, technique_id, country_id, vet_id, created_by_type, created_by_id, name, color, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM techniques WHERE name = 'Vaquillonas - Carne' AND parent_id IS NOT NULL), @ar_country_id, NULL, 'superadmin', @super_admin_id, 'Papel de trabajo 1', '#5b9bd5', NOW(), NOW()
+WHERE @p_exists = 0;
+
+SET @protocol_id := (SELECT id FROM protocols WHERE name = 'Papel de trabajo 1' AND country_id = @ar_country_id AND vet_id IS NULL LIMIT 1);
+
+-- Task #0: Colocar dispositivos y administrar GnRH, después de media tarde, ideal
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Colocar dispositivos y administrar GnRH, después de media tarde, idealmente.', 10, 'before', '18:00:00', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #1: Retirar dispositivos, administrar prostaglandina y colocar parches de 
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Retirar dispositivos, administrar prostaglandina y colocar parches de detección de celo, después de media tarde, idealmente.', 3, 'before', '18:00:00', 1, 1, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #2: Inseminar y administrar GnRH, bien temprano a la mañana, idealmente.
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Inseminar y administrar GnRH, bien temprano a la mañana, idealmente.', 0, 'before', '06:00:00', 1, 2, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #3: Ingresar toros de repaso, a media mañana, idealmente. Relación: 1 toro
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Ingresar toros de repaso, a media mañana, idealmente. Relación: 1 toro cada 40 vaquillonas.', 11, 'after', '10:00:00', 0, 3, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #4: Retirar toros y finalizar el servicio, a media mañana, idealmente.
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Retirar toros y finalizar el servicio, a media mañana, idealmente.', 60, 'after', '10:00:00', 0, 4, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #5: Diagnóstico de gestación previsto, con fecha y encierre coordinados co
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Diagnóstico de gestación previsto, con fecha y encierre coordinados con el veterinario.', 90, 'after', '10:00:00', 0, 5, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #0 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 0), 1, 'before', '17:00:00', CAST('["client-manager","client-owner"]' AS JSON), 'Recordá que mañana se colocan los dispositivos y se administra GnRH, después de media tarde, idealmente. Prepará los animales, los dispositivos y la medicación indicada.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #1 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 1), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana corresponde retirar los dispositivos, administrar prostaglandina y colocar los parches, después de media tarde, idealmente. Coordiná el encierre y los materiales.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #2 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 2), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana inseminamos, bien temprano a la mañana, idealmente. También corresponde administrar GnRH. Dejá preparados los animales y coordiná con el veterinario.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #3 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 3), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana corresponde ingresar los toros de repaso, a media mañana, idealmente: 1 toro cada 40 vaquillonas.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #4 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 4), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana finaliza el servicio y corresponde retirar los toros, a media mañana, idealmente. Coordiná el movimiento con el personal del campo.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #5 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 5), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'A partir de mañana está previsto realizar el diagnóstico de gestación. Coordiná con el veterinario la fecha y el encierre, idealmente con anticipación.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- =====================================================================
+-- Protocol: Papel de trabajo 2
+-- =====================================================================
+SET @p_exists := (SELECT COUNT(*) FROM protocols WHERE name = 'Papel de trabajo 2' AND country_id = @ar_country_id AND vet_id IS NULL);
+
+INSERT INTO protocols (guid, technique_id, country_id, vet_id, created_by_type, created_by_id, name, color, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM techniques WHERE name = 'Vaquillonas - Carne' AND parent_id IS NOT NULL), @ar_country_id, NULL, 'superadmin', @super_admin_id, 'Papel de trabajo 2', '#ed7d31', NOW(), NOW()
+WHERE @p_exists = 0;
+
+SET @protocol_id := (SELECT id FROM protocols WHERE name = 'Papel de trabajo 2' AND country_id = @ar_country_id AND vet_id IS NULL LIMIT 1);
+
+-- Task #0: Colocar dispositivos y administrar GnRH, después de media tarde, ideal
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Colocar dispositivos y administrar GnRH, después de media tarde, idealmente.', 10, 'before', '18:00:00', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #1: Retirar dispositivos, administrar prostaglandina y colocar parches, de
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Retirar dispositivos, administrar prostaglandina y colocar parches, después de media tarde, idealmente.', 3, 'before', '18:00:00', 1, 1, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #2: Inseminar y administrar GnRH, bien temprano a la mañana, idealmente.
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Inseminar y administrar GnRH, bien temprano a la mañana, idealmente.', 0, 'before', '06:00:00', 1, 2, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #3: Al terminar la inseminación, ingresar inmediatamente toros: 1 cada 25 
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Al terminar la inseminación, ingresar inmediatamente toros: 1 cada 25 vaquillonas.', 0, 'before', '06:00:00', 1, 3, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #4: Retirar los toros de esta primera etapa, a media mañana, idealmente.
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Retirar los toros de esta primera etapa, a media mañana, idealmente.', 5, 'after', '10:00:00', 0, 4, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #5: Reingresar toros, a media mañana, idealmente. Relación: 1 cada 40 vaqu
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Reingresar toros, a media mañana, idealmente. Relación: 1 cada 40 vaquillonas.', 19, 'after', '10:00:00', 0, 5, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #6: Retirar toros y finalizar el servicio, a media mañana, idealmente.
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Retirar toros y finalizar el servicio, a media mañana, idealmente.', 60, 'after', '10:00:00', 0, 6, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #7: Diagnóstico de gestación previsto, con fecha y encierre coordinados co
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Diagnóstico de gestación previsto, con fecha y encierre coordinados con el veterinario.', 90, 'after', '10:00:00', 0, 7, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #0 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 0), 1, 'before', '17:00:00', CAST('["client-manager","client-owner"]' AS JSON), 'Recordá que mañana se colocan los dispositivos y se administra GnRH, después de media tarde, idealmente. Prepará los animales y los materiales.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #1 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 1), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana corresponde retirar los dispositivos, administrar prostaglandina y colocar los parches, después de media tarde, idealmente.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #2 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 2), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana inseminamos y administramos GnRH, bien temprano a la mañana, idealmente. Al finalizar la inseminación, ingresan inmediatamente los toros: 1 cada 25 vaquillonas. Dejalos preparados para ese momento.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #4 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 4), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana corresponde retirar los toros de esta primera etapa de servicio, a media mañana, idealmente.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #5 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 5), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana corresponde volver a ingresar los toros, a media mañana, idealmente: 1 toro cada 40 vaquillonas.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #6 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 6), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana finaliza el servicio y corresponde retirar los toros, a media mañana, idealmente. Coordiná el movimiento con el personal del campo.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #7 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 7), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'A partir de mañana está previsto realizar el diagnóstico de gestación. Coordiná con el veterinario la fecha y el encierre, idealmente con anticipación.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- =====================================================================
+-- Protocol: Papel de trabajo 3
+-- =====================================================================
+SET @p_exists := (SELECT COUNT(*) FROM protocols WHERE name = 'Papel de trabajo 3' AND country_id = @ar_country_id AND vet_id IS NULL);
+
+INSERT INTO protocols (guid, technique_id, country_id, vet_id, created_by_type, created_by_id, name, color, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM techniques WHERE name = 'Vaquillonas - Carne' AND parent_id IS NOT NULL), @ar_country_id, NULL, 'superadmin', @super_admin_id, 'Papel de trabajo 3', '#70ad47', NOW(), NOW()
+WHERE @p_exists = 0;
+
+SET @protocol_id := (SELECT id FROM protocols WHERE name = 'Papel de trabajo 3' AND country_id = @ar_country_id AND vet_id IS NULL LIMIT 1);
+
+-- Task #0: Colocar dispositivos y administrar GnRH, a media tarde, idealmente.
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Colocar dispositivos y administrar GnRH, a media tarde, idealmente.', 10, 'before', '15:30:00', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #1: Retirar dispositivos, administrar prostaglandina y colocar parches, a 
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Retirar dispositivos, administrar prostaglandina y colocar parches, a media tarde, idealmente.', 3, 'before', '15:30:00', 1, 1, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #2: Primer turno: inseminar las vaquillonas que presentaron celo, bien tem
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Primer turno: inseminar las vaquillonas que presentaron celo, bien temprano a la mañana, idealmente.', 0, 'before', '06:00:00', 1, 2, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #3: Segundo turno: inseminar las restantes, bien temprano a la mañana, ide
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Segundo turno: inseminar las restantes, bien temprano a la mañana, idealmente. Administrar GnRH a las que continúen sin manifestar celo.', 1, 'after', '04:00:00', 1, 3, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #4: Ingresar toros de repaso, a media mañana, idealmente. Relación: 1 cada
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Ingresar toros de repaso, a media mañana, idealmente. Relación: 1 cada 40 vaquillonas.', 11, 'after', '10:00:00', 0, 4, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #5: Retirar toros y finalizar el servicio, a media mañana, idealmente.
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Retirar toros y finalizar el servicio, a media mañana, idealmente.', 60, 'after', '10:00:00', 0, 5, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Task #6: Diagnóstico de gestación previsto, con fecha y encierre coordinados co
+INSERT INTO protocol_tasks (guid, protocol_id, description, days_offset, time_of_day, time, important, sort_order, created_at, updated_at)
+SELECT UUID(), @protocol_id, 'Diagnóstico de gestación previsto, con fecha y encierre coordinados con el veterinario.', 90, 'after', '10:00:00', 0, 6, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #0 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 0), 1, 'before', '17:00:00', CAST('["client-manager","client-owner"]' AS JSON), 'Recordá que mañana se colocan los dispositivos y se administra GnRH, a media tarde, idealmente. Prepará los animales y los materiales.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #1 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 1), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana corresponde retirar los dispositivos, administrar prostaglandina y colocar los parches, a media tarde, idealmente. Dejá organizada la identificación de los animales según la manifestación de celo.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #2 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 2), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Tenemos programados dos turnos de inseminación para el grupo [grupo] de [establecimiento]:
+- Mañana, [fecha del día 0], bien temprano a la mañana, idealmente, se inseminan las vaquillonas que presentaron celo.
+- Al día siguiente, [fecha del día +1], bien temprano a la mañana, idealmente, se inseminan las restantes. Las que continúen sin manifestar celo reciben también GnRH.
+Cada animal se insemina una sola vez. Coordiná con el veterinario los horarios y dejá organizada la identificación de ambos grupos.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #4 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 4), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana corresponde ingresar los toros de repaso, a media mañana, idealmente: 1 toro cada 40 vaquillonas.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #5 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 5), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'Mañana finaliza el servicio y corresponde retirar los toros, a media mañana, idealmente. Coordiná el movimiento con el personal del campo.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+-- Alert para task #6 (offset_days=1, before)
+INSERT INTO protocol_task_alerts (guid, protocol_task_id, offset_days, time_of_day, time, roles, message, require_confirmation, sort_order, created_at, updated_at)
+SELECT UUID(), (SELECT id FROM protocol_tasks WHERE protocol_id = @protocol_id AND sort_order = 6), 1, 'before', '17:00:00', CAST('["client-manager"]' AS JSON), 'A partir de mañana está previsto realizar el diagnóstico de gestación. Coordiná con el veterinario la fecha y el encierre, idealmente con anticipación.', 0, 0, NOW(), NOW()
+WHERE @p_exists = 0;
+
+COMMIT;

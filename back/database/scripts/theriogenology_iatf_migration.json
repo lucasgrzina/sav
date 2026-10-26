@@ -1,0 +1,393 @@
+{
+  "techniques": [
+    {
+      "name": "IATF",
+      "target_date_name": "Fecha de inseminación",
+      "type": "technique",
+      "parent_id": null,
+      "children": [
+        {
+          "name": "Vaquillonas - Carne",
+          "target_date_name": "Fecha de inseminación",
+          "type": "subtype",
+          "protocols_name": "Protocolo 1"
+        }
+      ]
+    }
+  ],
+  "protocols": [
+    {
+      "technique": "IATF",
+      "subtechnique": "Vaquillonas - Carne",
+      "name": "Papel de trabajo 1",
+      "color": "#5b9bd5",
+      "vet_id": null,
+      "tasks": [
+        {
+          "description": "Colocar dispositivos y administrar GnRH, después de media tarde, idealmente.",
+          "days_offset": 10,
+          "time_of_day": "Before",
+          "time": "18:00:00",
+          "important": false
+        },
+        {
+          "description": "Retirar dispositivos, administrar prostaglandina y colocar parches de detección de celo, después de media tarde, idealmente.",
+          "days_offset": 3,
+          "time_of_day": "Before",
+          "time": "18:00:00",
+          "important": true
+        },
+        {
+          "description": "Inseminar y administrar GnRH, bien temprano a la mañana, idealmente.",
+          "days_offset": 0,
+          "time_of_day": "Before",
+          "time": "06:00:00",
+          "important": true
+        },
+        {
+          "description": "Ingresar toros de repaso, a media mañana, idealmente. Relación: 1 toro cada 40 vaquillonas.",
+          "days_offset": 11,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        },
+        {
+          "description": "Retirar toros y finalizar el servicio, a media mañana, idealmente.",
+          "days_offset": 60,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        },
+        {
+          "description": "Diagnóstico de gestación previsto, con fecha y encierre coordinados con el veterinario.",
+          "days_offset": 90,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        }
+      ],
+      "alerts": [
+        {
+          "task_index": 0,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager",
+            "client-owner"
+          ],
+          "text": "Recordá que mañana se colocan los dispositivos y se administra GnRH, después de media tarde, idealmente. Prepará los animales, los dispositivos y la medicación indicada."
+        },
+        {
+          "task_index": 1,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana corresponde retirar los dispositivos, administrar prostaglandina y colocar los parches, después de media tarde, idealmente. Coordiná el encierre y los materiales."
+        },
+        {
+          "task_index": 2,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana inseminamos, bien temprano a la mañana, idealmente. También corresponde administrar GnRH. Dejá preparados los animales y coordiná con el veterinario."
+        },
+        {
+          "task_index": 3,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana corresponde ingresar los toros de repaso, a media mañana, idealmente: 1 toro cada 40 vaquillonas."
+        },
+        {
+          "task_index": 4,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana finaliza el servicio y corresponde retirar los toros, a media mañana, idealmente. Coordiná el movimiento con el personal del campo."
+        },
+        {
+          "task_index": 5,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "A partir de mañana está previsto realizar el diagnóstico de gestación. Coordiná con el veterinario la fecha y el encierre, idealmente con anticipación."
+        }
+      ]
+    },
+    {
+      "technique": "IATF",
+      "subtechnique": "Vaquillonas - Carne",
+      "name": "Papel de trabajo 2",
+      "color": "#ed7d31",
+      "vet_id": null,
+      "tasks": [
+        {
+          "description": "Colocar dispositivos y administrar GnRH, después de media tarde, idealmente.",
+          "days_offset": 10,
+          "time_of_day": "Before",
+          "time": "18:00:00",
+          "important": false
+        },
+        {
+          "description": "Retirar dispositivos, administrar prostaglandina y colocar parches, después de media tarde, idealmente.",
+          "days_offset": 3,
+          "time_of_day": "Before",
+          "time": "18:00:00",
+          "important": true
+        },
+        {
+          "description": "Inseminar y administrar GnRH, bien temprano a la mañana, idealmente.",
+          "days_offset": 0,
+          "time_of_day": "Before",
+          "time": "06:00:00",
+          "important": true
+        },
+        {
+          "description": "Al terminar la inseminación, ingresar inmediatamente toros: 1 cada 25 vaquillonas.",
+          "days_offset": 0,
+          "time_of_day": "Before",
+          "time": "06:00:00",
+          "important": true
+        },
+        {
+          "description": "Retirar los toros de esta primera etapa, a media mañana, idealmente.",
+          "days_offset": 5,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        },
+        {
+          "description": "Reingresar toros, a media mañana, idealmente. Relación: 1 cada 40 vaquillonas.",
+          "days_offset": 19,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        },
+        {
+          "description": "Retirar toros y finalizar el servicio, a media mañana, idealmente.",
+          "days_offset": 60,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        },
+        {
+          "description": "Diagnóstico de gestación previsto, con fecha y encierre coordinados con el veterinario.",
+          "days_offset": 90,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        }
+      ],
+      "alerts": [
+        {
+          "task_index": 0,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager",
+            "client-owner"
+          ],
+          "text": "Recordá que mañana se colocan los dispositivos y se administra GnRH, después de media tarde, idealmente. Prepará los animales y los materiales."
+        },
+        {
+          "task_index": 1,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana corresponde retirar los dispositivos, administrar prostaglandina y colocar los parches, después de media tarde, idealmente."
+        },
+        {
+          "task_index": 2,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana inseminamos y administramos GnRH, bien temprano a la mañana, idealmente. Al finalizar la inseminación, ingresan inmediatamente los toros: 1 cada 25 vaquillonas. Dejalos preparados para ese momento."
+        },
+        {
+          "task_index": 4,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana corresponde retirar los toros de esta primera etapa de servicio, a media mañana, idealmente."
+        },
+        {
+          "task_index": 5,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana corresponde volver a ingresar los toros, a media mañana, idealmente: 1 toro cada 40 vaquillonas."
+        },
+        {
+          "task_index": 6,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana finaliza el servicio y corresponde retirar los toros, a media mañana, idealmente. Coordiná el movimiento con el personal del campo."
+        },
+        {
+          "task_index": 7,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "A partir de mañana está previsto realizar el diagnóstico de gestación. Coordiná con el veterinario la fecha y el encierre, idealmente con anticipación."
+        }
+      ]
+    },
+    {
+      "technique": "IATF",
+      "subtechnique": "Vaquillonas - Carne",
+      "name": "Papel de trabajo 3",
+      "color": "#70ad47",
+      "vet_id": null,
+      "tasks": [
+        {
+          "description": "Colocar dispositivos y administrar GnRH, a media tarde, idealmente.",
+          "days_offset": 10,
+          "time_of_day": "Before",
+          "time": "15:30:00",
+          "important": false
+        },
+        {
+          "description": "Retirar dispositivos, administrar prostaglandina y colocar parches, a media tarde, idealmente.",
+          "days_offset": 3,
+          "time_of_day": "Before",
+          "time": "15:30:00",
+          "important": true
+        },
+        {
+          "description": "Primer turno: inseminar las vaquillonas que presentaron celo, bien temprano a la mañana, idealmente.",
+          "days_offset": 0,
+          "time_of_day": "Before",
+          "time": "06:00:00",
+          "important": true
+        },
+        {
+          "description": "Segundo turno: inseminar las restantes, bien temprano a la mañana, idealmente. Administrar GnRH a las que continúen sin manifestar celo.",
+          "days_offset": 1,
+          "time_of_day": "After",
+          "time": "04:00:00",
+          "important": true
+        },
+        {
+          "description": "Ingresar toros de repaso, a media mañana, idealmente. Relación: 1 cada 40 vaquillonas.",
+          "days_offset": 11,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        },
+        {
+          "description": "Retirar toros y finalizar el servicio, a media mañana, idealmente.",
+          "days_offset": 60,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        },
+        {
+          "description": "Diagnóstico de gestación previsto, con fecha y encierre coordinados con el veterinario.",
+          "days_offset": 90,
+          "time_of_day": "After",
+          "time": "10:00:00",
+          "important": false
+        }
+      ],
+      "alerts": [
+        {
+          "task_index": 0,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager",
+            "client-owner"
+          ],
+          "text": "Recordá que mañana se colocan los dispositivos y se administra GnRH, a media tarde, idealmente. Prepará los animales y los materiales."
+        },
+        {
+          "task_index": 1,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana corresponde retirar los dispositivos, administrar prostaglandina y colocar los parches, a media tarde, idealmente. Dejá organizada la identificación de los animales según la manifestación de celo."
+        },
+        {
+          "task_index": 2,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Tenemos programados dos turnos de inseminación para el grupo [grupo] de [establecimiento]:\n- Mañana, [fecha del día 0], bien temprano a la mañana, idealmente, se inseminan las vaquillonas que presentaron celo.\n- Al día siguiente, [fecha del día +1], bien temprano a la mañana, idealmente, se inseminan las restantes. Las que continúen sin manifestar celo reciben también GnRH.\nCada animal se insemina una sola vez. Coordiná con el veterinario los horarios y dejá organizada la identificación de ambos grupos."
+        },
+        {
+          "task_index": 4,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana corresponde ingresar los toros de repaso, a media mañana, idealmente: 1 toro cada 40 vaquillonas."
+        },
+        {
+          "task_index": 5,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "Mañana finaliza el servicio y corresponde retirar los toros, a media mañana, idealmente. Coordiná el movimiento con el personal del campo."
+        },
+        {
+          "task_index": 6,
+          "offset_days": 1,
+          "time_of_day": "Before",
+          "time": "17:00:00",
+          "roles": [
+            "client-manager"
+          ],
+          "text": "A partir de mañana está previsto realizar el diagnóstico de gestación. Coordiná con el veterinario la fecha y el encierre, idealmente con anticipación."
+        }
+      ]
+    }
+  ]
+}
