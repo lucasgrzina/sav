@@ -75,7 +75,7 @@ const onSubmit = handleSubmit(async (values) => {
             if (vets.length > 0) {
                 vetStore.setUserVets(vets);
                 const target = vets[0].slug;
-                router.push(`/vets/${target}/perfil`);
+                router.push(`/vets/${target}/inicio`);
             } else {
                 // Sin vets (client-owner u otro rol sin panel vet)
                 notifyError('Tu cuenta fue activada. El panel para tu tipo de perfil estará disponible próximamente.');

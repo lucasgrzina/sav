@@ -118,7 +118,7 @@ function handleCancel(): void {
 
         <a-col :xs="24" :md="12">
           <a-form-item
-            label="Valor"
+            label="Dato de contacto"
             :validate-status="errors.value ? 'error' : ''"
             :help="errors.value ?? ''"
           >
