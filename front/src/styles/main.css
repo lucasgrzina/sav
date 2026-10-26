@@ -722,7 +722,6 @@
     font-size: 13.5px;
     color: var(--dt-muted);
     margin: 0;
-    text-transform: capitalize;
 }
 
 .dash-live-badge {

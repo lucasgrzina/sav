@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { usePermission } from '@/core/composables/usePermissions'
+import { capitalize } from '@/core/utils/string'
 import {
   HomeOutlined,
   ClockCircleOutlined,
@@ -31,7 +32,7 @@ function retry() {
 }
 
 const todayLabel = computed(() =>
-  new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }),
+  capitalize(new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })),
 )
 
 const greeting = computed(() => {
