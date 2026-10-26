@@ -26,6 +26,7 @@ class PreviewProgramRequest extends StoreProgramRequest
             'targets'              => ['required', 'array', 'min:1', 'max:' . self::MAX_TARGETS],
             'manager_profile_ids'  => ['required', 'array', 'min:1', 'max:' . self::MAX_MANAGERS],
             'targets.*.guid'       => ['nullable', 'string', 'uuid'],
+            'targets.*.animals_count' => ['nullable', 'integer', 'min:0', 'max:100000'], // preview only: the animals themselves are not sent
             'targets.*.target_ref' => ['nullable', 'string', 'max:36'], // client-side id of a group that has no guid yet
         ]);
     }

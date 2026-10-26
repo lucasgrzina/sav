@@ -40,6 +40,7 @@ export interface ProgramProjectedTask {
 export interface ProgramTarget {
   guid?: string
   target_date: string
+  name?: string | null
   animals: ProgramTargetAnimalRef[]
   // Solo presente en el detalle (DEC-15/DEC-16).
   tasks?: ProgramProjectedTask[]
@@ -118,6 +119,7 @@ export interface AnimalInput {
 export interface ProgramTargetPayload {
   guid?: string
   target_date: string
+  name?: string | null
   animals: AnimalInput[]
 }
 

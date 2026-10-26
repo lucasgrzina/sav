@@ -36,6 +36,7 @@ class UpdateProgramRequest extends FormRequest
             'targets'                   => ['required', 'array', 'min:1'],
             'targets.*.guid'            => ['nullable', 'string', 'uuid'], // presente = editar target existente, ausente = nuevo
             'targets.*.target_date'    => ['required', 'date'],
+            'targets.*.name'           => ['nullable', 'string', 'max:100'],
             'targets.*.animals'        => ['nullable', 'array'],
             'targets.*.animals.*.id'   => ['nullable', 'string', 'uuid'],
             'targets.*.animals.*.rp'   => ['required', 'string', 'max:50'],
@@ -107,6 +108,7 @@ class UpdateProgramRequest extends FormRequest
             'targets.required'                => 'Debe haber al menos un objetivo.',
             'targets.min'                     => 'Debe haber al menos un objetivo.',
             'targets.*.target_date.required'  => 'La fecha objetivo es requerida.',
+            'targets.*.name.max'              => 'El nombre del grupo no puede superar los 100 caracteres.',
             'targets.*.animals.*.rp.required' => 'El RP del animal es requerido.',
             'manager_profile_ids.required'    => 'Debe seleccionar al menos un manager.',
             'manager_profile_ids.min'         => 'Debe seleccionar al menos un manager.',

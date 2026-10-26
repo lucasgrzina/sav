@@ -22,7 +22,7 @@ function makePreview(overrides: Partial<ProgramPreview> = {}): ProgramPreview {
     },
     summary: { alerts_total: 2, alerts_will_send: 1, alerts_wont_send: 1, recipients_total: 1, groups_count: 1, window: { from: '2026-09-21', to: '2026-10-30' } },
     items: [{
-      target_key: 'k1', target_guid: null, target_ref: '0', target_date: '2026-09-23',
+      target_key: 'k1', target_guid: null, target_ref: '0', target_date: '2026-09-23', target_name: null,
       protocol_task_guid: null, task_description: 'Colecta de embriones', task_date: null, task_time: null,
       protocol_task_alert_guid: null, scheduled_at_local: local, scheduled_at_utc: '',
       will_send: true, skip_reason: null, roles: [], require_confirmation: false, free_text: null,
@@ -75,6 +75,19 @@ describe('ProgramPreviewPanel', () => {
     expect(text).toContain('Cliente SA')
     expect(text).toContain('Campo Norte')
     expect(text).toContain('Se programarán 2 avisos para 1 persona entre el 21/09/2026 y el 30/10/2026. El 1 no se enviará.')
+  })
+
+  it('titles each group with its name when set and with the date alone otherwise', () => {
+    const base = makePreview().items[0]
+    const items = [
+      { ...base, target_key: 'k1', target_date: '2026-09-23', target_name: 'Lote Norte' },
+      { ...base, target_key: 'k2', target_date: '2026-09-30', target_name: null },
+    ]
+    mountPanel({ preview: makePreview({ items }) })
+    const text = body().textContent ?? ''
+
+    expect(text).toContain('Grupo Lote Norte (23/09/2026) — 1 aviso')
+    expect(text).toContain('Grupo del 30/09/2026 — 1 aviso')
   })
 
   it('does not say "para 0 personas" when nothing will be delivered', () => {

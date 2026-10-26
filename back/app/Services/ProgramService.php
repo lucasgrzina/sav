@@ -55,7 +55,7 @@ class ProgramService
 
     /**
      * @param array $data {client_id, establishment_id, protocol_id (ints ya resueltos),
-     *                     comments?, targets: [{target_date, animals?: [{id?: int, rp: string}]}],
+     *                     comments?, targets: [{target_date, name?: string, animals?: [{id?: int, rp: string}]}],
      *                     manager_profile_ids: int[]}
      *
      * @throws ProgramManagerNotLinkedException si un manager de cliente no está vinculado al establecimiento
@@ -202,6 +202,12 @@ class ProgramService
 
         foreach ($targetsData as $targetData) {
             $fields = ['target_date' => $targetData['target_date']];
+
+            // Optional group name: blank becomes null; an absent key leaves an existing name untouched.
+            if (array_key_exists('name', $targetData)) {
+                $name = trim((string) $targetData['name']);
+                $fields['name'] = $name === '' ? null : $name;
+            }
 
             if (!empty($targetData['guid']) && $existing->has($targetData['guid'])) {
                 $target = $existing->get($targetData['guid']);

@@ -12,6 +12,7 @@ use App\Services\ProgramAlerts\Data\ProjectedRecipient;
 use App\Services\ProgramAlerts\Data\ProjectedTask;
 use App\Services\ProgramAlerts\Data\ProjectionInput;
 use App\Services\ProgramAlerts\Data\TargetInput;
+use App\Support\AlertMessagePlaceholders;
 use App\Support\DateOffset;
 use Carbon\CarbonImmutable;
 
@@ -99,7 +100,7 @@ final class ProgramAlertProjector
             important: (bool) $task->important,
             protocolTaskAlertGuid: $alert->guid,
             alertTime: (string) $alert->time,
-            message: $alert->message,
+            message: AlertMessagePlaceholders::resolve($alert->message, $in->establishmentName, $target->date, $in->locale, $target->name, $target->animalCount),
             requireConfirmation: (bool) $alert->require_confirmation,
             roles: $alert->roles ?? [],
             scheduledAtLocal: LocalDateTime::from($scheduledAtLocal, $in->locale),
@@ -108,6 +109,7 @@ final class ProgramAlertProjector
             multiGroup: $multiGroup,
             recipients: $recipients,
             logicalKey: $logicalKey,
+            targetName: $target->name !== null && trim($target->name) !== '' ? trim($target->name) : null,
         );
     }
 

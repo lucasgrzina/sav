@@ -43,6 +43,7 @@ function groupRecipientsByRole(recipients: ProgramAlertRecipient[]): RecipientGr
               <CalendarOutlined />
               {{ formatDate(target.target_date) }}
             </span>
+            <span v-if="target.name" class="ptt-target-name" data-testid="target-name">{{ target.name }}</span>
             <div class="ptt-target-animals">
               <a-tag v-for="a in target.animals" :key="a.guid">{{ a.rp }}</a-tag>
               <span v-if="!target.animals.length" class="ptt-empty">Sin animales</span>
@@ -133,6 +134,10 @@ function groupRecipientsByRole(recipients: ProgramAlertRecipient[]): RecipientGr
   gap: 6px;
   font-weight: 600;
   color: var(--dt-title, #fff);
+}
+
+.ptt-target-name {
+  font-weight: 600;
 }
 
 .ptt-target-animals {

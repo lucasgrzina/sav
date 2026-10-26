@@ -31,6 +31,7 @@ final readonly class ProjectedAlert
         public bool $multiGroup,
         public array $recipients,
         public ?string $logicalKey,
+        public ?string $targetName = null,
     ) {}
 
     /** Payload v2 (snapshot needed to render the message and to recompute the logical key). */

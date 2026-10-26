@@ -12,6 +12,7 @@ const emit = defineEmits<{ viewMessage: [message: string] }>()
 interface Group {
   key: string
   date: string
+  name: string | null
   items: PreviewItem[]
 }
 
@@ -20,7 +21,7 @@ interface Group {
 const groups = computed<Group[]>(() => {
   const map = new Map<string, Group>()
   for (const item of props.items) {
-    const group = map.get(item.target_key) ?? { key: item.target_key, date: item.target_date, items: [] }
+    const group = map.get(item.target_key) ?? { key: item.target_key, date: item.target_date, name: item.target_name ?? null, items: [] }
     group.items.push(item)
     map.set(item.target_key, group)
   }
@@ -68,7 +69,7 @@ function sentence(item: PreviewItem, r: PreviewRecipient): string {
     <a-collapse-panel
       v-for="group in groups"
       :key="group.key"
-      :header="PREVIEW_COPY.groupTitle(formatIsoDate(group.date), group.items.length)"
+      :header="PREVIEW_COPY.groupTitle(formatIsoDate(group.date), group.items.length, group.name)"
     >
       <div v-for="(item, i) in visibleItems(group)" :key="`${group.key}-${i}`" class="ppg-item">
         <div class="ppg-item-head">

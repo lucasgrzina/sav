@@ -48,6 +48,9 @@ export function useProgramSaveFlow(
         ...(t.guid ? { guid: t.guid } : {}),
         target_ref: String(index),
         target_date: t.target_date,
+        name: t.name ?? null,
+        // Animals are not sent to the preview (large lists); only their count, for the "[grupo]" fallback.
+        animals_count: t.animals.length,
       })),
       manager_profile_ids: payload.manager_profile_ids,
     }

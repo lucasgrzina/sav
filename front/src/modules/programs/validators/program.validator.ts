@@ -9,6 +9,8 @@ const animalInputSchema = z.object({
 export const programTargetSchema = z.object({
   guid: z.string().uuid().optional(),
   target_date: z.string().min(1, 'La fecha objetivo es requerida'),
+  // Optional group name; feeds the [grupo] placeholder of the alert messages.
+  name: z.string().max(100, 'El nombre del grupo no puede superar los 100 caracteres').nullable().optional(),
   animals: z.array(animalInputSchema).default([]),
 })
 

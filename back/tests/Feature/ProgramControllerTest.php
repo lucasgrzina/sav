@@ -317,6 +317,75 @@ class ProgramControllerTest extends TestCase
             ->assertStatus(200);
     }
 
+    // -------------------------------------------------------------------------
+    // Group name (program_targets.name) — optional, feeds the [grupo] placeholder
+    // -------------------------------------------------------------------------
+
+    public function test_group_name_is_stored_trimmed_exposed_in_the_resource_and_updatable(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'targets' => [
+                    ['target_date' => '2026-08-01', 'name' => '  Lote Norte  ', 'animals' => []],
+                    ['target_date' => '2026-08-02', 'name' => '', 'animals' => []],
+                    ['target_date' => '2026-08-03', 'animals' => []],
+                ],
+            ]))
+            ->assertStatus(201)
+            ->assertJsonPath('data.targets.0.name', 'Lote Norte')
+            ->assertJsonPath('data.targets.1.name', null)
+            ->assertJsonPath('data.targets.2.name', null);
+
+        $guid = $created->json('data.guid');
+        $first = $created->json('data.targets.0.guid');
+
+        // Rename one group; a payload without the key leaves the stored name untouched.
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'targets' => [['guid' => $first, 'target_date' => '2026-08-01', 'name' => 'Lote Sur', 'animals' => []]],
+            ]))
+            ->assertStatus(200)
+            ->assertJsonPath('data.targets.0.name', 'Lote Sur');
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$guid}", $this->basePayload([
+                'targets' => [['guid' => $first, 'target_date' => '2026-08-05', 'animals' => []]],
+            ]))
+            ->assertStatus(200)
+            ->assertJsonPath('data.targets.0.name', 'Lote Sur');
+    }
+
+    public function test_group_name_over_100_characters_is_rejected_on_store_and_update(): void
+    {
+        $user = $this->createUserForVet($this->vet);
+        $tooLong = str_repeat('a', 101);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload([
+                'targets' => [['target_date' => '2026-08-01', 'name' => $tooLong, 'animals' => []]],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['targets.0.name']);
+
+        $created = $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/vets/{$this->vet->guid}/programs", $this->basePayload());
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/v1/vets/{$this->vet->guid}/programs/{$created->json('data.guid')}", $this->basePayload([
+                'targets' => [['guid' => $created->json('data.targets.0.guid'), 'target_date' => '2026-08-01', 'name' => $tooLong, 'animals' => []]],
+            ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['targets.0.name']);
+    }
+
+    public function test_program_targets_table_has_a_nullable_name_column(): void
+    {
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('program_targets', 'name'));
+        $column = collect(\Illuminate\Support\Facades\Schema::getColumns('program_targets'))->firstWhere('name', 'name');
+        $this->assertTrue($column['nullable']);
+    }
+
     public function test_update_rejects_unlinked_client_manager(): void
     {
         $user = $this->createUserForVet($this->vet);

@@ -11,6 +11,7 @@ use App\Models\Program;
 use App\Models\Protocol;
 use App\Models\ProtocolTask;
 use App\Models\ProtocolTaskAlert;
+use App\Support\AlertMessagePlaceholders;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
@@ -159,13 +160,14 @@ class ProtocolService
         foreach ($protocol->tasks as $task) {
             $taskDate = $this->calculateTaskDate($baseDate, $task);
 
-            $taskAlerts = $task->alerts->map(function (ProtocolTaskAlert $alert) use ($taskDate, $task) {
+            $taskAlerts = $task->alerts->map(function (ProtocolTaskAlert $alert) use ($taskDate, $task, $baseDate) {
                 $alertDate = $this->calculateAlertDate($taskDate, $alert);
 
                 return [
                     'guid'                  => $alert->guid,
                     'task_description'      => $task->description,
-                    'message'               => $alert->message,
+                    // No establishment in a simulation: [establecimiento] and [grupo] stay as written.
+                    'message'               => AlertMessagePlaceholders::resolve($alert->message, null, $baseDate->toDateString()),
                     'roles'                 => $alert->roles,
                     'require_confirmation'  => $alert->require_confirmation,
                     'computed_date'         => $alertDate->toDateString(),

@@ -68,6 +68,8 @@ final class ProgramAlertPreviewService
                 ref: (string) ($target['target_ref'] ?? $index),
                 guid: $target['guid'] ?? null,
                 date: CarbonImmutable::parse($target['target_date'])->toDateString(),
+                name: $target['name'] ?? null,
+                animalCount: isset($target['animals_count']) ? (int) $target['animals_count'] : count($target['animals'] ?? []),
             );
         }
 
@@ -79,6 +81,7 @@ final class ProgramAlertPreviewService
             managers: $managers,
             now: CarbonImmutable::instance(now()),
             locale: ProjectionInput::localeFor($vet),
+            establishmentName: $establishment->name,
         );
 
         return $this->preview($in, $existing, $client, $establishment);
@@ -159,12 +162,13 @@ final class ProgramAlertPreviewService
             programGuid: $in->programGuid,
             protocol: $in->protocol,
             targets: array_map(
-                fn (TargetInput $t) => $t->guid === null ? new TargetInput($t->ref, self::DRAFT_PREFIX . $t->ref, $t->date) : $t,
+                fn (TargetInput $t) => $t->guid === null ? new TargetInput($t->ref, self::DRAFT_PREFIX . $t->ref, $t->date, $t->name, $t->animalCount) : $t,
                 $in->targets,
             ),
             managers: $in->managers,
             now: $in->now,
             locale: $in->locale,
+            establishmentName: $in->establishmentName,
         );
     }
 
@@ -217,6 +221,7 @@ final class ProgramAlertPreviewService
             'target_guid' => $guid,
             'target_ref' => $item->targetRef,
             'target_date' => $item->targetDate,
+            'target_name' => $item->targetName,
             'protocol_task_guid' => $item->protocolTaskGuid,
             'task_description' => $item->taskDescription,
             'task_date' => $item->taskDate,

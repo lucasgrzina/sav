@@ -203,6 +203,7 @@ export interface PreviewItem {
   target_guid: string | null
   target_ref: string | null
   target_date: string
+  target_name: string | null
   protocol_task_guid: string | null
   task_description: string | null
   task_date: string | null
@@ -274,6 +275,13 @@ export interface PreviewProgramPayload {
   client_id: string
   establishment_id: string
   protocol_id: string
-  targets: { guid?: string; target_ref: string; target_date: string }[]
+  // `animals_count` lets the backend resolve the "[grupo]" fallback ("del DD/MM/AAAA (N animales)").
+  targets: {
+    guid?: string
+    target_ref: string
+    target_date: string
+    name?: string | null
+    animals_count?: number
+  }[]
   manager_profile_ids: string[]
 }

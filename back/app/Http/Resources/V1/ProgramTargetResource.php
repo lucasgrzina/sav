@@ -12,6 +12,7 @@ class ProgramTargetResource extends JsonResource
         return [
             'guid'        => $this->guid,
             'target_date' => $this->target_date->toDateString(),
+            'name'        => $this->name,
             'animals'     => $this->animals->map(fn ($a) => [
                 'guid' => $a->guid,
                 'rp'   => $a->rp,

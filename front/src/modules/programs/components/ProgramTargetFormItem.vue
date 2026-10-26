@@ -90,6 +90,17 @@ function handleAnimalsChange(values: string[]) {
           />
         </a-form-item>
       </a-col>
+      <a-col :xs="24" :md="12" :lg="16">
+        <a-form-item label="Nombre del grupo (opcional)" class="ptfi-field">
+          <a-input
+            :value="target.name ?? ''"
+            :maxlength="100"
+            placeholder="Ej: Lote Norte"
+            data-testid="target-name-input"
+            @update:value="(v: string) => update('name', v)"
+          />
+        </a-form-item>
+      </a-col>
       <a-col :xs="24">
         <a-form-item label="Animales" class="ptfi-field">
           <a-select

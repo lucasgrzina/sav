@@ -11,7 +11,7 @@ class ProgramTarget extends Model
 {
     use HasGuid;
 
-    protected $fillable = ['program_id', 'target_date'];
+    protected $fillable = ['program_id', 'target_date', 'name'];
 
     protected $hidden = ['id'];
 

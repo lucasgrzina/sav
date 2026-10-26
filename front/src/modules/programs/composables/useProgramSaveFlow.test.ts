@@ -26,7 +26,7 @@ const payload: CreateProgramPayload = {
   protocol_id: 'p1',
   comments: null,
   targets: [
-    { guid: 'g1', target_date: '2026-09-23', animals: [{ rp: '1' }] },
+    { guid: 'g1', target_date: '2026-09-23', name: null, animals: [{ rp: '1' }] },
     { target_date: '2026-09-30', animals: [] },
   ],
   manager_profile_ids: ['m1'],
@@ -65,8 +65,8 @@ describe('useProgramSaveFlow', () => {
         establishment_id: 'e1',
         protocol_id: 'p1',
         targets: [
-          { guid: 'g1', target_ref: '0', target_date: '2026-09-23' },
-          { target_ref: '1', target_date: '2026-09-30' },
+          { guid: 'g1', target_ref: '0', target_date: '2026-09-23', name: null, animals_count: 1 },
+          { target_ref: '1', target_date: '2026-09-30', name: null, animals_count: 0 },
         ],
         manager_profile_ids: ['m1'],
       },

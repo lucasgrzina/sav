@@ -313,7 +313,8 @@ export const PREVIEW_COPY = {
     const skipped = wont > 0 ? ` ${wont === 1 ? 'El 1 no se enviará' : `Los ${wont} no se enviarán`}.` : ''
     return `${base}${range}.${skipped}`
   },
-  groupTitle: (date: string, count: number) => `Grupo del ${date} — ${count} ${count === 1 ? 'aviso' : 'avisos'}`,
+  groupTitle: (date: string, count: number, name?: string | null) =>
+    `${name ? `Grupo ${name} (${date})` : `Grupo del ${date}`} — ${count} ${count === 1 ? 'aviso' : 'avisos'}`,
   showMore: (n: number) => `Mostrar ${n} más`,
   truncated: 'El resumen muestra solo una parte de los avisos; el programa se guardará completo.',
   managers: 'Responsables',

@@ -61,6 +61,7 @@ function toFormValues(detail: ProgramDetail | null): ProgramFormValues {
     targets: detail.targets.map((t) => ({
       guid: t.guid,
       target_date: t.target_date,
+      name: t.name ?? '',
       animals: t.animals.map((a) => ({ id: a.guid, rp: a.rp })),
     })),
     manager_profile_ids: detail.managers.map((m) => m.guid),
@@ -317,6 +318,7 @@ function toPayload(values: ProgramFormValues): CreateProgramPayload {
     targets: values.targets.map((t) => ({
       guid: t.guid,
       target_date: t.target_date,
+      name: t.name?.trim() || null,
       animals: t.animals.map((a) => ({ id: a.id, rp: a.rp })),
     })),
     manager_profile_ids: values.manager_profile_ids,

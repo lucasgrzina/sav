@@ -388,6 +388,27 @@ class ProtocolServiceTest extends TestCase
         $this->assertEquals('2026-08-23', $result['alerts'][0]['computed_date']);
     }
 
+    public function test_simulate_resolves_day_placeholders_from_base_date_and_keeps_the_rest(): void
+    {
+        $protocol = $this->service->create($this->protocolPayload([
+            'tasks' => [
+                [
+                    'description' => 'Inseminar', 'days_offset' => 0, 'time_of_day' => 'before', 'time' => '08:00', 'important' => false,
+                    'alerts' => [
+                        ['offset_days' => 1, 'time_of_day' => 'before', 'time' => '17:00', 'roles' => ['vet'], 'message' => 'Grupo [grupo] de [establecimiento]: [fecha del día 0] / [fecha del día +1]', 'require_confirmation' => false],
+                    ],
+                ],
+            ],
+        ]), 1);
+
+        $result = $this->service->simulate($protocol, \Illuminate\Support\Carbon::parse('2026-09-24'));
+
+        $this->assertSame(
+            'Grupo [grupo] de [establecimiento]: jueves 24/09/2026 / viernes 25/09/2026',
+            $result['alerts'][0]['message'],
+        );
+    }
+
     public function test_simulate_returns_empty_collections_for_protocol_without_tasks(): void
     {
         $protocol = $this->service->create([

@@ -27,23 +27,34 @@ final readonly class ProjectionInput
         public Collection $managers,
         public CarbonImmutable $now,
         public string $locale,
+        public ?string $establishmentName = null,
     ) {}
 
     public static function fromProgram(Program $program, CarbonImmutable $now): self
     {
-        $program->loadMissing('targets', 'protocol.tasks.alerts', 'managers.role', 'managers.user', 'vet.country');
+        $program->loadMissing('targets', 'protocol.tasks.alerts', 'managers.role', 'managers.user', 'vet.country', 'establishment');
+
+        // One COUNT query for all groups (feeds the [grupo] fallback) unless the animals are already loaded.
+        $program->targets->loadCount('animals');
 
         return new self(
             vet: $program->vet,
             programGuid: $program->guid,
             protocol: $program->protocol,
             targets: $program->targets
-                ->map(fn ($target) => new TargetInput($target->guid, $target->guid, $target->target_date->toDateString()))
+                ->map(fn ($target) => new TargetInput(
+                    $target->guid,
+                    $target->guid,
+                    $target->target_date->toDateString(),
+                    $target->name,
+                    $target->relationLoaded('animals') ? $target->animals->count() : (int) $target->animals_count,
+                ))
                 ->values()
                 ->all(),
             managers: $program->managers,
             now: $now,
             locale: self::localeFor($program->vet),
+            establishmentName: $program->establishment?->name,
         );
     }
 

@@ -131,6 +131,35 @@ class ProgramPreviewControllerTest extends TestCase
         $this->assertStringContainsString('j•••@example.com', json_encode(json_decode($json, true), JSON_UNESCAPED_UNICODE));
     }
 
+    public function test_preview_resolves_the_group_placeholder_from_the_draft_name_or_the_fallback(): void
+    {
+        $this->protocolAlert->update(['message' => 'Grupo [grupo] de [establecimiento]']);
+        $owner = $this->makeResponsible();
+
+        $response = $this->actingAs($this->vetUser, 'sanctum')->postJson($this->url('/preview'), $this->draftPayload([
+            ['target_date' => '2030-06-10', 'name' => 'Lote Norte'],
+            ['target_date' => '2030-06-20', 'target_ref' => 'n2', 'animals_count' => 2],
+            ['target_date' => '2030-06-30', 'target_ref' => 'n3', 'animals' => [['rp' => 'A1']]],
+        ], [$owner]))->assertOk();
+
+        $names = collect($response->json('data.items'))->pluck('target_name', 'target_date');
+        $this->assertSame('Lote Norte', $names['2030-06-10']);
+        $this->assertNull($names['2030-06-20']);
+
+        $texts = collect($response->json('data.items'))->pluck('free_text', 'target_date');
+        $this->assertSame('Grupo Lote Norte de Estancia Test', $texts['2030-06-10']);
+        $this->assertSame('Grupo del 20/06/2030 (2 animales) de Estancia Test', $texts['2030-06-20']);
+        $this->assertSame('Grupo del 30/06/2030 (1 animal) de Estancia Test', $texts['2030-06-30']);
+    }
+
+    public function test_preview_rejects_a_group_name_over_100_characters(): void
+    {
+        $this->actingAs($this->vetUser, 'sanctum')
+            ->postJson($this->url('/preview'), $this->draftPayload([['target_date' => '2030-06-10', 'name' => str_repeat('a', 101)]], [$this->makeResponsible()]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['targets.0.name']);
+    }
+
     public function test_preview_writes_nothing_and_queues_nothing(): void
     {
         Queue::fake();
