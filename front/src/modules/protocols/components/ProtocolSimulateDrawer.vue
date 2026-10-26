@@ -6,6 +6,7 @@ import BaseDataTable from '@/components/tables/BaseDataTable.vue'
 import { getRoleLabel } from '@/core/utils/roles'
 import { useProtocolSimulation } from '../composables/useProtocolSimulation'
 import type { SimulatedAlert, SimulatedTask } from '../types/protocol.types'
+import { buildScheduleReviewRows, type ScheduleReviewRow } from '../utils/protocol-schedule'
 
 const props = defineProps<{ protocolGuid: string; protocolName: string }>()
 
@@ -63,6 +64,16 @@ const taskColumns = computed(() => [
   { title: 'Tarea', key: 'description', dataIndex: 'description' },
 ])
 
+const reviewRows = computed(() => buildScheduleReviewRows(data.value?.tasks ?? []))
+
+const reviewColumns = [
+  { title: 'Fecha', key: 'date' },
+  { title: 'Franja', key: 'workSlot', dataIndex: 'workSlot' },
+  { title: 'Hora operativa', key: 'time', dataIndex: 'time' },
+  { title: 'Intervalo', key: 'interval', dataIndex: 'interval' },
+  { title: 'Envío de alerta', key: 'alerts' },
+]
+
 const alertColumns = computed(() => [
   {
     title: 'Fecha',
@@ -80,7 +91,7 @@ const alertColumns = computed(() => [
   <BaseDrawer
     v-model="open"
     :title="`Simular protocolo — ${protocolName}`"
-    :width="720"
+    :width="960"
   >
     <div class="psd-content">
       <a-date-picker
@@ -100,6 +111,29 @@ const alertColumns = computed(() => [
       />
 
       <template v-else>
+        <h3 class="psd-section-title">Revisión de cronograma</h3>
+        <BaseDataTable
+          :columns="reviewColumns"
+          :data-source="reviewRows"
+          :loading="isLoading"
+          row-key="guid"
+          :pagination="false"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'date'">
+              {{ formatDate((record as ScheduleReviewRow).date) }}
+            </template>
+            <template v-else-if="column.key === 'alerts'">
+              <template v-if="(record as ScheduleReviewRow).alerts.length">
+                <div v-for="alert in (record as ScheduleReviewRow).alerts" :key="alert.guid">
+                  {{ formatDate(alert.date) }} {{ alert.time }}
+                </div>
+              </template>
+              <template v-else>—</template>
+            </template>
+          </template>
+        </BaseDataTable>
+
         <h3 class="psd-section-title">Tareas</h3>
         <BaseDataTable
           :columns="taskColumns"
