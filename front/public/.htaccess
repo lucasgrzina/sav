@@ -2,6 +2,11 @@
     RewriteEngine On
     RewriteBase /
 
+    # Force HTTPS (handles plain Apache and reverse-proxy / CDN SSL termination)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Never intercept the backend
     RewriteCond %{REQUEST_URI} ^/back/ [NC]
     RewriteRule ^ - [L]
@@ -16,6 +21,9 @@
 </IfModule>
 
 <IfModule mod_headers.c>
+    # Tell browsers to always use HTTPS for this domain for the next 2 years
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+
     # Hashed assets are immutable
     <FilesMatch "\.(js|css|woff2?|svg|png|jpe?g|webp)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
