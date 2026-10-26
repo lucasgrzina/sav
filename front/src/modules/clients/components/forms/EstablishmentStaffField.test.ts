@@ -31,7 +31,7 @@ describe('EstablishmentStaffField', () => {
     const options = wrapper.findComponent(BaseMultiSelectStub).props('options')
     expect(options).toEqual([
       { value: 'p1', label: 'Ana (Propietario)' },
-      { value: 'p2', label: 'Beto (Receptor)' },
+      { value: 'p2', label: 'Beto (Encargado)' },
     ])
   })
 
