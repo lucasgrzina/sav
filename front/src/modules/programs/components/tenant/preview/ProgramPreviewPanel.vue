@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { theme } from 'ant-design-vue'
 import BaseButton from '@/components/atoms/buttons/BaseButton.vue'
 import BaseDrawer from '@/components/atoms/overlays/BaseDrawer.vue'
 import { useResponsive } from '@/core/composables/useResponsive'
@@ -32,6 +33,17 @@ const acknowledged = defineModel<boolean>('acknowledged', { default: false })
 
 const { isMobile } = useResponsive()
 
+// The drawer is teleported to <body>, so plain elements don't pick up the active (light/dark)
+// theme; expose the Ant tokens as CSS variables for the preview children.
+const { token } = theme.useToken()
+const themeVars = computed(() => ({
+  '--pp-text': token.value.colorText,
+  '--pp-muted': token.value.colorTextSecondary,
+  '--pp-border': token.value.colorBorderSecondary,
+  '--pp-surface': token.value.colorFillAlter,
+  color: token.value.colorText,
+}))
+
 const messageOpen = ref(false)
 const message = ref<string | null>(null)
 
@@ -43,24 +55,26 @@ function showMessage(text: string) {
 
 <template>
   <BaseDrawer v-model="open" :title="PREVIEW_COPY.title" :width="isMobile ? '100%' : 720" @close="emit('close')">
-    <div v-if="status === 'loading'" class="ppp-loading" data-testid="preview-loading">
-      <a-spin />
-      <span>{{ PREVIEW_COPY.loading }}</span>
+    <div :style="themeVars">
+      <div v-if="status === 'loading'" class="ppp-loading" data-testid="preview-loading">
+        <a-spin />
+        <span>{{ PREVIEW_COPY.loading }}</span>
+      </div>
+
+      <ProgramPreviewError
+        v-else-if="status === 'error'"
+        :saving="saving"
+        @retry="emit('retry')"
+        @save-without-summary="emit('saveWithoutSummary')"
+      />
+
+      <template v-else-if="status === 'ready' && preview">
+        <ProgramPreviewSummary :preview="preview" />
+        <ProgramWarningList v-if="preview.warnings.length" :warnings="preview.warnings" class="ppp-warnings" />
+        <ProgramPreviewDiff v-if="preview.diff" :diff="preview.diff" />
+        <ProgramPreviewGroups :items="preview.items" @view-message="showMessage" />
+      </template>
     </div>
-
-    <ProgramPreviewError
-      v-else-if="status === 'error'"
-      :saving="saving"
-      @retry="emit('retry')"
-      @save-without-summary="emit('saveWithoutSummary')"
-    />
-
-    <template v-else-if="status === 'ready' && preview">
-      <ProgramPreviewSummary :preview="preview" />
-      <ProgramWarningList v-if="preview.warnings.length" :warnings="preview.warnings" class="ppp-warnings" />
-      <ProgramPreviewDiff v-if="preview.diff" :diff="preview.diff" />
-      <ProgramPreviewGroups :items="preview.items" @view-message="showMessage" />
-    </template>
 
     <template #footer>
       <div class="ppp-footer">

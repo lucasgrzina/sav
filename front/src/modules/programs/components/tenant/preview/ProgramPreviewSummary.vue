@@ -50,7 +50,7 @@ const sentence = computed(() => {
 }
 
 .pps-header dt {
-  color: #6b7280;
+  color: var(--pp-muted, #6b7280);
   font-size: 12px;
 }
 

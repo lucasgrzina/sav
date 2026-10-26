@@ -30,7 +30,7 @@ defineProps<{ diff: PreviewDiff }>()
 .ppd-root {
   margin-bottom: 16px;
   padding: 12px;
-  background: #fafafa;
+  background: var(--pp-surface, #fafafa);
   border-radius: 6px;
 }
 

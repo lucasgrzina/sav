@@ -39,7 +39,7 @@ const sorted = computed(() =>
 
 .pwl-item {
   padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--pp-border, #f0f0f0);
 }
 
 .pwl-detail {

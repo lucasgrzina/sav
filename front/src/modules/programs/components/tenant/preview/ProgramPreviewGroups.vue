@@ -108,7 +108,7 @@ function sentence(item: PreviewItem, r: PreviewRecipient): string {
 <style scoped>
 .ppg-item {
   padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--pp-border, #f0f0f0);
 }
 
 .ppg-recipients {
