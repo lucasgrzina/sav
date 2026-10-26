@@ -4,6 +4,7 @@ import { vetProtocolsRoutes } from '@/modules/protocols/router/vet-protocols.rou
 import { vetProgramsRoutes } from '@/modules/programs/router/vet-programs.routes'
 import { vetEstablishmentHealthPlansRoutes } from '@/modules/establishment-health-plans/router/vet-establishment-health-plans.routes'
 import { clientsRoutes } from '@/modules/clients/router/clients.routes'
+import { vetHomeRoutes } from '@/modules/home/router/home.routes'
 
 export const vetsTenantRoutes: RouteRecordRaw[] = [
   {
@@ -13,8 +14,9 @@ export const vetsTenantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
-        redirect: to => `/vets/${to.params.vetGuid}/perfil`,
+        redirect: to => `/vets/${to.params.vetGuid}/inicio`,
       },
+      ...vetHomeRoutes,
       {
         path: 'perfil',
         name: 'vet-tenant-perfil',

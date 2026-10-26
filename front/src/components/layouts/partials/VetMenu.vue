@@ -23,6 +23,7 @@ const { can, hasTenantContext } = usePermission()
 const vetGuid = computed(() => route.params.vetGuid as string)
 
 const vetNavItems = computed(() => [
+  { path: `/vets/${vetGuid.value}/inicio`,   label: 'Inicio',     icon: HomeOutlined },
   { path: `/vets/${vetGuid.value}/perfil`,   label: 'Empresa',    icon: IdcardOutlined },
   { path: `/vets/${vetGuid.value}/clients`,  label: 'Clientes',  icon: TeamOutlined },
   { path: `/vets/${vetGuid.value}/usuarios`, label: 'Usuarios',  icon: UserOutlined },

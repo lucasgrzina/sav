@@ -37,7 +37,7 @@ async function resolvePostLoginRoute(): Promise<string> {
             ? lastGuid
             : vets[0].guid;
 
-        return `/vets/${target}/perfil`;
+        return `/vets/${target}/inicio`;
     } catch {
         return '/dashboard';
     }
