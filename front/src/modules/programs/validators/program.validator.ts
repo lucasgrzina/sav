@@ -15,14 +15,14 @@ export const programTargetSchema = z.object({
 export const programSchema = z.object({
   client_id: z.string().uuid('Seleccioná un cliente'),
   establishment_id: z.string().uuid('Seleccioná un establecimiento'),
-  protocol_id: z.string().uuid('Seleccioná un protocolo'),
+  protocol_id: z.string().uuid('Seleccioná una opción'),
   comments: z
     .string()
     .nullable()
     .optional()
     .transform((v) => v ?? null),
   targets: z.array(programTargetSchema).min(1, 'Debe haber al menos un objetivo'),
-  manager_profile_ids: z.array(z.string().uuid()).min(1, 'Seleccioná al menos un manager'),
+  manager_profile_ids: z.array(z.string().uuid()).min(1, 'Seleccioná al menos un responsable'),
 })
 
 export type ProgramFormValues = z.infer<typeof programSchema>

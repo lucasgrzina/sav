@@ -40,7 +40,7 @@ const columns = [
         {{ (record as VetProtocolListItem).technique.name }}
       </template>
       <template v-else-if="column.key === 'origin'">
-        <a-tag v-if="(record as VetProtocolListItem).is_global" color="blue">Global</a-tag>
+        <a-tag v-if="(record as VetProtocolListItem).is_global" color="blue">Del catálogo de SAV</a-tag>
         <a-tag v-else color="green">Propio</a-tag>
       </template>
       <template v-else-if="column.key === 'created_at'">

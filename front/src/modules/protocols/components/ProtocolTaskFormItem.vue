@@ -100,6 +100,7 @@ function updateAlerts(value: ProtocolTaskFormValues['alerts']) {
         :value="task.time || undefined"
         value-format="HH:mm"
         format="HH:mm"
+        placeholder="Seleccioná la hora"
         style="width: 100%"
         @update:value="(v: string) => update('time', v ?? '')"
       />

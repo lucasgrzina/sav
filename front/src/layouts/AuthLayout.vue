@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { theme } from 'ant-design-vue';
 import AuthBrandPanel from '@/modules/auth/components/AuthBrandPanel.vue';
+import { antdLocale } from '@/core/constants/locale';
 
 const authTheme = {
     algorithm: theme.defaultAlgorithm,
@@ -30,7 +31,7 @@ const authTheme = {
 </script>
 
 <template>
-    <a-config-provider :theme="authTheme">
+    <a-config-provider :theme="authTheme" :locale="antdLocale">
         <div class="auth-root">
             <!-- Left: Brand panel -->
             <div class="auth-brand-panel">

@@ -22,7 +22,7 @@ const columns = [
   { title: 'Nombre',   key: 'name' },
   { title: 'Email',    key: 'email' },
   { title: 'Rol',      key: 'role' },
-  { title: 'Alta',     key: 'created_at' },
+  { title: 'Fecha de incorporación',     key: 'created_at' },
   { title: 'Acciones', key: 'actions', width: 110 },
 ]
 </script>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { theme } from 'ant-design-vue'
 import { useAuthStore } from '@/modules/auth/stores/auth.store'
+import { antdLocale } from '@/core/constants/locale'
 
 const authStore = useAuthStore()
 
@@ -30,7 +31,7 @@ const layoutTheme = {
 </script>
 
 <template>
-    <a-config-provider :theme="layoutTheme">
+    <a-config-provider :theme="layoutTheme" :locale="antdLocale">
         <div class="fcp-root">
             <!-- Subtle background grid -->
             <div class="fcp-grid" aria-hidden="true" />

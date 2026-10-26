@@ -61,7 +61,7 @@ const { data: client, isLoading } = useAdminClient(computed(() => props.guid))
           />
         </a-tab-pane>
 
-        <a-tab-pane key="staff" tab="Staff">
+        <a-tab-pane key="staff" tab="Personal del cliente">
           <AdminClientStaffSection :client-guid="props.guid" />
         </a-tab-pane>
       </a-tabs>

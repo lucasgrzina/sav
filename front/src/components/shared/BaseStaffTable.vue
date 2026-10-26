@@ -44,7 +44,7 @@ const defaultColumns: TableColumnDef[] = [
   { title: 'Nombre / Email', key: 'user',       dataIndex: 'user' },
   { title: 'Rol',            key: 'role' },
   { title: 'Estado',         key: 'status' },
-  { title: 'Alta',           key: 'created_at' },
+  { title: 'Fecha de incorporación',         key: 'created_at' },
   { title: 'Acciones',       key: 'actions', width: 140, alwaysVisible: true },
 ]
 

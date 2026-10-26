@@ -10,7 +10,7 @@ const clientStaffColumns: TableColumnDef[] = [
   { title: 'Rol',              key: 'role' },
   { title: 'Establecimientos', key: 'establishments' },
   { title: 'Estado',           key: 'status' },
-  { title: 'Alta',             key: 'created_at' },
+  { title: 'Fecha de incorporación',             key: 'created_at' },
   { title: 'Acciones',         key: 'actions', width: 140, alwaysVisible: true },
 ]
 

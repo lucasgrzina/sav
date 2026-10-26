@@ -48,7 +48,7 @@ const columns = [
   { title: 'Ciudad/Prov.', key: 'location' },
   { title: 'Coordenadas',  key: 'coordinates' },
   { title: 'Personal vinculado', key: 'staff' },
-  { title: 'Alta',         key: 'created_at' },
+  { title: 'Fecha de creación',         key: 'created_at' },
   { title: 'Acciones',     key: 'actions', width: 100 },
 ]
 </script>

@@ -57,7 +57,7 @@ const { data: vet, isLoading } = useVet(computed(() => props.guid))
       <VetInfoCards :vet="vet" />
 
       <a-tabs class="avd-tabs">
-        <a-tab-pane key="staff" tab="Staff">
+        <a-tab-pane key="staff" tab="Personal de la veterinaria">
           <PermissionGuard permission="vets.staff.read">
             <VetStaffSection :vet-guid="props.guid" />
           </PermissionGuard>

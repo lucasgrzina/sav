@@ -11,6 +11,7 @@ import {
   CustomerServiceOutlined,
   HeartOutlined,
   ScheduleOutlined,
+  HomeOutlined,
 } from '@ant-design/icons-vue'
 import { usePermission } from '@/core/composables/usePermissions'
 
@@ -42,7 +43,7 @@ const sanidadNavItems = computed(() =>
 )
 
 const soporteNavItems = computed(() => [
-  { path: `/vets/${vetGuid.value}/soporte`,    label: 'Mensajes',   icon: CustomerServiceOutlined },
+  { path: `/vets/${vetGuid.value}/soporte`,    label: 'Soporte',    icon: CustomerServiceOutlined },
   { path: `/vets/${vetGuid.value}/tutoriales`, label: 'Tutoriales', icon: PlayCircleOutlined },
 ])
 
@@ -123,7 +124,7 @@ const visibleSanidadItems = computed(() =>
 
     <div class="dash-nav-divider" />
     <Transition name="label-fade">
-      <span v-if="!collapsed" class="dash-nav-section">Soporte</span>
+      <span v-if="!collapsed" class="dash-nav-section">Ayuda</span>
     </Transition>
 
     <RouterLink

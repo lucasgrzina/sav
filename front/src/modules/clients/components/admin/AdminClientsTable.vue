@@ -15,7 +15,7 @@ const columns = [
   { title: 'Nombre',    key: 'name' },
   { title: 'CUIT/Doc.', key: 'tax_id' },
   { title: 'País',      key: 'country' },
-  { title: 'Alta',      key: 'created_at' },
+  { title: 'Fecha de creación',      key: 'created_at' },
   { title: 'Acciones',  key: 'actions', width: 110 },
 ]
 </script>

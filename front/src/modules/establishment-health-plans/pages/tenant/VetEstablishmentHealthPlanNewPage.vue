@@ -94,7 +94,7 @@ const onSubmit = handleSubmit((values) => {
       </BaseButton>
     </div>
 
-    <AppHeader title="Nuevo plan sanitario" subtitle="Instanciá una plantilla del catálogo sobre un establecimiento." />
+    <AppHeader title="Nuevo plan sanitario" subtitle="Creá un plan a partir de una plantilla del catálogo para un establecimiento." />
 
     <a-form layout="vertical" class="vehpnp-form" @submit.prevent="onSubmit">
       <EstablishmentHealthPlanForm

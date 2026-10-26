@@ -21,7 +21,7 @@ defineProps<{ protocol: VetProtocolDetail }>()
 
       <dt>Origen</dt>
       <dd>
-        <a-tag v-if="protocol.is_global" color="blue">Global</a-tag>
+        <a-tag v-if="protocol.is_global" color="blue">Del catálogo de SAV</a-tag>
         <a-tag v-else color="green">Propio</a-tag>
       </dd>
 

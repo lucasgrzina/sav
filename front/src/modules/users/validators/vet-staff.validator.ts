@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const contactItemSchema = z.object({
   type:           z.enum(['email', 'phone', 'whatsapp']),
-  value:          z.string().min(1, 'El valor del contacto es requerido').max(200),
+  value:          z.string().min(1, 'El teléfono o correo electrónico es requerido').max(200),
   label:          z.string().max(100).nullable().optional(),
   is_primary:     z.boolean().default(false),
   use_for_alerts: z.boolean().default(false),

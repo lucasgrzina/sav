@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { APP_NAME } from '@/core/constants/app'
 import { useTheme } from '@/core/composables/useTheme'
+import { antdLocale } from '@/core/constants/locale'
 import { useSidebar } from '@/core/composables/useSidebar'
 import { MenuOutlined } from '@ant-design/icons-vue'
 import AppSidebar from '@/components/layouts/partials/AppSidebar.vue'
@@ -37,7 +38,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <a-config-provider :theme="dashTheme">
+  <a-config-provider :theme="dashTheme" :locale="antdLocale">
     <div class="dash-root" :class="[{ light: isLight }, `palette-${palette}`]">
 
       <VetChangedBanner />

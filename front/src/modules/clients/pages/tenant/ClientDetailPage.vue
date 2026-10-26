@@ -80,7 +80,7 @@ async function handleUnlink(): Promise<void> {
           <ContactsSection :client-guid="guid" />
         </a-tab-pane>
 
-        <a-tab-pane key="staff" tab="Staff">
+        <a-tab-pane key="staff" tab="Personal del cliente">
           <ClientStaffSection :vet-guid="vetGuid" :client-guid="guid" />
         </a-tab-pane>
       </a-tabs>

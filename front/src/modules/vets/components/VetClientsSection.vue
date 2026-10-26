@@ -25,7 +25,7 @@ const isModalOpen = ref(false)
 const columns = [
   { title: 'Nombre',    key: 'name' },
   { title: 'CUIT/Doc.', key: 'tax_id' },
-  { title: 'Alta',      key: 'created_at' },
+  { title: 'Fecha de incorporación',      key: 'created_at' },
   { title: 'Acciones',  key: 'actions', width: 110 },
 ]
 </script>

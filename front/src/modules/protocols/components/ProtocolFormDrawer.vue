@@ -39,7 +39,7 @@ const techniqueOptions = computed(() =>
 )
 
 const countryOptions = computed(() => [
-  { value: '', label: 'Global (todos los países)' },
+  { value: '', label: 'Del catálogo de SAV (todos los países)' },
   ...(countries.value ?? []).map((c) => ({ value: c.guid, label: c.name })),
 ])
 

@@ -44,9 +44,9 @@ function getTypeLabel(type: string): string {
 
 const columns = [
   { title: 'Tipo',     key: 'type' },
-  { title: 'Valor',    key: 'value' },
+  { title: 'Teléfono o correo electrónico, según corresponda', key: 'value' },
   { title: 'Etiqueta', key: 'label' },
-  { title: 'Flags',    key: 'flags' },
+  { title: 'Opciones de contacto',  key: 'flags' },
   { title: 'Acciones', key: 'actions', width: 100 },
 ]
 </script>

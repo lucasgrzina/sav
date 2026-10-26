@@ -197,7 +197,7 @@ const columns = [
             {{ (record as ProtocolListItem).technique.name }}
           </template>
           <template v-else-if="column.key === 'country'">
-            <span v-if="(record as ProtocolListItem).is_global">Global</span>
+            <span v-if="(record as ProtocolListItem).is_global">Del catálogo de SAV</span>
             <span v-else>{{ (record as ProtocolListItem).country?.name }}</span>
           </template>
           <template v-else-if="column.key === 'created_at'">

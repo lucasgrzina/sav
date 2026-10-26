@@ -20,7 +20,7 @@ const isModalOpen = ref(false)
 const columns = [
   { title: 'Nombre', key: 'name' },
   { title: 'Estado', key: 'status' },
-  { title: 'Alta',   key: 'created_at' },
+  { title: 'Fecha de incorporación',   key: 'created_at' },
   { title: 'Acciones', key: 'actions', width: 110 },
 ]
 </script>
