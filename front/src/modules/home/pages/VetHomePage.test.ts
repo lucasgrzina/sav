@@ -55,6 +55,7 @@ function build(overrides: Partial<VetHomeData> = {}): VetHomeData {
       task_description: null, scheduled_at_local: local, sent_at: null, sent_at_local: null,
       destination_masked: null, program,
     }],
+    has_more: { upcoming_programs: false, recent_alerts: false, problem_alerts: false },
     ...overrides,
   }
 }
@@ -104,6 +105,32 @@ describe('VetHomePage', () => {
       name: 'vet-programs-detail', params: { guid: 'prog-1' }, query: { tab: 'alerts' },
     })
     expect(wrapper.text()).not.toContain('5491122334455')
+  })
+
+  it('shows no "more" note when no list was cut', () => {
+    const wrapper = mountPage()
+
+    expect(wrapper.find('[data-testid="section-more"]').exists()).toBe(false)
+  })
+
+  it('shows a "more" note with a link to the programs list on each cut block', () => {
+    s.data = ref(build({ has_more: { upcoming_programs: true, recent_alerts: true, problem_alerts: true } }))
+    const wrapper = mountPage()
+
+    expect(wrapper.get('[data-testid="home-upcoming"] [data-testid="section-more"]').text()).toContain('Hay más programas')
+    expect(wrapper.get('[data-testid="home-recent"] [data-testid="section-more"]').text()).toContain('Hay más avisos. Mostramos los más recientes.')
+    const problems = wrapper.get('[data-testid="home-problems"] [data-testid="section-more"]')
+    expect(problems.text()).toContain('Hay más avisos con problemas')
+    expect(problems.getComponent(RouterLinkStub).props('to')).toEqual({ name: 'vet-programs-list', params: { vetGuid: 'vet-1' } })
+  })
+
+  it('flags only the block that was cut', () => {
+    s.data = ref(build({ has_more: { upcoming_programs: false, recent_alerts: false, problem_alerts: true } }))
+    const wrapper = mountPage()
+
+    expect(wrapper.find('[data-testid="home-problems"] [data-testid="section-more"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="home-upcoming"] [data-testid="section-more"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="home-recent"] [data-testid="section-more"]').exists()).toBe(false)
   })
 
   it('shows friendly empty states for each block', () => {

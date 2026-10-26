@@ -13,9 +13,11 @@ export const HOME_COPY = {
     title: 'Próximos programas',
     empty: 'No hay programas con fecha próxima.',
     seeAll: 'Ver todos los programas',
+    more: 'Hay más programas. Mostramos los más próximos.',
   },
   recent: {
     title: 'Avisos recientes',
+    more: 'Hay más avisos. Mostramos los más recientes.',
     empty: 'Todavía no se enviaron avisos.',
     sentAt: (label: string) => `Enviado ${label}`,
     noTask: 'Aviso del programa',
@@ -25,5 +27,6 @@ export const HOME_COPY = {
     empty: 'No hay avisos con problemas. Todo en orden.',
     scheduledFor: (label: string) => `Era para ${label}`,
     open: 'Ver avisos del programa',
+    more: 'Hay más avisos con problemas. Mostramos los más recientes.',
   },
 } as const

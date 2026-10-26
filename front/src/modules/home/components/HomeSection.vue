@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import BaseCard from '@/components/atoms/cards/BaseCard.vue'
 import BaseEmptyState from '@/components/atoms/feedback/BaseEmptyState.vue'
 
@@ -7,6 +8,10 @@ defineProps<{
   empty: boolean
   emptyText: string
   count?: number
+  /** Shown as a muted note under the list when it was cut at its limit. */
+  moreText?: string
+  moreLabel?: string
+  moreTo?: RouteLocationRaw
 }>()
 </script>
 
@@ -22,5 +27,9 @@ defineProps<{
     <ul v-else class="m-0 flex list-none flex-col gap-2 p-0">
       <slot />
     </ul>
+    <p v-if="moreText" class="m-0 mt-3 text-sm text-gray-500" data-testid="section-more">
+      {{ moreText }}
+      <RouterLink v-if="moreTo && moreLabel" :to="moreTo">{{ moreLabel }}</RouterLink>
+    </p>
   </BaseCard>
 </template>

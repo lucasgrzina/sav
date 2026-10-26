@@ -97,7 +97,8 @@ class VetHomeControllerTest extends TestCase
             ->assertJsonPath('data.upcoming_programs', [])
             ->assertJsonPath('data.recent_alerts', [])
             ->assertJsonPath('data.problem_alerts', [])
-            ->assertJsonStructure(['data' => ['generated_at', 'timezone', 'upcoming_programs', 'recent_alerts', 'problem_alerts']]);
+            ->assertJsonStructure(['data' => ['generated_at', 'timezone', 'upcoming_programs', 'recent_alerts', 'problem_alerts', 'has_more']])
+            ->assertJsonPath('data.has_more', ['upcoming_programs' => false, 'recent_alerts' => false, 'problem_alerts' => false]);
     }
 
     public function test_upcoming_programs_are_the_next_five_by_nearest_target_date_and_skip_past_and_cancelled(): void
@@ -118,6 +119,7 @@ class VetHomeControllerTest extends TestCase
             ['2030-06-02', '2030-06-04', '2030-06-05', '2030-06-08', '2030-06-12'],
             array_column($response->json('data.upcoming_programs'), 'next_target_date'),
         );
+        $response->assertJsonPath('data.has_more.upcoming_programs', true);
         $first = $response->json('data.upcoming_programs.1');
         $this->assertSame($multi->guid, $first['guid']);
         $this->assertSame('Cliente Test', $first['client']['name']);
@@ -171,6 +173,37 @@ class VetHomeControllerTest extends TestCase
 
         $response = $this->fetch()->assertOk()->assertJsonCount(VetHomeService::RECENT_ALERTS_LIMIT, 'data.recent_alerts');
         $this->assertStringStartsWith('2030-05-10', $response->json('data.recent_alerts.0.sent_at_local.date'));
+        $response->assertJsonPath('data.has_more.recent_alerts', true)->assertJsonPath('data.has_more.problem_alerts', false);
+    }
+
+    public function test_has_more_is_false_when_lists_fit_exactly_in_their_limits(): void
+    {
+        foreach (['2030-06-02', '2030-06-03', '2030-06-04', '2030-06-05'] as $date) {
+            $this->makeProgram([$date], [$this->owner]);
+        }
+        $program = $this->makeProgram(['2030-06-10'], [$this->owner]);
+        for ($i = 1; $i <= VetHomeService::RECENT_ALERTS_LIMIT; $i++) {
+            $day = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+            $this->makeAlert($program, "2030-05-{$day} 11:30:00", [$this->sent("2030-05-{$day} 11:30:05")]);
+        }
+
+        $this->fetch()->assertOk()
+            ->assertJsonCount(VetHomeService::UPCOMING_PROGRAMS_LIMIT, 'data.upcoming_programs')
+            ->assertJsonCount(VetHomeService::RECENT_ALERTS_LIMIT, 'data.recent_alerts')
+            ->assertJsonPath('data.has_more', ['upcoming_programs' => false, 'recent_alerts' => false, 'problem_alerts' => false]);
+    }
+
+    public function test_problem_alerts_flag_has_more_when_cut_at_the_limit(): void
+    {
+        $program = $this->makeProgram(['2030-06-10'], [$this->owner]);
+        // Days 10.. keep every alert inside the 30-day problem window.
+        for ($i = 10; $i <= 10 + VetHomeService::PROBLEM_ALERTS_LIMIT; $i++) {
+            $this->makeAlert($program, "2030-05-{$i} 11:30:00", [[$this->owner, Channel::Whatsapp, DeliveryStatus::Failed,['failure_code' => FailureCode::ProviderRejected]]]);
+        }
+
+        $this->fetch()->assertOk()
+            ->assertJsonCount(VetHomeService::PROBLEM_ALERTS_LIMIT, 'data.problem_alerts')
+            ->assertJsonPath('data.has_more.problem_alerts', true);
     }
 
     public function test_problem_alerts_show_failure_code_program_and_exclude_cancelled_and_recovered_lines(): void
@@ -248,7 +281,9 @@ class VetHomeControllerTest extends TestCase
         $this->fetch($this->makeStaffUser($this->vet, 'vet-administrative'))->assertOk()
             ->assertJsonCount(1, 'data.upcoming_programs')
             ->assertJsonPath('data.recent_alerts', null)
-            ->assertJsonPath('data.problem_alerts', null);
+            ->assertJsonPath('data.problem_alerts', null)
+            ->assertJsonPath('data.has_more.recent_alerts', null)
+            ->assertJsonPath('data.has_more.problem_alerts', null);
 
         $this->app['auth']->forgetGuards();
         $this->getJson($this->url())->assertUnauthorized();

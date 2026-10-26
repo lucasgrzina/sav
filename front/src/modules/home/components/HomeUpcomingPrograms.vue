@@ -4,7 +4,7 @@ import HomeSection from './HomeSection.vue'
 import { HOME_COPY } from '../constants/home-copy'
 import type { HomeUpcomingProgram } from '../types/home.types'
 
-defineProps<{ vetGuid: string; programs: HomeUpcomingProgram[] }>()
+defineProps<{ vetGuid: string; programs: HomeUpcomingProgram[]; hasMore?: boolean }>()
 
 function dateLabel(date: string): string {
   return parseDate(date).toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })
@@ -16,6 +16,9 @@ function dateLabel(date: string): string {
     :title="HOME_COPY.upcoming.title"
     :empty="programs.length === 0"
     :empty-text="HOME_COPY.upcoming.empty"
+    :more-text="hasMore ? HOME_COPY.upcoming.more : undefined"
+    :more-label="HOME_COPY.upcoming.seeAll"
+    :more-to="{ name: 'vet-programs-list', params: { vetGuid } }"
     data-testid="home-upcoming"
   >
     <li v-for="program in programs" :key="program.guid">

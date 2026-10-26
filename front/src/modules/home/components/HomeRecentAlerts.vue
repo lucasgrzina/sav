@@ -5,7 +5,7 @@ import { HOME_COPY } from '../constants/home-copy'
 import { ALERT_TYPE_LABEL } from '@/modules/programs/constants/alert-copy'
 import type { HomeAlertItem } from '../types/home.types'
 
-defineProps<{ vetGuid: string; alerts: HomeAlertItem[] }>()
+defineProps<{ vetGuid: string; alerts: HomeAlertItem[]; hasMore?: boolean | null }>()
 </script>
 
 <template>
@@ -13,6 +13,9 @@ defineProps<{ vetGuid: string; alerts: HomeAlertItem[] }>()
     :title="HOME_COPY.recent.title"
     :empty="alerts.length === 0"
     :empty-text="HOME_COPY.recent.empty"
+    :more-text="hasMore ? HOME_COPY.recent.more : undefined"
+    :more-label="HOME_COPY.upcoming.seeAll"
+    :more-to="{ name: 'vet-programs-list', params: { vetGuid } }"
     data-testid="home-recent"
   >
     <li v-for="alert in alerts" :key="alert.key">

@@ -5,7 +5,7 @@ import { HOME_COPY } from '../constants/home-copy'
 import { ALERT_TYPE_LABEL, FAILURE_COPY } from '@/modules/programs/constants/alert-copy'
 import type { HomeProblemAlertItem } from '../types/home.types'
 
-defineProps<{ vetGuid: string; alerts: HomeProblemAlertItem[] }>()
+defineProps<{ vetGuid: string; alerts: HomeProblemAlertItem[]; hasMore?: boolean | null }>()
 </script>
 
 <template>
@@ -14,6 +14,9 @@ defineProps<{ vetGuid: string; alerts: HomeProblemAlertItem[] }>()
     :count="alerts.length"
     :empty="alerts.length === 0"
     :empty-text="HOME_COPY.problems.empty"
+    :more-text="hasMore ? HOME_COPY.problems.more : undefined"
+    :more-label="HOME_COPY.upcoming.seeAll"
+    :more-to="{ name: 'vet-programs-list', params: { vetGuid } }"
     data-testid="home-problems"
   >
     <li v-for="alert in alerts" :key="alert.key">

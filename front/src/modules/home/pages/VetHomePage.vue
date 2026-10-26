@@ -47,10 +47,16 @@ function retry() {
           v-if="data.problem_alerts"
           :vet-guid="vetGuid"
           :alerts="data.problem_alerts"
+          :has-more="data.has_more?.problem_alerts"
           :class="{ 'order-first': hasProblems }"
         />
-        <HomeUpcomingPrograms :vet-guid="vetGuid" :programs="data.upcoming_programs" />
-        <HomeRecentAlerts v-if="data.recent_alerts" :vet-guid="vetGuid" :alerts="data.recent_alerts" />
+        <HomeUpcomingPrograms :vet-guid="vetGuid" :programs="data.upcoming_programs" :has-more="data.has_more?.upcoming_programs" />
+        <HomeRecentAlerts
+          v-if="data.recent_alerts"
+          :vet-guid="vetGuid"
+          :alerts="data.recent_alerts"
+          :has-more="data.has_more?.recent_alerts"
+        />
       </div>
     </AsyncContent>
   </div>

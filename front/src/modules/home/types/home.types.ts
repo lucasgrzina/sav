@@ -45,4 +45,10 @@ export interface VetHomeData {
   recent_alerts: HomeAlertItem[] | null
   /** null when the user lacks programs.alerts.read. */
   problem_alerts: HomeProblemAlertItem[] | null
+  /** True when the list was cut at its limit. Alert flags are null when the user lacks programs.alerts.read. */
+  has_more: {
+    upcoming_programs: boolean
+    recent_alerts: boolean | null
+    problem_alerts: boolean | null
+  }
 }

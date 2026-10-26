@@ -56,33 +56,47 @@ class VetHomeService
         $data = [
             'generated_at'      => $now->toIso8601ZuluString(),
             'timezone'          => $timezone,
-            'upcoming_programs' => $this->upcomingPrograms($vet, $today, $establishmentIds),
+            'upcoming_programs' => [],
             'recent_alerts'     => null,
             'problem_alerts'    => null,
+            'has_more'          => ['upcoming_programs' => false, 'recent_alerts' => null, 'problem_alerts' => null],
         ];
+
+        [$data['upcoming_programs'], $data['has_more']['upcoming_programs']] = $this->upcomingPrograms($vet, $today, $establishmentIds);
 
         if ($withAlerts) {
             $locale = ProjectionInput::localeFor($vet);
-            $data['recent_alerts'] = $this->recentAlerts($vet, $establishmentIds, $now, $timezone, $locale);
-            $data['problem_alerts'] = $this->problemAlerts($vet, $establishmentIds, $now, $timezone, $locale);
+            [$data['recent_alerts'], $data['has_more']['recent_alerts']] = $this->recentAlerts($vet, $establishmentIds, $now, $timezone, $locale);
+            [$data['problem_alerts'], $data['has_more']['problem_alerts']] = $this->problemAlerts($vet, $establishmentIds, $now, $timezone, $locale);
         }
 
         return $data;
     }
 
-    /** @param list<int>|null $establishmentIds */
+    /**
+     * @param list<int>|null $establishmentIds
+     * @return array{0: list<array<string, mixed>>, 1: bool} items and whether more exist beyond the limit
+     */
     private function upcomingPrograms(Vet $vet, string $today, ?array $establishmentIds): array
     {
-        return $this->repo
-            ->upcomingPrograms($vet->id, $today, $establishmentIds, self::UPCOMING_PROGRAMS_LIMIT)
+        // Ask for one extra row to know whether the list was cut.
+        $programs = $this->repo->upcomingPrograms($vet->id, $today, $establishmentIds, self::UPCOMING_PROGRAMS_LIMIT + 1);
+
+        $items = $programs
+            ->take(self::UPCOMING_PROGRAMS_LIMIT)
             ->map(fn (Program $program) => $this->programSummary($program) + [
                 'next_target_date' => substr((string) $program->next_target_date, 0, 10),
             ])
             ->values()
             ->all();
+
+        return [$items, $programs->count() > self::UPCOMING_PROGRAMS_LIMIT];
     }
 
-    /** @param list<int>|null $establishmentIds */
+    /**
+     * @param list<int>|null $establishmentIds
+     * @return array{0: list<array<string, mixed>>, 1: bool} items and whether more exist beyond the limit
+     */
     private function recentAlerts(Vet $vet, ?array $establishmentIds, CarbonImmutable $now, string $timezone, string $locale): array
     {
         $pairs = $this->repo->recentReachedPairs($vet->id, $establishmentIds, self::RECENT_ALERTS_LIMIT * self::CANDIDATE_FACTOR);
@@ -91,10 +105,16 @@ class VetHomeService
 
         usort($entries, fn (array $a, array $b) => $this->sentTimestamp($b) <=> $this->sentTimestamp($a));
 
-        return $this->present(array_slice($entries, 0, self::RECENT_ALERTS_LIMIT), $vet, $timezone, $locale, problem: false);
+        return [
+            $this->present(array_slice($entries, 0, self::RECENT_ALERTS_LIMIT), $vet, $timezone, $locale, problem: false),
+            count($entries) > self::RECENT_ALERTS_LIMIT,
+        ];
     }
 
-    /** @param list<int>|null $establishmentIds */
+    /**
+     * @param list<int>|null $establishmentIds
+     * @return array{0: list<array<string, mixed>>, 1: bool} items and whether more exist beyond the limit
+     */
     private function problemAlerts(Vet $vet, ?array $establishmentIds, CarbonImmutable $now, string $timezone, string $locale): array
     {
         $pairs = $this->repo->problemPairs(
@@ -109,7 +129,10 @@ class VetHomeService
 
         usort($entries, fn (array $a, array $b) => $b['alert']->scheduled_at->getTimestamp() <=> $a['alert']->scheduled_at->getTimestamp());
 
-        return $this->present(array_slice($entries, 0, self::PROBLEM_ALERTS_LIMIT), $vet, $timezone, $locale, problem: true);
+        return [
+            $this->present(array_slice($entries, 0, self::PROBLEM_ALERTS_LIMIT), $vet, $timezone, $locale, problem: true),
+            count($entries) > self::PROBLEM_ALERTS_LIMIT,
+        ];
     }
 
     /**

@@ -35,6 +35,11 @@ class VetHomeResource extends JsonResource
             'problem_alerts'    => $data['problem_alerts'] === null
                 ? null
                 : array_map(fn (array $a) => $this->alert($a, true), $data['problem_alerts']),
+            'has_more'          => [
+                'upcoming_programs' => $data['has_more']['upcoming_programs'],
+                'recent_alerts'     => $data['has_more']['recent_alerts'],
+                'problem_alerts'    => $data['has_more']['problem_alerts'],
+            ],
         ];
     }
 
