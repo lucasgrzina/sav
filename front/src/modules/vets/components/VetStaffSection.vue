@@ -41,6 +41,9 @@ const columns = [
       :loading="isLoading || isRemoving"
       row-key="guid"
       :scroll="{ x: 600 }"
+      mobile-cards
+      mobile-title-key="name"
+      :mobile-secondary-keys="['email', 'role', 'created_at']"
       :pagination="false"
     >
       <template #bodyCell="{ column, record }">

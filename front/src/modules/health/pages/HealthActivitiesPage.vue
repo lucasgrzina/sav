@@ -89,6 +89,9 @@ const columns = [
       :loading="isLoading || isDeleting"
       row-key="guid"
       :scroll="{ x: 600 }"
+      mobile-cards
+      mobile-title-key="name"
+      :mobile-secondary-keys="['description']"
       :pagination="false"
     >
       <template #bodyCell="{ column, record }">

@@ -49,6 +49,9 @@ const columns = [
       :loading="isUnlinking"
       row-key="guid"
       :scroll="{ x: 600 }"
+      mobile-cards
+      mobile-title-key="name"
+      :mobile-secondary-keys="['status', 'created_at']"
       :pagination="false"
     >
       <template #bodyCell="{ column, record }">

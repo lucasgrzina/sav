@@ -37,7 +37,11 @@ function switchToVet(targetGuid: string): void {
 <template>
   <div v-if="shouldShow" class="vet-switcher">
     <a-dropdown trigger="click" placement="bottomRight">
-      <button class="vet-switcher__trigger" :title="`Cambiar empresa (${currentVetItem?.name ?? '...'})`">
+      <button
+        class="vet-switcher__trigger"
+        :title="`Cambiar empresa (${currentVetItem?.name ?? '...'})`"
+        :aria-label="`Cambiar empresa (${currentVetItem?.name ?? '...'})`"
+      >
         <span class="vet-switcher__name">{{ currentVetItem?.name ?? '...' }}</span>
         <SwapOutlined class="vet-switcher__icon" />
       </button>
@@ -83,6 +87,18 @@ function switchToVet(targetGuid: string): void {
   font-size: 13px;
   cursor: pointer;
   transition: border-color 0.15s;
+}
+.vet-switcher__name {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+@media (max-width: 640px) {
+  /* On phones only the swap icon stays; the header title needs the room */
+  .vet-switcher__name { display: none; }
+  .vet-switcher__trigger { min-height: 36px; padding: 6px 10px; }
 }
 .vet-switcher__trigger:hover {
   border-color: var(--dt-accent, #1AE5A0);

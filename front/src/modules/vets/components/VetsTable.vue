@@ -34,6 +34,9 @@ const columns = computed(() => props.columns ?? defaultColumns)
     :loading="loading"
     row-key="guid"
     :scroll="{ x: 800 }"
+    mobile-cards
+    mobile-title-key="name"
+    :mobile-secondary-keys="['country', 'status', 'created_at']"
     :pagination="false"
   >
     <template #bodyCell="{ column, record }">

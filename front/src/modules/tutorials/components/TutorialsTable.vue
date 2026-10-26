@@ -45,6 +45,9 @@ function sourceLabel(source: TutorialSource): string {
     :loading="loading"
     row-key="guid"
     :scroll="{ x: 700 }"
+    mobile-cards
+    mobile-title-key="title"
+    :mobile-secondary-keys="['source', 'code', 'order']"
     :pagination="false"
   >
     <template #bodyCell="{ column, record }">

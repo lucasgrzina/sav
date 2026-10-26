@@ -33,6 +33,9 @@ const columns = [
     :data-source="protocols"
     :loading="loading"
     row-key="guid"
+    mobile-cards
+    mobile-title-key="name"
+    :mobile-secondary-keys="['technique', 'origin', 'created_at']"
     :pagination="false"
   >
     <template #bodyCell="{ column, record }">

@@ -61,12 +61,16 @@ const actionsButtonSize = computed(() => {
     flex-wrap: wrap;
 }
 
+.app-header__content {
+  @apply min-w-0 max-w-full;
+}
+
 .app-header__text {
-  @apply flex flex-col gap-1;
+  @apply flex min-w-0 flex-col gap-1;
 }
 
 .app-header__title {
-  @apply m-0 font-bold;
+  @apply m-0 font-bold break-words;
   font-family:    'Syne', sans-serif;
   letter-spacing: -0.02em;
   line-height:    1.2;
@@ -81,6 +85,12 @@ const actionsButtonSize = computed(() => {
 
 .app-header__actions {
   @apply flex flex-wrap items-center gap-2;
+}
+
+@media (max-width: 640px) {
+  .app-header { margin-bottom: 16px; }
+  .app-header__content,
+  .app-header__actions { @apply w-full; }
 }
 
 .app-header--large   .app-header__title    { font-size: 24px; }

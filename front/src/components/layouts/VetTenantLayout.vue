@@ -131,12 +131,14 @@ onMounted(() => {
   font-weight: 700;
   color: var(--dt-title, #fff);
   margin: 0;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .dash-header-right {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -146,6 +148,10 @@ onMounted(() => {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
+}
+
+@media (max-width: 700px) {
+  .dash-header { padding: 0 12px; gap: 8px; }
 }
 
 .vet-layout-skeleton {

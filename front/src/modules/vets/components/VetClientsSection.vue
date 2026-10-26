@@ -72,6 +72,9 @@ const columns = [
       :loading="isLoading || isUnlinking"
       row-key="guid"
       :scroll="{ x: 600 }"
+      mobile-cards
+      mobile-title-key="name"
+      :mobile-secondary-keys="['tax_id', 'created_at']"
       :pagination="false"
     >
       <template #bodyCell="{ column, record }">

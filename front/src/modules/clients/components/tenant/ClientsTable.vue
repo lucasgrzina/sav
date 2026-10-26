@@ -34,6 +34,9 @@ const columns = [
     :loading="loading"
     row-key="guid"
     :scroll="{ x: 700 }"
+    mobile-cards
+    mobile-title-key="name"
+    :mobile-secondary-keys="['tax_id', 'country', 'created_at']"
     :pagination="false"
   >
     <template #bodyCell="{ column, record }">

@@ -51,6 +51,9 @@ function priorityLabel(priority: SupportMessagePriority): string {
     :loading="loading"
     row-key="guid"
     :scroll="{ x: 800 }"
+    mobile-cards
+    mobile-title-key="subject"
+    :mobile-secondary-keys="['status', 'priority', 'created_at']"
     :pagination="false"
   >
     <template #bodyCell="{ column, record }">

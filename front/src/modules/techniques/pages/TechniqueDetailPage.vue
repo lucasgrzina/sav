@@ -100,6 +100,9 @@ const childColumns = [
             row-key="guid"
             :pagination="false"
             :scroll="{ x: 500 }"
+            mobile-cards
+            mobile-title-key="name"
+            :mobile-secondary-keys="['protocols_name']"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'protocols_name'">
