@@ -25,7 +25,7 @@ const clientManagers = computed(() => props.program.managers.filter((m) => m.ori
         <dt>Establecimiento</dt>
         <dd>{{ program.establishment.name }}</dd>
 
-        <dt>Técnica</dt>
+        <dt>Tipo de programa</dt>
         <dd>{{ program.technique.name }}</dd>
 
         <dt>Protocolo</dt>

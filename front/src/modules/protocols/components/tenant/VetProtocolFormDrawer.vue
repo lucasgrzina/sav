@@ -192,7 +192,7 @@ const title = computed(() => {
       </a-form-item>
 
       <a-form-item
-        label="Programa"
+        label="Tipo de programa"
         :validate-status="errors.technique_id ? 'error' : ''"
         :help="errors.technique_id ?? ''"
         required
@@ -201,7 +201,7 @@ const title = computed(() => {
           :model-value="techniqueId"
           :options="subTechniqueOptions"
           :disabled="isVersionMode || !rootTechniqueId"
-          placeholder="Seleccioná un programa"
+          placeholder="Seleccioná el tipo de programa"
           @update:model-value="onSubTechniqueSelect"
         />
       </a-form-item>

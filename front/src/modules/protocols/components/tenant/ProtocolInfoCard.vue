@@ -16,7 +16,7 @@ defineProps<{ protocol: VetProtocolDetail }>()
       <dt>Nombre</dt>
       <dd>{{ protocol.name }}</dd>
 
-      <dt>Técnica</dt>
+      <dt>Tipo de programa</dt>
       <dd>{{ protocol.technique.name }}</dd>
 
       <dt>Origen</dt>
