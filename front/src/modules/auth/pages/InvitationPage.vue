@@ -74,7 +74,7 @@ const onSubmit = handleSubmit(async (values) => {
             const vets = await fetchUserVets();
             if (vets.length > 0) {
                 vetStore.setUserVets(vets);
-                const target = vets[0].slug;
+                const target = vets[0].guid;
                 router.push(`/vets/${target}/inicio`);
             } else {
                 // Sin vets (client-owner u otro rol sin panel vet)
