@@ -130,8 +130,8 @@ class TaskDueComposerTest extends TestCase
         $this->assertSame('Sin indicaciones adicionales.', $this->v2($this->context(freeText: null))[8]);
         $this->assertSame('Sin indicaciones adicionales.', $this->v2($this->context(freeText: " \n\t "))[8]);
 
-        $long = $this->v2($this->context(freeText: str_repeat('á', 300)))[8];
-        $this->assertSame(200, mb_strlen($long));
+        $long = $this->v2($this->context(freeText: str_repeat('á', TaskDueComposer::FREE_TEXT_MAX + 100)))[8];
+        $this->assertSame(TaskDueComposer::FREE_TEXT_MAX, mb_strlen($long));
         $this->assertStringEndsWith('...', $long);
     }
 

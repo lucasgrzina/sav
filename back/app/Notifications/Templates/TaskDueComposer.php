@@ -21,6 +21,13 @@ final class TaskDueComposer
     /** Meta rejects empty template parameters. */
     public const FALLBACK_EMPTY = '-';
     public const FALLBACK_FREE_TEXT = 'Sin indicaciones adicionales.';
+    /**
+     * Max chars of the free-text variable (v2 {{8}} and the e-mail). Our own cap, sized for the
+     * Twilio sandbox (free-form body up to 1600). With approved Meta templates the ~1024 total body
+     * limit applies (fixed text ~170 + other variables up to 470), so this cap MUST be revisited
+     * before going to production.
+     */
+    public const FREE_TEXT_MAX = 600;
 
     public function compose(TaskDueContext $ctx, string $recipientName, int $version): ComposedMessage
     {
@@ -96,7 +103,7 @@ final class TaskDueComposer
             5 => WhatsappVariableSanitizer::clean($ctx->establishmentName, 60, self::FALLBACK_EMPTY),
             6 => WhatsappVariableSanitizer::clean($ctx->taskDescription, 120, self::FALLBACK_EMPTY),
             7 => WhatsappVariableSanitizer::clean($this->whenText($ctx), 80, self::FALLBACK_EMPTY),
-            8 => WhatsappVariableSanitizer::clean($ctx->freeText, 200, self::FALLBACK_FREE_TEXT),
+            8 => WhatsappVariableSanitizer::clean($ctx->freeText, self::FREE_TEXT_MAX, self::FALLBACK_FREE_TEXT),
         ];
     }
 

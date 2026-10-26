@@ -77,7 +77,7 @@ final class ProgramTaskDueMessageBuilder implements AlertMessageBuilder
     /** Same lines as the WhatsApp v2 message, as a plain-text e-mail. */
     private function emailV2(TaskDueContext $ctx, Recipient $recipient): EmailContent
     {
-        $freeText = WhatsappVariableSanitizer::clean($ctx->freeText, 200, TaskDueComposer::FALLBACK_FREE_TEXT);
+        $freeText = WhatsappVariableSanitizer::clean($ctx->freeText, TaskDueComposer::FREE_TEXT_MAX, TaskDueComposer::FALLBACK_FREE_TEXT);
         $name = WhatsappVariableSanitizer::clean($recipient->name, 60, TaskDueComposer::FALLBACK_NAME);
         $task = WhatsappVariableSanitizer::clean($ctx->taskDescription, 120, TaskDueComposer::FALLBACK_EMPTY);
 
