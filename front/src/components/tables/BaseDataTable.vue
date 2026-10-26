@@ -238,7 +238,7 @@ const classes = computed(() => [
           >
             <slot
               name="bodyCell"
-              :column="getTitleColumn()"
+              :column="getTitleColumn()!"
               :record="record"
               :index="index"
               :text="cellValue(record, getTitleColumn()!)"
@@ -279,7 +279,7 @@ const classes = computed(() => [
           >
             <slot
               name="bodyCell"
-              :column="getActionsColumn()"
+              :column="getActionsColumn()!"
               :record="record"
               :index="index"
               :text="undefined"

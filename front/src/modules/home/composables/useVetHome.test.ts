@@ -19,6 +19,7 @@ const payload: VetHomeData = {
   upcoming_programs: [],
   recent_alerts: null,
   problem_alerts: null,
+  has_more: { upcoming_programs: false, recent_alerts: null, problem_alerts: null },
 }
 
 describe('useVetHome', () => {

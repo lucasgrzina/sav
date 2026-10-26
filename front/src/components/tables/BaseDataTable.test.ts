@@ -38,7 +38,7 @@ function mountTable(extra: Record<string, unknown> = {}, onRow?: (r: Row) => voi
             'mobile-cards': true,
             'mobile-title-key': 'name',
             'mobile-secondary-keys': ['tax_id'],
-            ...(onRow ? { customRow: (r: Row) => ({ onClick: () => onRow(r) }) } : {}),
+            ...(onRow ? { customRow: (r: Record<string, any>) => ({ onClick: () => onRow(r as Row) }) } : {}),
             ...extra,
           },
           {
