@@ -78,7 +78,7 @@ const onSubmit = handleSubmit(async (values) => {
                 router.push(`/vets/${target}/inicio`);
             } else {
                 // Sin vets (client-owner u otro rol sin panel vet)
-                notifyError('Tu cuenta fue activada. El panel para tu tipo de perfil estará disponible próximamente.');
+                notifyError('Tu cuenta fue activada, pero tu tipo de perfil no tiene acceso al panel de SAV.');
                 authStore.$reset();
                 router.push('/login');
             }
